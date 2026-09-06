@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Dolby Atmos -->
+    <string name="dolby_title">Dolby Atmos</string>
+    <string name="dolby_enable">Dolby Atmos kullan</string>
+    <string name="dolby_profile_title">Bir profil seç</string>
+    <string name="dolby_preset">Ekolayzır</string>
+    <string name="dolby_off">Kapalı</string>
+    <string name="dolby_on">Açık</string>
+    <string name="dolby_low">Düşük</string>
+    <string name="dolby_medium">Orta</string>
+    <string name="dolby_high">Yüksek</string>
+    <string name="dolby_max">Maksimum</string>
+    <string name="dolby_unknown">Bilinmiyor</string>
+    <string name="dolby_on_with_profile">Açık (%1$s)</string>
+    <string name="dolby_category_settings">Ses ayarları</string>
+    <string name="dolby_category_adv_settings">Gelişmiş ayarlar</string>
+    <string name="dolby_adv_settings_footer">Gelişmiş ayarları görmek için farklı bir profil seçin.</string>
+    <string name="dolby_bass_enhancer">Bas güçlendirici</string>
+    <string name="dolby_bass_level">Bas seviyesi</string>
+    <string name="dolby_bass_curve">Bas eğrisi</string>
+    <string name="dolby_bass_curve_balanced">Dengeli</string>
+    <string name="dolby_bass_curve_sub_boost">Sub bas artırımı</string>
+    <string name="dolby_bass_curve_punch">Vurucu</string>
+    <string name="dolby_treble_enhancer">Tiz güçlendirici</string>
+    <string name="dolby_treble_level">Tiz seviyesi</string>
+    <string name="dolby_dialogue_enhancer">Diyalog güçlendirici</string>
+    <string name="dolby_spk_virtualizer">Hoparlör çevresel sanallaştırıcı</string>
+    <string name="dolby_hp_virtualizer">Kulaklık çevresel sanallaştırıcı</string>
+    <string name="dolby_volume_leveler">Ses dengeleyici</string>
+    <string name="dolby_bass_enhancer_summary">Daha derin bas için düşük frekansları güçlendirir</string>  
+    <string name="dolby_treble_enhancer_summary">Daha net tiz için yüksek frekansları güçlendirir</string>
+    <string name="dolby_dialogue_enhancer_summary">Ses ve konuşma netliğini artırır</string>  
+    <string name="dolby_spk_virtualizer_summary">Hoparlörlerde sanal surround ses oluşturur</string>  
+    <string name="dolby_hp_virtualizer_summary">Kulaklıklarda sanal surround ses oluşturur</string>  
+    <string name="dolby_volume_leveler_summary">Tutarlı bir dinleme deneyimi için ses seviyesini dengeler</string>  
+    <string name="dolby_connect_headphones">Kulaklık bağla</string>
+    <string name="dolby_reset_all">Profilleri sıfırla</string>
+    <string name="dolby_reset_all_message">Bu işlem tüm profilleri fabrika ayarlarına sıfırlar.</string>
+    <string name="dolby_reset_all_toast">Tüm profiller başarıyla sıfırlandı</string>
+    <string name="dolby_hp_virtualizer_dolby_strength">Surround sanallaştırıcı gücü</string>
+    <string name="dolby_dialogue_enhancer_dolby_strength">Diyalog güçlendirici seviyesi</string>
+    <string name="dolby_notification_listener_label">Dolby Atmos Servisi</string>
+    <string name="loading">Yükleniyor...</string>
+
+    <!-- Dolby profiles -->
+    <string name="dolby_profile_dynamic">Dinamik</string>
+    <string name="dolby_profile_video">Film/Video</string>
+    <string name="dolby_profile_music">Müzik</string>
+    <string name="dolby_profile_game">Oyun</string>
+    <string name="dolby_profile_work">Çalışma</string>
+    <string name="dolby_profile_casual">Günlük</string>
+    <string name="dolby_profile_mood">Ruh Hali</string>
+
+    <!-- Dolby equalizer presets -->
+    <string name="dolby_preset_default">Düz (kapalı)</string>
+    <string name="dolby_preset_rock">Rock</string>
+    <string name="dolby_preset_jazz">Jazz</string>
+    <string name="dolby_preset_pop">Pop</string>
+    <string name="dolby_preset_classical">Klasik</string>
+    <string name="dolby_preset_hiphop">Hip Hop</string>
+    <string name="dolby_preset_blues">Blues</string>
+    <string name="dolby_preset_electronic">Elektronik</string>
+    <string name="dolby_preset_country">Country</string>
+    <string name="dolby_preset_dance">Dance</string>
+    <string name="dolby_preset_metal">Metal</string>
+    <string name="dolby_preset_acoustic">Akustik</string>
+    <string name="dolby_preset_bass">Bas Güçlendirme</string>
+    <string name="dolby_preset_beats">Beats</string>
+    <string name="dolby_preset_clear">Kristal Netlik</string>
+    <string name="dolby_preset_deep">Derin</string>
+    <string name="dolby_preset_dubstep">Dubstep</string>
+    <string name="dolby_preset_hardstyle">Hardstyle</string>
+    <string name="dolby_preset_movie">Film</string>
+    <string name="dolby_preset_rb">R&amp;B</string>
+    <string name="dolby_preset_vocal">Vokal Güçlendirme</string>
+    <string name="dolby_preset_custom">Özel</string>
+    <string name="equalizer">Ekolayzır</string>
+    <string name="advanced">Gelişmiş</string>
+    <string name="home">Ana Sayfa</string>
+
+    <!-- Dolby equalizer UI -->
+    <string name="dolby_geq_slider_label_gain">Kazanç</string>
+    <string name="dolby_geq_preset">Ön Ayar</string>
+    <string name="dolby_geq_preset_name">Ön ayar adı</string>
+    <string name="dolby_geq_new_preset">Yeni ön ayar</string>
+    <string name="dolby_geq_rename_preset">Ön ayarı yeniden adlandır</string>
+    <string name="dolby_geq_delete_preset">Ön ayarı sil</string>
+    <string name="dolby_geq_delete_preset_prompt">Bu ön ayarı silmek istiyor musunuz?</string>
+    <string name="dolby_geq_reset_gains">Kazançları sıfırla</string>
+    <string name="dolby_geq_reset_gains_prompt">Bu ön ayarı varsayılanlara sıfırlamak istiyor musunuz?</string>
+    <string name="dolby_geq_preset_name_exists">Bu isimde bir ön ayar zaten var!</string>
+    <string name="dolby_geq_preset_name_too_long">Ön ayar adı çok uzun!</string>
+    <string name="band_mode_mismatch">Bant modu uyuşmazlığı</string>
+    <string name="frequency_response">Frekans Tepkisi</string>
+    <string name="locked">Kilitli</string>
+    <string name="band_configuration">Bant Yapılandırması</string>
+    <string name="choose_equalizer_precision">Ekolayzır hassasiyetini seçin: daha fazla bant = daha ince kontrol</string>
+
+    <!-- Dolby intelligent EQ -->
+    <string name="dolby_ieq">Akıllı ekolayzır</string>
+    <string name="dolby_balanced">Dengeli</string>
+    <string name="dolby_warm">Sıcak</string>
+    <string name="dolby_detailed">Detaylı</string>
+
+    <!-- Per-App Audio Profiles -->
+    <string name="app_profiles_title">Uygulama Bazlı Ses Profilleri</string>
+    <string name="app_profiles_desc">İçerik türüne göre optimize edilmiş ses için uygulamalara farklı ses profilleri atayın</string>
+    <string name="app_profiles_search_hint">Uygulama ara...</string>
+    <string name="app_profiles_no_apps">Uygulama bulunamadı</string>
+    <string name="app_profiles_loading">Uygulamalar yükleniyor...</string>
+    <string name="app_profiles_clear_all">Tüm Uygulama Profillerini Temizle</string>
+    <string name="app_profiles_clear_all_message">Bu işlem tüm uygulama profili atamalarını kaldırır. Uygulamalar varsayılan profili kullanır.</string>
+    <string name="app_profiles_manage">Uygulama Profillerini Yönet</string>
+    <string name="app_profiles_default">Varsayılan</string>
+    <string name="app_profiles_assigned">Atanan: %1$s</string>
+    <string name="app_profiles_headphone_only">Yalnızca Kulaklık/BT modu</string>
+    <string name="app_profiles_headphone_only_description">Profilleri yalnızca kulaklık veya Bluetooth ses cihazı bağlıyken değiştir</string>
+    <string name="app_profiles_permission_required">İzin Gerekli</string>
+    <string name="app_profiles_permission_required_details">Aktif uygulamaya göre profili otomatik değiştirmek için bir sonraki ekranda Kullanım Erişimi izni verin.</string>
+    <string name="app_profiles_grant_permission">İzin Ver</string>
+    <string name="app_profiles_search_placeholder">Uygulama ara...</string>
+    <string name="app_profiles_no_apps_found">Uygulama bulunamadı</string>
+    <string name="app_profiles_retry">Tekrar dene</string>
+    <string name="app_profiles_change">Değiştir</string>
+    <string name="app_profiles_auto_switch">Profilleri otomatik değiştir</string>
+    <string name="app_profiles_show_toasts">Bildirim göster</string>
+
+    <!-- Dolby mid enhancer -->
+    <string name="dolby_mid_enhancer">Mid güçlendirici</string>
+    <string name="dolby_mid_level">Mid seviyesi</string>
+    <string name="dolby_mid_enhancer_summary">Daha net vokaller ve enstrümanlar için orta frekansları güçlendirir</string>
+
+</resources>
