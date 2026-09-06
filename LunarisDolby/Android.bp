@@ -51,3 +51,9 @@ prebuilt_etc {
     sub_dir: "permissions",
     system_ext_specific: true,
 }
+prebuilt_etc {
+    name: "preinstalled-packages-platform-dolby.xml",
+    src: "preinstalled-packages-platform-dolby.xml",
+    sub_dir: "sysconfig",
+    system_ext_specific: true,
+}
