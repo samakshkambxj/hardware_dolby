@@ -27,7 +27,12 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
     private val defaultPrefs = context.getSharedPreferences("dolby_prefs", Context.MODE_PRIVATE)
     private val presetsPrefs = context.getSharedPreferences(DolbyConstants.PREF_FILE_PRESETS, Context.MODE_PRIVATE)
     
-    private val _isOnSpeaker = MutableStateFlow(checkIsOnSpeaker())
+    private val deviceStateManager = DeviceStateManager(context)
+
+    private val _activeAudioDevice = MutableStateFlow(resolveActiveAudioDevice())
+    val activeAudioDevice: StateFlow<ActiveAudioDevice> = _activeAudioDevice.asStateFlow()
+
+    private val _isOnSpeaker = MutableStateFlow(_activeAudioDevice.value.isOnSpeaker)
     val isOnSpeaker: StateFlow<Boolean> = _isOnSpeaker.asStateFlow()
     
     private val _currentProfile = MutableStateFlow(0)
@@ -129,19 +134,44 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
         }
     }
 
-    private fun checkIsOnSpeaker(): Boolean {
-        return try {
-            val device = audioManager.getDevicesForAttributes(ATTRIBUTES_MEDIA)[0]
-            device.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
-        } catch (e: Exception) {
-            DolbyConstants.dlog(TAG, "Error checking speaker state: ${e.message}")
-            false
+    fun getCurrentOutputDevice(): AudioDeviceInfo? {
+        val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+        for (type in OUTPUT_DEVICE_PRIORITY) {
+            val device = devices.firstOrNull { it.type == type }
+            if (device != null) return device
+        }
+        return devices.firstOrNull()
+    }
+
+    private fun resolveActiveAudioDevice(): ActiveAudioDevice {
+        val device = getCurrentOutputDevice() ?: return ActiveAudioDevice.Unknown
+        return ActiveAudioDevice(
+            name = deviceStateManager.deviceDisplayName(device),
+            category = device.toAudioCategory()
+        )
+    }
+
+    private fun AudioDeviceInfo.toAudioCategory(): AudioDeviceCategory {
+        return when (type) {
+            AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> AudioDeviceCategory.SPEAKER
+            AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+            AudioDeviceInfo.TYPE_WIRED_HEADSET -> AudioDeviceCategory.WIRED
+            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+            AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
+            AudioDeviceInfo.TYPE_BLE_HEADSET,
+            AudioDeviceInfo.TYPE_BLE_SPEAKER,
+            AudioDeviceInfo.TYPE_BLE_BROADCAST -> AudioDeviceCategory.BLUETOOTH
+            AudioDeviceInfo.TYPE_USB_HEADSET,
+            AudioDeviceInfo.TYPE_USB_DEVICE -> AudioDeviceCategory.USB
+            else -> AudioDeviceCategory.OTHER
         }
     }
 
     fun updateSpeakerState() {
         if (!isReleased) {
-            _isOnSpeaker.value = checkIsOnSpeaker()
+            val activeDevice = resolveActiveAudioDevice()
+            _activeAudioDevice.value = activeDevice
+            _isOnSpeaker.value = activeDevice.isOnSpeaker
         }
     }
 
@@ -918,6 +948,19 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
     companion object {
         private const val TAG = "DolbyRepository"
         private const val EFFECT_PRIORITY = 100
+
+        private val OUTPUT_DEVICE_PRIORITY = listOf(
+            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+            AudioDeviceInfo.TYPE_BLE_HEADSET,
+            AudioDeviceInfo.TYPE_BLE_SPEAKER,
+            AudioDeviceInfo.TYPE_BLE_BROADCAST,
+            AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
+            AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+            AudioDeviceInfo.TYPE_WIRED_HEADSET,
+            AudioDeviceInfo.TYPE_USB_HEADSET,
+            AudioDeviceInfo.TYPE_USB_DEVICE,
+            AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+        )
         
         private const val BASS_GAIN_MULTIPLIER = 1.4f
         private const val MID_GAIN_MULTIPLIER = 1.3f

@@ -33,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
+import org.lunaris.dolby.domain.models.ActiveAudioDevice
+import org.lunaris.dolby.domain.models.AudioDeviceCategory
 import org.lunaris.dolby.domain.models.ProfileSettings
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
 import org.lunaris.dolby.utils.*
@@ -79,6 +81,81 @@ fun Modifier.squishable(
                 }
             }
         }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun ActiveAudioDeviceCard(
+    device: ActiveAudioDevice,
+    modifier: Modifier = Modifier
+) {
+    val icon = when (device.category) {
+        AudioDeviceCategory.SPEAKER -> Icons.Default.VolumeUp
+        AudioDeviceCategory.WIRED -> Icons.Default.Headphones
+        AudioDeviceCategory.BLUETOOTH -> Icons.Default.Bluetooth
+        AudioDeviceCategory.USB -> Icons.Default.Usb
+        AudioDeviceCategory.OTHER -> Icons.Default.Speaker
+    }
+
+    val categoryLabel = when (device.category) {
+        AudioDeviceCategory.SPEAKER -> stringResource(R.string.audio_output_speaker)
+        AudioDeviceCategory.WIRED -> stringResource(R.string.audio_output_wired)
+        AudioDeviceCategory.BLUETOOTH -> stringResource(R.string.audio_output_bluetooth)
+        AudioDeviceCategory.USB -> stringResource(R.string.audio_output_usb)
+        AudioDeviceCategory.OTHER -> stringResource(R.string.audio_output_unknown)
+    }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.audio_output_active_device),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = device.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    text = categoryLabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                )
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

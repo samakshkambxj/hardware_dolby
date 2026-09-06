@@ -132,4 +132,12 @@
     <string name="dolby_mid_level">Mid seviyesi</string>
     <string name="dolby_mid_enhancer_summary">Daha net vokaller ve enstrümanlar için orta frekansları güçlendirir</string>
 
+    <!-- Active audio output -->
+    <string name="audio_output_active_device">Aktif ses çıkışı</string>
+    <string name="audio_output_speaker">Hoparlör</string>
+    <string name="audio_output_wired">Kablolu kulaklık</string>
+    <string name="audio_output_bluetooth">Bluetooth</string>
+    <string name="audio_output_usb">USB ses</string>
+    <string name="audio_output_unknown">Ses cihazı</string>
+
 </resources>
