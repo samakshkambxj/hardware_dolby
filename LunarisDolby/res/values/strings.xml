@@ -201,4 +201,12 @@
     <string name="dolby_autoeq_search">Search</string>
     <string name="dolby_autoeq_active">Active profile</string>
     <string name="dolby_autoeq_selected">Selected profile</string>
+
+    <!-- Active audio output -->
+    <string name="audio_output_active_device">Active audio output</string>
+    <string name="audio_output_speaker">Speaker</string>
+    <string name="audio_output_wired">Wired headphones</string>
+    <string name="audio_output_bluetooth">Bluetooth</string>
+    <string name="audio_output_usb">USB audio</string>
+    <string name="audio_output_unknown">Audio device</string>
 </resources>
