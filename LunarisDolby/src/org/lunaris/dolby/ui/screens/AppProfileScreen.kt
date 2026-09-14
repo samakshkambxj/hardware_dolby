@@ -33,6 +33,7 @@ import org.lunaris.dolby.R
 import org.lunaris.dolby.data.AppInfo
 import org.lunaris.dolby.domain.models.AppProfileUiState
 import org.lunaris.dolby.ui.components.BouncyListItem
+import org.lunaris.dolby.ui.components.LunarisGlassTopBar
 import org.lunaris.dolby.ui.components.ModernConfirmDialog
 import org.lunaris.dolby.ui.components.verticalBouncyEdge
 import org.lunaris.dolby.ui.viewmodel.AppProfileViewModel
@@ -49,14 +50,14 @@ fun AppProfileScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { 
+            LunarisGlassTopBar(
+                title = {
                     Text(
                         stringResource(R.string.app_profiles_title),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
@@ -82,15 +83,12 @@ fun AppProfileScreen(
                     }
                     IconButton(onClick = { viewModel.loadApps() }) {
                         Icon(
-                            Icons.Default.Refresh, 
+                            Icons.Default.Refresh,
                             contentDescription = "Refresh",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                }
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer

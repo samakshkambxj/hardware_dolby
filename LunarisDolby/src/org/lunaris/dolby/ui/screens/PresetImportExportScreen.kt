@@ -33,6 +33,7 @@ import org.lunaris.dolby.domain.models.EqualizerPreset
 import org.lunaris.dolby.domain.models.EqualizerUiState
 import org.lunaris.dolby.ui.components.BouncyListItem
 import org.lunaris.dolby.ui.components.BouncyPopIn
+import org.lunaris.dolby.ui.components.LunarisGlassTopBar
 import org.lunaris.dolby.ui.components.verticalBouncyEdge
 import org.lunaris.dolby.ui.components.ModernConfirmDialog
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
@@ -159,14 +160,14 @@ fun PresetImportExportScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { 
+            LunarisGlassTopBar(
+                title = {
                     Text(
                         stringResource(R.string.import_export_presets),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
@@ -180,15 +181,12 @@ fun PresetImportExportScreen(
                 actions = {
                     IconButton(onClick = { showBatchExport = true }) {
                         Icon(
-                            Icons.Default.FileDownload, 
+                            Icons.Default.FileDownload,
                             contentDescription = "Batch export",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                }
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer

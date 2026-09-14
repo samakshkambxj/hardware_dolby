@@ -50,7 +50,7 @@ fun ModernDolbySettingsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            LunarisGlassTopBar(
                 title = {
                     Column {
                         Text(
@@ -70,22 +70,19 @@ fun ModernDolbySettingsScreen(
                 actions = {
                     IconButton(onClick = { showCreditsDialog = true }) {
                         Icon(
-                            Icons.Default.Info, 
+                            Icons.Default.Info,
                             contentDescription = "Credits",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     IconButton(onClick = { showResetDialog = true }) {
                         Icon(
-                            Icons.Default.RestartAlt, 
+                            Icons.Default.RestartAlt,
                             contentDescription = "Reset",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                }
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer,

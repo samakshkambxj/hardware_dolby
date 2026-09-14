@@ -40,6 +40,11 @@ fun ModernAdvancedSettingsScreen(
     val balanceError by viewModel.balanceError.collectAsState()
     val scenes by viewModel.scenes.collectAsState()
     val deviceScenes by viewModel.deviceScenes.collectAsState()
+    val spatialSupported by viewModel.spatializerSupported.collectAsState()
+    val spatialAvailable by viewModel.spatializerAvailable.collectAsState()
+    val spatialEnabled by viewModel.spatializerEnabled.collectAsState()
+    val headTrackingAvailable by viewModel.headTrackingAvailable.collectAsState()
+    val headTrackingEnabled by viewModel.headTrackingEnabled.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(balanceError) {
@@ -51,18 +56,15 @@ fun ModernAdvancedSettingsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { 
+            LunarisGlassTopBar(
+                title = {
                     Text(
                         stringResource(R.string.dolby_category_adv_settings),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
-                    ) 
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                    )
+                }
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -88,6 +90,11 @@ fun ModernAdvancedSettingsScreen(
                     onBalanceChange = { viewModel.setChannelBalance(it) },
                     scenes = scenes,
                     deviceScenes = deviceScenes,
+                    spatialSupported = spatialSupported,
+                    spatialAvailable = spatialAvailable,
+                    spatialEnabled = spatialEnabled,
+                    headTrackingAvailable = headTrackingAvailable,
+                    headTrackingEnabled = headTrackingEnabled,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -130,6 +137,11 @@ private fun ModernAdvancedSettingsContent(
     onBalanceChange: (Float) -> Unit,
     scenes: List<org.lunaris.dolby.domain.models.Scene>,
     deviceScenes: Map<String, String>,
+    spatialSupported: Boolean,
+    spatialAvailable: Boolean,
+    spatialEnabled: Boolean,
+    headTrackingAvailable: Boolean,
+    headTrackingEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -369,6 +381,20 @@ private fun ModernAdvancedSettingsContent(
             }
         }
         
+        item(key = "spatial") {
+            BouncyPopIn(delayMillis = 75) {
+                SpatialAudioCard(
+                    isSupported = spatialSupported,
+                    isAvailable = spatialAvailable,
+                    isEnabled = spatialEnabled,
+                    headTrackingAvailable = headTrackingAvailable,
+                    headTrackingEnabled = headTrackingEnabled,
+                    onEnabledChange = { viewModel.setSpatialAudioEnabled(it) },
+                    onHeadTrackingChange = { viewModel.setHeadTrackingEnabled(it) }
+                )
+            }
+        }
+
         item(key = "balance") {
             BouncyPopIn(delayMillis = 90) {
                 BalanceCard(

@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import org.lunaris.dolby.R
 import org.lunaris.dolby.ui.components.BouncyListItem
 import org.lunaris.dolby.ui.components.verticalBouncyEdge
+import org.lunaris.dolby.ui.components.LunarisGlassTopBar
 import org.lunaris.dolby.ui.components.ModernSettingSlider
 import org.lunaris.dolby.ui.components.ModernSettingsCard
 
@@ -125,7 +126,7 @@ fun VolumeControlScreen() {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            LunarisGlassTopBar(
                 title = {
                     Text(
                         stringResource(R.string.volume),
@@ -133,10 +134,7 @@ fun VolumeControlScreen() {
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                }
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer

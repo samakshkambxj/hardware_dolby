@@ -15,6 +15,7 @@ import org.lunaris.dolby.data.DeviceStateManager
 import org.lunaris.dolby.data.SceneRepository
 import org.lunaris.dolby.data.SleepTimerManager
 import org.lunaris.dolby.data.SleepTimerState
+import org.lunaris.dolby.data.SpatializerManager
 import org.lunaris.dolby.domain.models.*
 import org.lunaris.dolby.service.DolbyEffectService
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +32,13 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     private val sceneRepository = SceneRepository(application)
     private val deviceStateManager = DeviceStateManager(application)
     private val sleepTimer = SleepTimerManager(application)
+    private val spatializerManager = SpatializerManager(application)
+
+    val spatializerSupported: StateFlow<Boolean> = spatializerManager.isSupported
+    val spatializerAvailable: StateFlow<Boolean> = spatializerManager.isAvailable
+    val spatializerEnabled: StateFlow<Boolean> = spatializerManager.isEnabled
+    val headTrackingAvailable: StateFlow<Boolean> = spatializerManager.isHeadTrackingAvailable
+    val headTrackingEnabled: StateFlow<Boolean> = spatializerManager.isHeadTrackingEnabled
 
     private val _uiState = MutableStateFlow<DolbyUiState>(DolbyUiState.Loading)
     val uiState: StateFlow<DolbyUiState> = _uiState.asStateFlow()
@@ -63,6 +71,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         refreshDeviceScenes()
         refreshSleepState()
         refreshBalance()
+        refreshSpatializer()
         observeAudioOutputState()
         observeProfileChanges()
     }
@@ -74,7 +83,40 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
                 if (!isCleared) {
                     DolbyConstants.dlog(TAG, "Audio output changed: ${it.name} (${it.category})")
                     loadSettings()
+                    refreshSpatializer()
                 }
+            }
+        }
+    }
+
+    fun refreshSpatializer() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                spatializerManager.refresh()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error refreshing spatializer: ${e.message}")
+            }
+        }
+    }
+
+    fun setSpatialAudioEnabled(enabled: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                spatializerManager.setEnabled(enabled)
+                spatializerManager.refresh()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error setting spatial audio: ${e.message}")
+            }
+        }
+    }
+
+    fun setHeadTrackingEnabled(enabled: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                spatializerManager.setHeadTrackingEnabled(enabled)
+                spatializerManager.refresh()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error setting head tracking: ${e.message}")
             }
         }
     }

@@ -69,14 +69,14 @@ fun ModernEqualizerScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { 
+            LunarisGlassTopBar(
+                title = {
                     Text(
                         stringResource(R.string.dolby_preset),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
-                    ) 
+                    )
                 },
                 actions = {
                     IconButton(onClick = { showSaveDialog = true }) {
@@ -112,17 +112,14 @@ fun ModernEqualizerScreen(
                         if (state.currentPreset.isUserDefined) {
                             IconButton(onClick = { showDeleteDialog = true }) {
                                 Icon(
-                                    Icons.Default.Delete, 
+                                    Icons.Default.Delete,
                                     contentDescription = "Delete",
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             }
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                }
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer

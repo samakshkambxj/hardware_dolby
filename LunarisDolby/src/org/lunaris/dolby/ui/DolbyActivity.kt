@@ -75,6 +75,7 @@ class DolbyActivity : ComponentActivity() {
             super.onResume(owner)
             DolbyConstants.dlog(TAG, "Lifecycle: onResume")
             dolbyViewModel.updateSpeakerState()
+            dolbyViewModel.refreshSpatializer()
         }
         
         override fun onPause(owner: LifecycleOwner) {
