@@ -303,7 +303,7 @@ private fun ProfileCard(
                         .align(Alignment.TopEnd)
                         .padding(10.dp)
                         .size(24.dp)
-                        .squishable(enabled = true, scaleDown = 0.8f),
+                        .squishable(enabled = true, scaleDown = 0.9f),
                     shape = CircleShape,
                     color = palette.content
                 ) {

@@ -14,6 +14,7 @@ import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -26,7 +27,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.lunaris.dolby.R
-import org.lunaris.dolby.ui.components.BouncyPopIn
+import org.lunaris.dolby.ui.components.BouncyListItem
+import org.lunaris.dolby.ui.components.verticalBouncyEdge
 import org.lunaris.dolby.ui.components.ModernSettingSlider
 import org.lunaris.dolby.ui.components.ModernSettingsCard
 
@@ -140,17 +142,19 @@ fun VolumeControlScreen() {
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         LazyColumn(
+            state = rememberLazyListState(),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(paddingValues)
+                .verticalBouncyEdge(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             itemsIndexed(
                 items = streams,
                 key = { _, stream -> stream.streamType }
-            ) { index, stream ->
-                BouncyPopIn(delayMillis = (index * 45).coerceAtMost(225)) {
+            ) { _, stream ->
+                BouncyListItem {
                     val max = remember(stream.streamType) {
                     try {
                         audioManager.getStreamMaxVolume(stream.streamType)

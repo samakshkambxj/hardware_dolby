@@ -243,25 +243,28 @@ private fun ModernEqualizerContent(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalBouncyEdge()
             .verticalScroll(scrollState)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.extraLarge,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
-        ) {
-            ModernPresetSelector(
-                presets = state.presets,
-                currentPreset = state.currentPreset,
-                onPresetSelected = { viewModel.setPreset(it) }
-            )
+        BouncyPopIn(delayMillis = 0) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                )
+            ) {
+                ModernPresetSelector(
+                    presets = state.presets,
+                    currentPreset = state.currentPreset,
+                    onPresetSelected = { viewModel.setPreset(it) }
+                )
+            }
         }
 
-        BouncyPopIn(delayMillis = 60) {
+        BouncyPopIn(delayMillis = 30) {
             BandModeSelector(
                 currentMode = state.bandMode,
                 onModeChange = { viewModel.setBandMode(it) }
@@ -308,7 +311,7 @@ private fun ModernEqualizerContent(
             }
         }
         
-        BouncyPopIn(delayMillis = 120) {
+        BouncyPopIn(delayMillis = 60) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.extraLarge,
@@ -375,7 +378,7 @@ private fun ModernEqualizerContent(
             }
         }
 
-        BouncyPopIn(delayMillis = 180) {
+        BouncyPopIn(delayMillis = 90) {
             BandTunerCard(
                 bandGains = state.bandGains,
                 bandMode = state.bandMode,

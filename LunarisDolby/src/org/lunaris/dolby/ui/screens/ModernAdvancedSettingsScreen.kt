@@ -6,6 +6,7 @@
 package org.lunaris.dolby.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -131,13 +132,17 @@ private fun ModernAdvancedSettingsContent(
     deviceScenes: Map<String, String>,
     modifier: Modifier = Modifier
 ) {
+    val listState = rememberLazyListState()
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        state = listState,
+        modifier = modifier
+            .fillMaxSize()
+            .verticalBouncyEdge(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (state.settings.enabled) {
-            item {
+            item(key = "tuning") {
                 BouncyPopIn(delayMillis = 0) {
                     ModernSettingsCard(
                         title = stringResource(R.string.dolby_category_settings),
@@ -247,8 +252,8 @@ private fun ModernAdvancedSettingsContent(
             }
             }
 
-            item {
-                BouncyPopIn(delayMillis = 60) {
+            item(key = "leveler") {
+                BouncyPopIn(delayMillis = 30) {
                     ModernSettingsCard(
                         title = "Volume Leveler",
                         icon = Icons.Default.VolumeDown
@@ -265,8 +270,8 @@ private fun ModernAdvancedSettingsContent(
             }
             
             if (state.settings.currentProfile != 0) {
-                item {
-                    BouncyPopIn(delayMillis = 100) {
+                item(key = "virtualizer") {
+                    BouncyPopIn(delayMillis = 60) {
                         ModernSettingsCard(
                             title = "Surround Virtualizer",
                             icon = Icons.Default.Headphones
@@ -305,8 +310,8 @@ private fun ModernAdvancedSettingsContent(
                     }
                 }
                 
-                item {
-                    BouncyPopIn(delayMillis = 130) {
+                item(key = "dialogue") {
+                    BouncyPopIn(delayMillis = 60) {
                         ModernSettingsCard(
                             title = "Dialogue Enhancement",
                             icon = Icons.Default.RecordVoiceOver
@@ -364,29 +369,35 @@ private fun ModernAdvancedSettingsContent(
             }
         }
         
-        item {
-            BalanceCard(
-                balance = balance,
-                onBalanceChange = onBalanceChange
-            )
-        }
-
-        item {
-            AutomationCard()
-        }
-
-        item {
-            val deviceKey = remember(state.activeAudioDevice) {
-                viewModel.currentDeviceKey()
+        item(key = "balance") {
+            BouncyPopIn(delayMillis = 90) {
+                BalanceCard(
+                    balance = balance,
+                    onBalanceChange = onBalanceChange
+                )
             }
-            DeviceSceneCard(
-                currentDeviceName = state.activeAudioDevice.name,
-                currentDeviceKey = deviceKey,
-                scenes = scenes,
-                deviceScenes = deviceScenes,
-                onAssign = { viewModel.assignDeviceScene(it) },
-                onClear = { viewModel.clearDeviceScene(it) }
-            )
+        }
+
+        item(key = "automation") {
+            BouncyPopIn(delayMillis = 120) {
+                AutomationCard()
+            }
+        }
+
+        item(key = "device_scene") {
+            BouncyPopIn(delayMillis = 150) {
+                val deviceKey = remember(state.activeAudioDevice) {
+                    viewModel.currentDeviceKey()
+                }
+                DeviceSceneCard(
+                    currentDeviceName = state.activeAudioDevice.name,
+                    currentDeviceKey = deviceKey,
+                    scenes = scenes,
+                    deviceScenes = deviceScenes,
+                    onAssign = { viewModel.assignDeviceScene(it) },
+                    onClear = { viewModel.clearDeviceScene(it) }
+                )
+            }
         }
 
         item {

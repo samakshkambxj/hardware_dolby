@@ -12,6 +12,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -30,7 +31,9 @@ import org.lunaris.dolby.R
 import org.lunaris.dolby.data.PresetExportManager
 import org.lunaris.dolby.domain.models.EqualizerPreset
 import org.lunaris.dolby.domain.models.EqualizerUiState
+import org.lunaris.dolby.ui.components.BouncyListItem
 import org.lunaris.dolby.ui.components.BouncyPopIn
+import org.lunaris.dolby.ui.components.verticalBouncyEdge
 import org.lunaris.dolby.ui.components.ModernConfirmDialog
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
 import org.lunaris.dolby.utils.ToastHelper
@@ -194,11 +197,14 @@ fun PresetImportExportScreen(
             when (val state = uiState) {
                 is EqualizerUiState.Success -> {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                        state = rememberLazyListState(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalBouncyEdge(),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        item {
+                        item(key = "import") {
                             BouncyPopIn(delayMillis = 0) {
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
@@ -325,8 +331,11 @@ fun PresetImportExportScreen(
                                 modifier = Modifier.padding(vertical = 8.dp)
                             )
                         }
-                        itemsIndexed(state.presets.filter { it.isUserDefined }) { index, preset ->
-                            BouncyPopIn(delayMillis = (index * 30).coerceAtMost(200)) {
+                        itemsIndexed(
+                            state.presets.filter { it.isUserDefined },
+                            key = { _, preset -> preset.name + preset.bandMode.value }
+                        ) { _, preset ->
+                            BouncyListItem {
                                 PresetExportCard(
                                 preset = preset,
                                 onExportFile = {

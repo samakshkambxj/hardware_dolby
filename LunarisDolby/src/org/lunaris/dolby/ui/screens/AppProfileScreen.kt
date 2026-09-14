@@ -10,6 +10,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -31,8 +32,9 @@ import androidx.navigation.NavController
 import org.lunaris.dolby.R
 import org.lunaris.dolby.data.AppInfo
 import org.lunaris.dolby.domain.models.AppProfileUiState
-import org.lunaris.dolby.ui.components.BouncyPopIn
+import org.lunaris.dolby.ui.components.BouncyListItem
 import org.lunaris.dolby.ui.components.ModernConfirmDialog
+import org.lunaris.dolby.ui.components.verticalBouncyEdge
 import org.lunaris.dolby.ui.viewmodel.AppProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -202,12 +204,15 @@ fun AppProfileScreen(
                         }
                     } else {
                         LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
+                            state = rememberLazyListState(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalBouncyEdge(),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            itemsIndexed(filteredApps, key = { _, app -> app.packageName }) { index, app ->
-                                BouncyPopIn(delayMillis = (index * 25).coerceAtMost(200)) {
+                            itemsIndexed(filteredApps, key = { _, app -> app.packageName }) { _, app ->
+                                BouncyListItem {
                                     AppProfileItem(
                                         app = app,
                                         onProfileSelected = { profile ->

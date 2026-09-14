@@ -43,22 +43,21 @@ fun SleepTimerCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalBouncyEdge()
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                SLEEP_MINUTES.forEachIndexed { index, minutes ->
-                    BouncyPopIn(delayMillis = (index * 30).coerceAtMost(150)) {
-                        FilterChip(
-                            selected = if (minutes == 0) !state.active else state.active && activeMinutes == minutes,
-                            onClick = { if (minutes == 0) onCancel() else onStart(minutes) },
-                            label = {
-                                Text(
-                                    if (minutes == 0) stringResource(R.string.sleep_timer_off)
-                                    else stringResource(R.string.sleep_timer_minutes, minutes)
-                                )
-                            }
-                        )
-                    }
+                SLEEP_MINUTES.forEach { minutes ->
+                    FilterChip(
+                        selected = if (minutes == 0) !state.active else state.active && activeMinutes == minutes,
+                        onClick = { if (minutes == 0) onCancel() else onStart(minutes) },
+                        label = {
+                            Text(
+                                if (minutes == 0) stringResource(R.string.sleep_timer_off)
+                                else stringResource(R.string.sleep_timer_minutes, minutes)
+                            )
+                        }
+                    )
                 }
             }
             if (state.active) {
