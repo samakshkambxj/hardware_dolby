@@ -99,6 +99,28 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".tile.SceneCycleTileService"
+            android:icon="@drawable/ic_dolby_qs"
+            android:label="@string/tile_scene_title"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".tile.LevelerTileService"
+            android:icon="@drawable/ic_dolby_qs"
+            android:label="@string/tile_leveler_title"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
         <provider
             android:name=".provider.SummaryProvider"
             android:authorities="org.lunaris.dolby.summary">
