@@ -16,8 +16,12 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 
@@ -80,12 +84,12 @@ fun BouncyPopIn(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    var shown by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(delayMillis <= 0) }
-    androidx.compose.runtime.LaunchedEffect(visible, delayMillis) {
+    var shown by remember { mutableStateOf(delayMillis <= 0) }
+    LaunchedEffect(visible, delayMillis) {
         if (!visible) {
             shown = false
         } else if (delayMillis > 0) {
-            kotlinx.coroutines.delay(delayMillis.toLong())
+            delay(delayMillis.toLong())
             shown = true
         } else {
             shown = true

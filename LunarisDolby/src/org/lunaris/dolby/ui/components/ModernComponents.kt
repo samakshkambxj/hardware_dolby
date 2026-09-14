@@ -68,8 +68,7 @@ fun Modifier.squishable(
                         val event = awaitPointerEvent()
                         when (event.type) {
                             PointerEventType.Press -> isPressed = true
-                            PointerEventType.Release,
-                            PointerEventType.Cancel -> isPressed = false
+                            PointerEventType.Release -> isPressed = false
                         }
                     }
                 }
