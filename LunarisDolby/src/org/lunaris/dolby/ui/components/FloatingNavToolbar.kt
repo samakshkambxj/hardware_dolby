@@ -7,6 +7,7 @@ package org.lunaris.dolby.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -41,8 +42,12 @@ fun FloatingNavToolbar(
     val isVolumeSelected = currentRoute == "volume"
     val isEqualizerSelected = currentRoute == "equalizer"
     val isAdvancedSelected = currentRoute == "advanced"
-    
-    val containerColor = MaterialTheme.colorScheme.primaryContainer
+
+    // Liquid-glass look: frosted translucent container with a specular edge.
+    // True backdrop blur isn't available to Compose content, so the frosted
+    // effect comes from translucency + highlight border + soft shadow.
+    val glassContainer = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+    val glassEdge = Color.White.copy(alpha = 0.35f)
     val onContainerColor = MaterialTheme.colorScheme.onPrimaryContainer
     val primaryColor = MaterialTheme.colorScheme.primary
     val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
@@ -54,7 +59,7 @@ fun FloatingNavToolbar(
         HorizontalFloatingToolbar(
             expanded = true,
             colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(
-                toolbarContainerColor = containerColor,
+                toolbarContainerColor = glassContainer,
                 toolbarContentColor = onContainerColor
             ),
             modifier = Modifier
@@ -63,10 +68,15 @@ fun FloatingNavToolbar(
                     bottom = FloatingToolbarDefaults.ScreenOffset
                 )
                 .shadow(
-                    elevation = 16.dp,
+                    elevation = 24.dp,
                     shape = MaterialTheme.shapes.extraLarge,
-                    ambientColor = Color.Black.copy(alpha = 0.4f),
-                    spotColor = Color.Black.copy(alpha = 0.5f)
+                    ambientColor = Color.Black.copy(alpha = 0.25f),
+                    spotColor = Color.Black.copy(alpha = 0.35f)
+                )
+                .border(
+                    width = 1.dp,
+                    color = glassEdge,
+                    shape = MaterialTheme.shapes.extraLarge
                 )
         ) {
             NavToolbarItem(
@@ -75,7 +85,7 @@ fun FloatingNavToolbar(
                 selected = isHomeSelected,
                 primaryColor = primaryColor,
                 onPrimaryColor = onPrimaryColor,
-                containerColor = containerColor,
+                containerColor = glassContainer,
                 onContainerColor = onContainerColor,
                 onClick = {
                     scope.launch {
@@ -84,7 +94,7 @@ fun FloatingNavToolbar(
                     onNavigate("settings")
                 }
             )
-            
+
             NavToolbarItem(
                 icon = Icons.Default.GraphicEq,
                 label = stringResource(R.string.equalizer),
@@ -92,7 +102,7 @@ fun FloatingNavToolbar(
                 isEqualizer = true,
                 primaryColor = primaryColor,
                 onPrimaryColor = onPrimaryColor,
-                containerColor = containerColor,
+                containerColor = glassContainer,
                 onContainerColor = onContainerColor,
                 onClick = {
                     scope.launch {
@@ -101,14 +111,14 @@ fun FloatingNavToolbar(
                     onNavigate("equalizer")
                 }
             )
-            
+
             NavToolbarItem(
                 icon = Icons.Default.Settings,
                 label = stringResource(R.string.advanced),
                 selected = isAdvancedSelected,
                 primaryColor = primaryColor,
                 onPrimaryColor = onPrimaryColor,
-                containerColor = containerColor,
+                containerColor = glassContainer,
                 onContainerColor = onContainerColor,
                 onClick = {
                     scope.launch {
@@ -124,7 +134,7 @@ fun FloatingNavToolbar(
                 selected = isVolumeSelected,
                 primaryColor = primaryColor,
                 onPrimaryColor = onPrimaryColor,
-                containerColor = containerColor,
+                containerColor = glassContainer,
                 onContainerColor = onContainerColor,
                 onClick = {
                     scope.launch {
