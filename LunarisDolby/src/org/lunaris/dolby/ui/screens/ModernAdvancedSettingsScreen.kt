@@ -358,6 +358,10 @@ private fun ModernAdvancedSettingsContent(
         }
 
         item {
+            AutomationCard()
+        }
+
+        item {
             Spacer(modifier = Modifier.height(70.dp))
         }
     }
