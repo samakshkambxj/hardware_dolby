@@ -38,6 +38,7 @@ fun FloatingNavToolbar(
     val scope = rememberCoroutineScope()
     
     val isHomeSelected = currentRoute == "settings"
+    val isVolumeSelected = currentRoute == "volume"
     val isEqualizerSelected = currentRoute == "equalizer"
     val isAdvancedSelected = currentRoute == "advanced"
     
@@ -62,10 +63,10 @@ fun FloatingNavToolbar(
                     bottom = FloatingToolbarDefaults.ScreenOffset
                 )
                 .shadow(
-                    elevation = 12.dp,
+                    elevation = 16.dp,
                     shape = MaterialTheme.shapes.extraLarge,
-                    ambientColor = MaterialTheme.colorScheme.scrim,
-                    spotColor = MaterialTheme.colorScheme.scrim
+                    ambientColor = Color.Black.copy(alpha = 0.4f),
+                    spotColor = Color.Black.copy(alpha = 0.5f)
                 )
         ) {
             NavToolbarItem(
@@ -116,6 +117,24 @@ fun FloatingNavToolbar(
                     onNavigate("advanced")
                 }
             )
+
+            NavToolbarItem(
+                icon = Icons.Default.VolumeUp,
+                label = stringResource(R.string.volume),
+                selected = isVolumeSelected,
+                primaryColor = primaryColor,
+                onPrimaryColor = onPrimaryColor,
+                containerColor = containerColor,
+                onContainerColor = onContainerColor,
+                onClick = {
+                    scope.launch {
+                        haptic.performHaptic(
+                            HapticFeedbackHelper.HapticIntensity.CLICK
+                        )
+                    }
+                    onNavigate("volume")
+                }
+            )
         }
     }
 }
@@ -150,7 +169,7 @@ private fun NavToolbarItem(
             androidx.compose.foundation.shape.CircleShape,
             androidx.compose.foundation.shape.CircleShape
         ),
-        modifier = modifier.height(48.dp)
+        modifier = modifier.height(56.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
