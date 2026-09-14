@@ -193,6 +193,30 @@ class DeviceStateManager(private val context: Context) {
             ?: emptyList()
     }
 
+    // ---- Per-device scenes: deviceKey -> sceneId ----
+
+    fun saveDeviceScene(deviceKey: String, sceneId: String) {
+        deviceScenePrefs.edit().putString(deviceKey, sceneId).apply()
+        DolbyConstants.dlog(TAG, "Scene $sceneId assigned to device=$deviceKey")
+    }
+
+    fun getDeviceScene(deviceKey: String): String? =
+        deviceScenePrefs.getString(deviceKey, null)
+
+    fun clearDeviceScene(deviceKey: String) {
+        deviceScenePrefs.edit().remove(deviceKey).apply()
+        DolbyConstants.dlog(TAG, "Scene cleared for device=$deviceKey")
+    }
+
+    fun getDeviceSceneMap(): Map<String, String> =
+        deviceScenePrefs.all.mapNotNull { (key, value) ->
+            val id = value as? String
+            if (id.isNullOrEmpty()) null else key to id
+        }.toMap()
+
+    private val deviceScenePrefs: SharedPreferences
+        get() = context.getSharedPreferences(PREF_FILE_DEVICE_SCENES, Context.MODE_PRIVATE)
+
     private fun getDevicePrefs(deviceKey: String): SharedPreferences =
         context.getSharedPreferences("device_state_$deviceKey", Context.MODE_PRIVATE)
 
@@ -200,6 +224,7 @@ class DeviceStateManager(private val context: Context) {
         private const val TAG = "DeviceStateManager"
 
         const val SNAPSHOT_VERSION = 1
+        const val PREF_FILE_DEVICE_SCENES = "dolby_device_scenes"
 
         private const val KEY_VERSION = "snapshot_version"
         private const val KEY_DOLBY_ENABLED = "enabled"

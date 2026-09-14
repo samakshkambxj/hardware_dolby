@@ -20,6 +20,7 @@ import android.util.Log
 import org.lunaris.dolby.DolbyConstants
 import org.lunaris.dolby.data.DeviceStateManager
 import org.lunaris.dolby.data.DolbyRepository
+import org.lunaris.dolby.data.SceneRepository
 
 class DolbyEffectService : Service() {
 
@@ -110,6 +111,8 @@ class DolbyEffectService : Service() {
                 Log.d(TAG, "Device state memory disabled, applying saved state")
                 repository.applySavedState()
             }
+            // Per-device scene wins over snapshots/saved state when assigned.
+            applyDeviceScene(newKey)
             previousActiveDevice = newDevice
         } else {
             repository.updateSpeakerState()
@@ -150,6 +153,22 @@ class DolbyEffectService : Service() {
 
     private fun AudioDeviceInfo.debugString(): String =
         "name=$productName,type=$type,id=$id,address=$address,isSink=$isSink"
+
+    private fun applyDeviceScene(deviceKey: String) {
+        try {
+            val sceneId = deviceStateManager.getDeviceScene(deviceKey) ?: return
+            val scene = SceneRepository(this).getScene(sceneId)
+            if (scene == null) {
+                Log.d(TAG, "Stale device scene $sceneId for $deviceKey, clearing")
+                deviceStateManager.clearDeviceScene(deviceKey)
+                return
+            }
+            Log.d(TAG, "Applying device scene ${scene.name} for $deviceKey")
+            SceneRepository(this).applyScene(scene, repository)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to apply device scene for $deviceKey", e)
+        }
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         repository.applySavedState()

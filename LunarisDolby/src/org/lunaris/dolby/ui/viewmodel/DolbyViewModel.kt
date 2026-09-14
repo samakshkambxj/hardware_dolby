@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import org.lunaris.dolby.DolbyConstants
 import org.lunaris.dolby.R
 import org.lunaris.dolby.data.DolbyRepository
+import org.lunaris.dolby.data.DeviceStateManager
 import org.lunaris.dolby.data.SceneRepository
 import org.lunaris.dolby.data.SleepTimerManager
 import org.lunaris.dolby.data.SleepTimerState
@@ -28,6 +29,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = DolbyRepository(application)
     private val sceneRepository = SceneRepository(application)
+    private val deviceStateManager = DeviceStateManager(application)
     private val sleepTimer = SleepTimerManager(application)
 
     private val _uiState = MutableStateFlow<DolbyUiState>(DolbyUiState.Loading)
@@ -36,6 +38,9 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _scenes = MutableStateFlow<List<Scene>>(emptyList())
     val scenes: StateFlow<List<Scene>> = _scenes.asStateFlow()
+
+    private val _deviceScenes = MutableStateFlow<Map<String, String>>(emptyMap())
+    val deviceScenes: StateFlow<Map<String, String>> = _deviceScenes.asStateFlow()
 
     private val _sleepState = MutableStateFlow(SleepTimerState())
     val sleepState: StateFlow<SleepTimerState> = _sleepState.asStateFlow()
@@ -55,6 +60,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         DolbyConstants.dlog(TAG, "ViewModel initialized")
         loadSettings()
         refreshScenes()
+        refreshDeviceScenes()
         refreshSleepState()
         refreshBalance()
         observeAudioOutputState()
@@ -380,6 +386,48 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
                 refreshScenes()
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error resetting scenes: ${e.message}")
+            }
+        }
+    }
+
+    fun refreshDeviceScenes() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _deviceScenes.value = deviceStateManager.getDeviceSceneMap()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error loading device scenes: ${e.message}")
+            }
+        }
+    }
+
+    fun currentDeviceKey(): String? {
+        return try {
+            repository.currentDeviceKey()
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error getting device key: ${e.message}")
+            null
+        }
+    }
+
+    fun assignDeviceScene(sceneId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val key = repository.currentDeviceKey() ?: return@launch
+                deviceStateManager.saveDeviceScene(key, sceneId)
+                refreshDeviceScenes()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error assigning device scene: ${e.message}")
+            }
+        }
+    }
+
+    fun clearDeviceScene(deviceKey: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                deviceStateManager.clearDeviceScene(deviceKey)
+                refreshDeviceScenes()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error clearing device scene: ${e.message}")
             }
         }
     }
