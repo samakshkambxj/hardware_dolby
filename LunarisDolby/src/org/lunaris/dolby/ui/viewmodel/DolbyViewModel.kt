@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import org.lunaris.dolby.DolbyConstants
 import org.lunaris.dolby.data.DolbyRepository
+import org.lunaris.dolby.data.SceneRepository
 import org.lunaris.dolby.domain.models.*
 import org.lunaris.dolby.service.DolbyEffectService
 import kotlinx.coroutines.Dispatchers
@@ -21,10 +22,14 @@ import kotlinx.coroutines.cancelChildren
 class DolbyViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = DolbyRepository(application)
+    private val sceneRepository = SceneRepository(application)
 
     private val _uiState = MutableStateFlow<DolbyUiState>(DolbyUiState.Loading)
     val uiState: StateFlow<DolbyUiState> = _uiState.asStateFlow()
     val currentProfile: StateFlow<Int> = repository.currentProfile
+
+    private val _scenes = MutableStateFlow<List<Scene>>(emptyList())
+    val scenes: StateFlow<List<Scene>> = _scenes.asStateFlow()
     
     private var audioOutputStateJob: Job? = null
     private var profileChangeJob: Job? = null
@@ -33,6 +38,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     init {
         DolbyConstants.dlog(TAG, "ViewModel initialized")
         loadSettings()
+        refreshScenes()
         observeAudioOutputState()
         observeProfileChanges()
     }
@@ -302,6 +308,49 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
                 loadSettings()
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error resetting profiles: ${e.message}")
+            }
+        }
+    }
+
+    fun refreshScenes() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _scenes.value = sceneRepository.getScenes()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error loading scenes: ${e.message}")
+            }
+        }
+    }
+
+    fun applyScene(scene: Scene) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                sceneRepository.applyScene(scene, repository)
+                loadSettings()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error applying scene: ${e.message}")
+            }
+        }
+    }
+
+    fun saveScene(name: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                sceneRepository.saveCurrentAsScene(name, repository)
+                refreshScenes()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error saving scene: ${e.message}")
+            }
+        }
+    }
+
+    fun deleteScene(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                sceneRepository.deleteScene(id)
+                refreshScenes()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error deleting scene: ${e.message}")
             }
         }
     }

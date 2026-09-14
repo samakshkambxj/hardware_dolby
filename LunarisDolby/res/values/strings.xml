@@ -220,4 +220,18 @@
     <string name="audio_output_usb">USB audio</string>
     <string name="audio_output_unknown">Audio device</string>
     <string name="volume">Volume</string>
+
+    <!-- Scenes -->
+    <string name="scenes">Scenes</string>
+    <string name="scene_save_current">Save current</string>
+    <string name="scene_save_title">Save scene</string>
+    <string name="scene_name_hint">Scene name</string>
+    <string name="scene_delete_title">Delete scene?</string>
+    <string name="scene_delete_message">Delete "%1$s"?</string>
+    <string name="scene_applied">Scene applied</string>
+    <string name="scene_builtin_movie">Movie Night</string>
+    <string name="scene_builtin_bass">Bass Boost</string>
+    <string name="scene_builtin_podcast">Podcast</string>
+    <string name="scene_builtin_gaming">Gaming</string>
+    <string name="save">Save</string>
 </resources>
