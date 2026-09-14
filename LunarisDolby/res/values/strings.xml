@@ -241,4 +241,10 @@
     <string name="sleep_timer_minutes">%1$d min</string>
     <string name="sleep_timer_remaining">Turns off in %1$d min</string>
     <string name="sleep_timer_ended">Sleep timer ended — Dolby off</string>
+
+    <!-- Channel balance -->
+    <string name="balance">Channel balance</string>
+    <string name="balance_summary">Adjust left/right output balance</string>
+    <string name="balance_center">Center</string>
+    <string name="balance_unsupported">Balance control not supported on this device</string>
 </resources>
