@@ -263,4 +263,18 @@
     <string name="automation_hint_enabled">Boolean extra "enabled"</string>
     <string name="automation_hint_profile">Int extra "profile" (0–6)</string>
     <string name="automation_hint_scene">String extra "scene_id"</string>
+
+    <!-- Quick Settings tiles -->
+    <string name="tile_scene_title">Dolby Scene</string>
+    <string name="tile_leveler_title">Volume Leveler</string>
+
+    <!-- Per-device scenes -->
+    <string name="device_scene_title">Per-device scenes</string>
+    <string name="device_scene_summary">Auto-apply a scene when an audio device connects</string>
+    <string name="device_scene_current_device">Current device: %1$s</string>
+    <string name="device_scene_choose">Choose scene</string>
+    <string name="device_scene_none">No scene</string>
+    <string name="device_scene_assign">Assign to this device</string>
+    <string name="device_scene_clear">Clear</string>
+    <string name="device_scene_assigned">%1$s → %2$s</string>
 </resources>
