@@ -373,6 +373,17 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun resetScenes() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                sceneRepository.deleteAllCustomScenes()
+                refreshScenes()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error resetting scenes: ${e.message}")
+            }
+        }
+    }
+
     fun startSleepTimer(minutes: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             try {

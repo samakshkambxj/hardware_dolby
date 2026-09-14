@@ -233,6 +233,13 @@
     <string name="scene_builtin_bass">Bass Boost</string>
     <string name="scene_builtin_podcast">Podcast</string>
     <string name="scene_builtin_gaming">Gaming</string>
+    <string name="scene_builtin_music">Music Session</string>
+    <string name="scene_builtin_night">Late Night</string>
+    <string name="scene_builtin_vocal">Voice Clarity</string>
+    <string name="scene_builtin_outdoor">Outdoor Speaker</string>
+    <string name="scene_reset">Reset scenes</string>
+    <string name="scene_reset_title">Reset scenes?</string>
+    <string name="scene_reset_message">Delete all custom scenes? Built-in scenes will be kept.</string>
     <string name="save">Save</string>
 
     <!-- Sleep timer -->

@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,6 +30,8 @@ fun SceneSection(
     onApply: (Scene) -> Unit,
     onSaveClick: () -> Unit,
     onDeleteClick: (Scene) -> Unit,
+    onResetClick: () -> Unit,
+    hasCustomScenes: Boolean,
     modifier: Modifier = Modifier
 ) {
     ModernSettingsCard(
@@ -57,6 +60,21 @@ fun SceneSection(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.scene_save_current))
+            }
+            if (hasCustomScenes) {
+                TextButton(
+                    onClick = onResetClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.RestartAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.scene_reset))
+                }
             }
         }
     }

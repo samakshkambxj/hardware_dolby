@@ -42,6 +42,7 @@ fun ModernDolbySettingsScreen(
     var showResetDialog by remember { mutableStateOf(false) }
     var showCreditsDialog by remember { mutableStateOf(false) }
     var showSaveSceneDialog by remember { mutableStateOf(false) }
+    var showResetScenesDialog by remember { mutableStateOf(false) }
     var sceneName by remember { mutableStateOf("") }
     var sceneToDelete by remember { mutableStateOf<Scene?>(null) }
     val context = LocalContext.current
@@ -127,6 +128,7 @@ fun ModernDolbySettingsScreen(
                         showSaveSceneDialog = true
                     },
                     onDeleteSceneClick = { sceneToDelete = it },
+                    onResetScenesClick = { showResetScenesDialog = true },
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -202,6 +204,19 @@ fun ModernDolbySettingsScreen(
             onDismiss = { sceneToDelete = null }
         )
     }
+
+    if (showResetScenesDialog) {
+        ModernConfirmDialog(
+            title = stringResource(R.string.scene_reset_title),
+            message = stringResource(R.string.scene_reset_message),
+            icon = Icons.Default.RestartAlt,
+            onConfirm = {
+                viewModel.resetScenes()
+                showResetScenesDialog = false
+            },
+            onDismiss = { showResetScenesDialog = false }
+        )
+    }
 }
 
 @Composable
@@ -214,6 +229,7 @@ private fun ModernDolbySettingsContent(
     onApplyScene: (Scene) -> Unit,
     onSaveSceneClick: () -> Unit,
     onDeleteSceneClick: (Scene) -> Unit,
+    onResetScenesClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -277,7 +293,9 @@ private fun ModernDolbySettingsContent(
                     scenes = scenes,
                     onApply = onApplyScene,
                     onSaveClick = onSaveSceneClick,
-                    onDeleteClick = onDeleteSceneClick
+                    onDeleteClick = onDeleteSceneClick,
+                    onResetClick = onResetScenesClick,
+                    hasCustomScenes = scenes.any { !it.isBuiltIn }
                 )
             }
         }
