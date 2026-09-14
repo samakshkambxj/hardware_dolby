@@ -219,4 +219,5 @@
     <string name="audio_output_bluetooth">Bluetooth</string>
     <string name="audio_output_usb">USB audio</string>
     <string name="audio_output_unknown">Audio device</string>
+    <string name="volume">Volume</string>
 </resources>

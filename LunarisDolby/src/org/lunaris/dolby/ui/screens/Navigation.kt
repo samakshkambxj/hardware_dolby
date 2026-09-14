@@ -52,7 +52,7 @@ fun MainPagerScreen(
 ) {
     val pagerState = rememberPagerState(
         initialPage = 0,
-        pageCount = { 3 }
+        pageCount = { 4 }
     )
     val coroutineScope = rememberCoroutineScope()
 
@@ -60,7 +60,8 @@ fun MainPagerScreen(
         0 -> "settings"
         1 -> "equalizer"
         2 -> "advanced"
-        else -> "settings"
+        3 -> "volume"
+    else -> "settings"
     }
 
     LaunchedEffect(pagerState.settledPage) {
@@ -87,6 +88,7 @@ fun MainPagerScreen(
                     viewModel = dolbyViewModel,
                     navController = navController
                 )
+                3 -> VolumeControlScreen()
             }
         }
 
@@ -120,6 +122,7 @@ fun MainPagerScreen(
                             "settings" -> pagerState.animateScrollToPage(0)
                             "equalizer" -> pagerState.animateScrollToPage(1)
                             "advanced" -> pagerState.animateScrollToPage(2)
+                            "volume" -> pagerState.animateScrollToPage(3)
                         }
                     }
                 }
