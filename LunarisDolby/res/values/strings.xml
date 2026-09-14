@@ -247,4 +247,13 @@
     <string name="balance_summary">Adjust left/right output balance</string>
     <string name="balance_center">Center</string>
     <string name="balance_unsupported">Balance control not supported on this device</string>
+
+    <!-- Automation -->
+    <string name="automation">Automation</string>
+    <string name="automation_summary">Control Dolby from Tasker, MacroDroid or scripts via broadcast</string>
+    <string name="automation_copied">Copied to clipboard</string>
+    <string name="automation_hint_toggle">No extras — flips the master switch</string>
+    <string name="automation_hint_enabled">Boolean extra "enabled"</string>
+    <string name="automation_hint_profile">Int extra "profile" (0–6)</string>
+    <string name="automation_hint_scene">String extra "scene_id"</string>
 </resources>

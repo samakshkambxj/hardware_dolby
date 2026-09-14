@@ -44,6 +44,17 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".service.DolbyCommandReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="org.lunaris.dolby.action.TOGGLE" />
+                <action android:name="org.lunaris.dolby.action.SET_ENABLED" />
+                <action android:name="org.lunaris.dolby.action.SET_PROFILE" />
+                <action android:name="org.lunaris.dolby.action.APPLY_SCENE" />
+            </intent-filter>
+        </receiver>
+
         <activity
             android:name=".ui.DolbyActivity"
             android:label="@string/dolby_title"
