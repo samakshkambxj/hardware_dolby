@@ -144,6 +144,16 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
         return devices.firstOrNull()
     }
 
+    /** Stable key for the current output device, matching DeviceStateManager keys. */
+    fun currentDeviceKey(): String? {
+        return try {
+            getCurrentOutputDevice()?.let { deviceStateManager.deviceKey(it) }
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error getting device key: ${e.message}")
+            null
+        }
+    }
+
     private fun resolveActiveAudioDevice(): ActiveAudioDevice {
         val device = getCurrentOutputDevice() ?: return ActiveAudioDevice.Unknown
         return ActiveAudioDevice(

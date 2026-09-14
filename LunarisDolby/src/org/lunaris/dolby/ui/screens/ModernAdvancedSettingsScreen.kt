@@ -37,6 +37,8 @@ fun ModernAdvancedSettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val balance by viewModel.channelBalance.collectAsState()
     val balanceError by viewModel.balanceError.collectAsState()
+    val scenes by viewModel.scenes.collectAsState()
+    val deviceScenes by viewModel.deviceScenes.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(balanceError) {
@@ -83,6 +85,8 @@ fun ModernAdvancedSettingsScreen(
                     navController = navController,
                     balance = balance,
                     onBalanceChange = { viewModel.setChannelBalance(it) },
+                    scenes = scenes,
+                    deviceScenes = deviceScenes,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -123,6 +127,8 @@ private fun ModernAdvancedSettingsContent(
     navController: NavController,
     balance: Float,
     onBalanceChange: (Float) -> Unit,
+    scenes: List<org.lunaris.dolby.domain.models.Scene>,
+    deviceScenes: Map<String, String>,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -359,6 +365,20 @@ private fun ModernAdvancedSettingsContent(
 
         item {
             AutomationCard()
+        }
+
+        item {
+            val deviceKey = remember(state.activeAudioDevice) {
+                viewModel.currentDeviceKey()
+            }
+            DeviceSceneCard(
+                currentDeviceName = state.activeAudioDevice.name,
+                currentDeviceKey = deviceKey,
+                scenes = scenes,
+                deviceScenes = deviceScenes,
+                onAssign = { viewModel.assignDeviceScene(it) },
+                onClear = { viewModel.clearDeviceScene(it) }
+            )
         }
 
         item {
