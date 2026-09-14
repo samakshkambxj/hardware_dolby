@@ -10,6 +10,7 @@ import android.content.SharedPreferences
 import android.media.AudioAttributes
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.provider.Settings
 import org.lunaris.dolby.DolbyConstants
 import org.lunaris.dolby.DolbyConstants.DsParam
 import org.lunaris.dolby.R
@@ -873,6 +874,60 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
         return prefs.getInt(DolbyConstants.PREF_MID_LEVEL, 0)
     }
 
+    /**
+     * System-wide left/right balance in [-1f, 1f] (0 = center). Reads the
+     * platform "master_balance" setting honored by the audio flinger.
+     */
+    fun getChannelBalance(): Float {
+        return try {
+            Settings.System.getFloat(
+                context.contentResolver, MASTER_BALANCE_KEY, 0f
+            ).coerceIn(-1f, 1f)
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error reading channel balance: ${e.message}")
+            0f
+        }
+    }
+
+    /**
+     * Applies the balance immediately through AudioManager when the (hidden)
+     * setMasterBalance API is present, and always persists it to the
+     * "master_balance" system setting so it survives. Returns false when
+     * neither path is permitted on this device.
+     */
+    fun setChannelBalance(balance: Float): Boolean {
+        if (isReleased) return false
+        val value = balance.coerceIn(-1f, 1f)
+        try {
+            val method = AudioManager::class.java.getMethod(
+                "setMasterBalance", Float::class.javaPrimitiveType
+            )
+            method.invoke(audioManager, value)
+            persistBalanceSetting(value)
+            return true
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "setMasterBalance API unavailable: ${e.message}")
+        }
+        return try {
+            if (Settings.System.putFloat(context.contentResolver, MASTER_BALANCE_KEY, value)) {
+                persistBalanceSetting(value)
+                true
+            } else {
+                false
+            }
+        } catch (e: SecurityException) {
+            DolbyConstants.dlog(TAG, "WRITE_SETTINGS denied for balance: ${e.message}")
+            false
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error setting channel balance: ${e.message}")
+            false
+        }
+    }
+
+    private fun persistBalanceSetting(value: Float) {
+        defaultPrefs.edit().putFloat(DolbyConstants.PREF_BALANCE, value).apply()
+    }
+
     fun setMidLevel(profile: Int, level: Int) {
         if (isReleased) return
         
@@ -948,6 +1003,9 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
     companion object {
         private const val TAG = "DolbyRepository"
         private const val EFFECT_PRIORITY = 100
+        // Platform "master_balance" setting (use the literal: the SDK constant
+        // is not guaranteed present on every target).
+        private const val MASTER_BALANCE_KEY = "master_balance"
 
         private val OUTPUT_DEVICE_PRIORITY = listOf(
             AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,

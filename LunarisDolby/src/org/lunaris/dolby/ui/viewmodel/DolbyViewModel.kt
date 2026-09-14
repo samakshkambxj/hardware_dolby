@@ -9,6 +9,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import org.lunaris.dolby.DolbyConstants
+import org.lunaris.dolby.R
 import org.lunaris.dolby.data.DolbyRepository
 import org.lunaris.dolby.data.SceneRepository
 import org.lunaris.dolby.data.SleepTimerManager
@@ -39,6 +40,12 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     private val _sleepState = MutableStateFlow(SleepTimerState())
     val sleepState: StateFlow<SleepTimerState> = _sleepState.asStateFlow()
     private var sleepTicker: Job? = null
+
+    private val _channelBalance = MutableStateFlow(0f)
+    val channelBalance: StateFlow<Float> = _channelBalance.asStateFlow()
+
+    private val _balanceError = MutableStateFlow<String?>(null)
+    val balanceError: StateFlow<String?> = _balanceError.asStateFlow()
     
     private var audioOutputStateJob: Job? = null
     private var profileChangeJob: Job? = null
@@ -49,6 +56,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         loadSettings()
         refreshScenes()
         refreshSleepState()
+        refreshBalance()
         observeAudioOutputState()
         observeProfileChanges()
     }
@@ -415,6 +423,38 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
                 _sleepState.value = SleepTimerState(active = true, remainingMs = remaining)
             }
         }
+    }
+
+    fun refreshBalance() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _channelBalance.value = repository.getChannelBalance()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error loading balance: ${e.message}")
+            }
+        }
+    }
+
+    fun setChannelBalance(balance: Float) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val ok = repository.setChannelBalance(balance)
+                if (ok) {
+                    _channelBalance.value = balance.coerceIn(-1f, 1f)
+                } else {
+                    _balanceError.value =
+                        getApplication<Application>().getString(R.string.balance_unsupported)
+                }
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error setting balance: ${e.message}")
+                _balanceError.value =
+                    getApplication<Application>().getString(R.string.balance_unsupported)
+            }
+        }
+    }
+
+    fun clearBalanceError() {
+        _balanceError.value = null
     }
 
     fun updateSpeakerState() {
