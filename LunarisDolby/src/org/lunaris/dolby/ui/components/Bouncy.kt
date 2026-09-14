@@ -89,8 +89,36 @@ object BouncySpecs {
     /** Edge-stretch bounce for scroll containers only. */
     val overscroll = spring<Float>(
         dampingRatio = Spring.DampingRatioMediumBouncy,
-        stiffness = Spring.StiffnessMediumLow
+        stiffness = Spring.StiffnessMedium
     )
+}
+
+/**
+ * Play-once gate for entrance animations.
+ *
+ * Lazy items are recycled: scrolling away and back (or navigating away and
+ * back) recomposes them, and without this every [BouncyPopIn]/[BouncyListItem]
+ * would replay its delay + enter animation — cards visibly lagging behind
+ * the scroll, or a full staggered cascade on every page visit.
+ * Pass a stable `key` (matching the Lazy `item(key = ...)` key) and the
+ * entrance plays only the first time that key is composed; afterwards the
+ * content is emitted directly with no animation.
+ */
+private val bouncySeenKeys = mutableSetOf<Any>()
+
+private fun markBouncySeen(key: Any): Boolean = synchronized(bouncySeenKeys) {
+    if (bouncySeenKeys.contains(key)) {
+        false
+    } else {
+        bouncySeenKeys.add(key)
+        true
+    }
+}
+
+@Composable
+private fun rememberBouncyFirstSeen(key: Any?): Boolean {
+    // Single remember call (hook order stays stable); null key = always animate.
+    return remember(key) { key == null || markBouncySeen(key) }
 }
 
 /**
@@ -159,8 +187,16 @@ fun BouncyPopIn(
     visible: Boolean = true,
     delayMillis: Int = 0,
     modifier: Modifier = Modifier,
+    key: Any? = null,
     content: @Composable () -> Unit
 ) {
+    // Play-once: recycled / revisited items render instantly instead of
+    // replaying the delay + enter while scrolling or paging.
+    val firstSeen = rememberBouncyFirstSeen(key)
+    if (key != null && !firstSeen && visible) {
+        content()
+        return
+    }
     var shown by remember { mutableStateOf(delayMillis <= 0) }
     LaunchedEffect(visible, delayMillis) {
         if (!visible) {
@@ -211,8 +247,14 @@ fun rememberBouncySelectedScale(selected: Boolean): Float {
 @Composable
 fun LazyItemScope.BouncyListItem(
     modifier: Modifier = Modifier,
+    key: Any? = null,
     content: @Composable () -> Unit
 ) {
+    val firstSeen = rememberBouncyFirstSeen(key)
+    if (key != null && !firstSeen) {
+        content()
+        return
+    }
     AnimatedVisibility(
         visible = true,
         modifier = modifier,
@@ -232,29 +274,56 @@ fun LazyItemScope.BouncyListItem(
  *   Modifier.verticalBouncyEdge().verticalScroll(state)
  *   LazyColumn(Modifier.verticalBouncyEdge(), state = ...)
  *
- * Unconsumed scroll delta at the list ends stretches content (~35% of the
- * finger travel, capped), then springs back with [BouncySpecs.overscroll].
+ * Unconsumed scroll delta at the list ends stretches content (a fraction of
+ * the finger travel, capped), then springs back with [BouncySpecs.overscroll].
  * Normal scrolling is untouched (we return Zero until the edge), so fling
  * smoothness is preserved.
+ *
+ * Implementation note: the stretch target is accumulated synchronously in a
+ * plain var and only the Animatable write is posted async, guarded by a
+ * generation counter. (Computing the next value from `offset.value` and
+ * posting `snapTo` used to read a stale value under rapid scroll events, so
+ * deltas collapsed and the stretch visibly lagged behind the finger.)
  */
 fun Modifier.verticalBouncyEdge(
     enabled: Boolean = true,
-    maxStretchPx: Float = 220f
+    maxStretchPx: Float = 180f,
+    stretchFactor: Float = 0.45f
 ): Modifier = composed {
     if (!enabled) return@composed this
     val offset = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
-    val connection = remember(maxStretchPx) {
+    val connection = remember(maxStretchPx, stretchFactor) {
         object : NestedScrollConnection {
+            var target = 0f
+            var generation = 0
+
+            private fun stretchBy(delta: Float) {
+                generation += 1
+                val snapshot = generation
+                target = (target + delta * stretchFactor)
+                    .coerceIn(-maxStretchPx, maxStretchPx)
+                val settled = target
+                scope.launch {
+                    // A newer gesture event wins; stale snaps never clobber it.
+                    if (snapshot == generation) offset.snapTo(settled)
+                }
+            }
+
+            fun settle() {
+                if (target == 0f && offset.value == 0f) return
+                generation += 1
+                target = 0f
+                scope.launch { offset.animateTo(0f, BouncySpecs.overscroll) }
+            }
+
             override fun onPostScroll(
                 consumed: Offset,
                 available: Offset,
                 source: NestedScrollSource
             ): Offset {
                 if (available.y != 0f) {
-                    val next = (offset.value + available.y * 0.35f)
-                        .coerceIn(-maxStretchPx, maxStretchPx)
-                    scope.launch { offset.snapTo(next) }
+                    stretchBy(available.y)
                     // Consume the edge delta so it becomes stretch, not fling.
                     return Offset(0f, available.y)
                 }
@@ -267,14 +336,12 @@ fun Modifier.verticalBouncyEdge(
             ): Offset {
                 // While stretched, eat drag that pulls back toward rest so the
                 // content follows the finger home instead of scrolling underneath.
-                if (offset.value != 0f && source == NestedScrollSource.Drag) {
+                if (target != 0f && source == NestedScrollSource.Drag) {
                     val pullingHome =
-                        (offset.value > 0f && available.y < 0f) ||
-                            (offset.value < 0f && available.y > 0f)
+                        (target > 0f && available.y < 0f) ||
+                            (target < 0f && available.y > 0f)
                     if (pullingHome) {
-                        val next = (offset.value + available.y * 0.5f)
-                            .coerceIn(-maxStretchPx, maxStretchPx)
-                        scope.launch { offset.snapTo(next) }
+                        stretchBy(available.y)
                         return Offset(0f, available.y)
                     }
                 }
@@ -285,8 +352,8 @@ fun Modifier.verticalBouncyEdge(
                 consumed: Velocity,
                 available: Velocity
             ): Velocity {
-                if (offset.value != 0f) {
-                    scope.launch { offset.animateTo(0f, BouncySpecs.overscroll) }
+                if (target != 0f || offset.value != 0f) {
+                    settle()
                     return available
                 }
                 return Velocity.Zero
@@ -303,9 +370,7 @@ fun Modifier.verticalBouncyEdge(
             awaitEachGesture {
                 awaitFirstDown(requireUnconsumed = false)
                 waitForUpOrCancellation()
-                if (offset.value != 0f) {
-                    scope.launch { offset.animateTo(0f, BouncySpecs.overscroll) }
-                }
+                connection.settle()
             }
         }
         .graphicsLayer { translationY = offset.value }
@@ -316,22 +381,42 @@ fun Modifier.verticalBouncyEdge(
  */
 fun Modifier.horizontalBouncyEdge(
     enabled: Boolean = true,
-    maxStretchPx: Float = 160f
+    maxStretchPx: Float = 160f,
+    stretchFactor: Float = 0.45f
 ): Modifier = composed {
     if (!enabled) return@composed this
     val offset = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
-    val connection = remember(maxStretchPx) {
+    val connection = remember(maxStretchPx, stretchFactor) {
         object : NestedScrollConnection {
+            var target = 0f
+            var generation = 0
+
+            private fun stretchBy(delta: Float) {
+                generation += 1
+                val snapshot = generation
+                target = (target + delta * stretchFactor)
+                    .coerceIn(-maxStretchPx, maxStretchPx)
+                val settled = target
+                scope.launch {
+                    if (snapshot == generation) offset.snapTo(settled)
+                }
+            }
+
+            fun settle() {
+                if (target == 0f && offset.value == 0f) return
+                generation += 1
+                target = 0f
+                scope.launch { offset.animateTo(0f, BouncySpecs.overscroll) }
+            }
+
             override fun onPostScroll(
                 consumed: Offset,
                 available: Offset,
                 source: NestedScrollSource
             ): Offset {
                 if (available.x != 0f) {
-                    val next = (offset.value + available.x * 0.35f)
-                        .coerceIn(-maxStretchPx, maxStretchPx)
-                    scope.launch { offset.snapTo(next) }
+                    stretchBy(available.x)
                     return Offset(available.x, 0f)
                 }
                 return Offset.Zero
@@ -341,8 +426,8 @@ fun Modifier.horizontalBouncyEdge(
                 consumed: Velocity,
                 available: Velocity
             ): Velocity {
-                if (offset.value != 0f) {
-                    scope.launch { offset.animateTo(0f, BouncySpecs.overscroll) }
+                if (target != 0f || offset.value != 0f) {
+                    settle()
                     return available
                 }
                 return Velocity.Zero
@@ -351,5 +436,13 @@ fun Modifier.horizontalBouncyEdge(
     }
     this
         .nestedScroll(connection)
+        .pointerInput(enabled) {
+            if (!enabled) return@pointerInput
+            awaitEachGesture {
+                awaitFirstDown(requireUnconsumed = false)
+                waitForUpOrCancellation()
+                connection.settle()
+            }
+        }
         .graphicsLayer { translationX = offset.value }
 }

@@ -152,7 +152,7 @@ fun VolumeControlScreen() {
                 items = streams,
                 key = { _, stream -> stream.streamType }
             ) { _, stream ->
-                BouncyListItem {
+                BouncyListItem(key = "vol:${stream.streamType}") {
                     val max = remember(stream.streamType) {
                     try {
                         audioManager.getStreamMaxVolume(stream.streamType)

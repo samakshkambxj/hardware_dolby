@@ -210,7 +210,7 @@ fun AppProfileScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             itemsIndexed(filteredApps, key = { _, app -> app.packageName }) { _, app ->
-                                BouncyListItem {
+                                BouncyListItem(key = "app:${app.packageName}") {
                                     AppProfileItem(
                                         app = app,
                                         onProfileSelected = { profile ->

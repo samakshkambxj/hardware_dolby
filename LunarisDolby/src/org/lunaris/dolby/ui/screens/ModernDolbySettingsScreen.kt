@@ -240,7 +240,7 @@ private fun ModernDolbySettingsContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item(key = "main_card") {
-            BouncyPopIn(delayMillis = 0) {
+            BouncyPopIn(delayMillis = 0, key = "home:main_card") {
                 DolbyMainCard(
                     enabled = state.settings.enabled,
                     onEnabledChange = { viewModel.setDolbyEnabled(it) }
@@ -249,13 +249,13 @@ private fun ModernDolbySettingsContent(
         }
 
         item(key = "device_card") {
-            BouncyPopIn(delayMillis = 30) {
+            BouncyPopIn(delayMillis = 30, key = "home:device_card") {
                 ActiveAudioDeviceCard(device = state.activeAudioDevice)
             }
         }
 
         item(key = "notif_card") {
-            BouncyPopIn(delayMillis = 60) {
+            BouncyPopIn(delayMillis = 60, key = "home:notif_card") {
                 NotificationListenerPermissionCard()
             }
         }
@@ -268,7 +268,7 @@ private fun ModernDolbySettingsContent(
                 ),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                BouncyPopIn(delayMillis = 0) {
+                BouncyPopIn(delayMillis = 0, key = "home:profile") {
                     ModernProfileSelector(
                         currentProfile = state.settings.currentProfile,
                         onProfileChange = { viewModel.setProfile(it) }
@@ -285,7 +285,7 @@ private fun ModernDolbySettingsContent(
                 ),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                BouncyPopIn(delayMillis = 0) {
+                BouncyPopIn(delayMillis = 0, key = "home:ieq") {
                     ModernSettingsCard(
                         title = stringResource(R.string.dolby_ieq),
                         icon = Icons.Default.GraphicEq
@@ -307,7 +307,7 @@ private fun ModernDolbySettingsContent(
                 ),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                BouncyPopIn(delayMillis = 0) {
+                BouncyPopIn(delayMillis = 0, key = "home:scenes") {
                     SceneSection(
                         scenes = scenes,
                         onApply = onApplyScene,
@@ -328,7 +328,7 @@ private fun ModernDolbySettingsContent(
                 ),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                BouncyPopIn(delayMillis = 0) {
+                BouncyPopIn(delayMillis = 0, key = "home:sleep") {
                     SleepTimerCard(
                         state = sleepState,
                         onStart = { viewModel.startSleepTimer(it) },
@@ -346,7 +346,7 @@ private fun ModernDolbySettingsContent(
                 ),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                BouncyPopIn(delayMillis = 0) {
+                BouncyPopIn(delayMillis = 0, key = "home:app_profiles") {
                     AppProfileSettingsCard(
                         onManageClick = { navController.navigate("app_profiles") }
                     )

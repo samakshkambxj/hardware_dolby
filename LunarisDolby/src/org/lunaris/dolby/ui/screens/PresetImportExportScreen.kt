@@ -203,7 +203,7 @@ fun PresetImportExportScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         item(key = "import") {
-                            BouncyPopIn(delayMillis = 0) {
+                            BouncyPopIn(delayMillis = 0, key = "pio:import") {
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = MaterialTheme.shapes.extraLarge,
@@ -333,7 +333,7 @@ fun PresetImportExportScreen(
                             state.presets.filter { it.isUserDefined },
                             key = { _, preset -> preset.name + preset.bandMode.value }
                         ) { _, preset ->
-                            BouncyListItem {
+                            BouncyListItem(key = "pio:preset:" + preset.name + preset.bandMode.value) {
                                 PresetExportCard(
                                 preset = preset,
                                 onExportFile = {

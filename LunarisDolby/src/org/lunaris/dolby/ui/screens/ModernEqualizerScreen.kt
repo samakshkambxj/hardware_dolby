@@ -245,7 +245,7 @@ private fun ModernEqualizerContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        BouncyPopIn(delayMillis = 0) {
+        BouncyPopIn(delayMillis = 0, key = "eq:presets") {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.extraLarge,
@@ -261,14 +261,17 @@ private fun ModernEqualizerContent(
             }
         }
 
-        BouncyPopIn(delayMillis = 30) {
+        BouncyPopIn(delayMillis = 30, key = "eq:bandmode") {
             BandModeSelector(
                 currentMode = state.bandMode,
                 onModeChange = { viewModel.setBandMode(it) }
             )
         }
         
-        if (!isBandModeCompatible && !isFlatPreset) {
+        BouncyPopIn(
+            key = "eq:compat_warning",
+            visible = !isBandModeCompatible && !isFlatPreset
+        ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
@@ -308,7 +311,7 @@ private fun ModernEqualizerContent(
             }
         }
         
-        BouncyPopIn(delayMillis = 60) {
+        BouncyPopIn(delayMillis = 60, key = "eq:section") {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.extraLarge,
@@ -375,7 +378,7 @@ private fun ModernEqualizerContent(
             }
         }
 
-        BouncyPopIn(delayMillis = 90) {
+        BouncyPopIn(delayMillis = 90, key = "eq:tuner") {
             BandTunerCard(
                 bandGains = state.bandGains,
                 bandMode = state.bandMode,
@@ -1626,6 +1629,7 @@ private fun AutoEqSelectionDialog(
                         items(filteredList, key = { it.id }) { entry ->
                             val isSelected = entry.id == activeAutoEqId
 
+                            BouncyListItem(key = "autoeq:${entry.id}") {
                             Surface(
                                 onClick = {
                                     viewModel.applyAutoEqProfileNetwork(context, entry)
@@ -1663,6 +1667,7 @@ private fun AutoEqSelectionDialog(
                                         )
                                     }
                                 }
+                            }
                             }
                         }
                     }
