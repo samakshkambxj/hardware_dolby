@@ -49,13 +49,13 @@ fun CreditsDialog(
         Contributor(
             name = "Samakshhhh",
             githubUsername = "samakshkambxj",
-            contribution = "Port Lunaris Dolby for Nothing Phone (3a) Lite",
+            contribution = "Port Lunaris Dolby for Nothing Phone (3a) Lite (Galaxian)",
             isHighlighted = true
         ),
         Contributor(
             name = "Anshuman_X",
             githubUsername = "maxxcodebug",
-            contribution = "Make this Lunaris Dolby port possible for CMF PHONE 1 (Tetris)",
+            contribution = "Base Lunaris Dolby on which this is built",
             isHighlighted = true
         ),
         Contributor(
