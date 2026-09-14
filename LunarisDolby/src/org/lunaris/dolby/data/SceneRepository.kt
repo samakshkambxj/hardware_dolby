@@ -76,6 +76,20 @@ class SceneRepository(private val context: Context) {
     }
 
     /**
+     * Deletes all user-created scenes. Built-ins are hardcoded and unaffected.
+     * Returns the number of scenes removed.
+     */
+    fun deleteAllCustomScenes(): Int {
+        val customKeys = prefs.all.keys.filter { it.startsWith(CUSTOM_ID_PREFIX) }
+        if (customKeys.isEmpty()) return 0
+        prefs.edit().apply {
+            customKeys.forEach { remove(it) }
+            apply()
+        }
+        return customKeys.size
+    }
+
+    /**
      * Applies a scene. The profile is switched first so that all subsequent
      * per-profile settings land on the scene's profile. Must be called off the
      * main thread (touches the audio effect).
@@ -172,6 +186,78 @@ class SceneRepository(private val context: Context) {
             hpVirtualizer = true,
             spkVirtualizer = false,
             stereoWidening = 56
+        ),
+        Scene(
+            id = "builtin_music",
+            name = context.getString(R.string.scene_builtin_music),
+            isBuiltIn = true,
+            enabled = true,
+            profile = 2,
+            ieqPreset = 2,
+            bassLevel = 35,
+            bassCurve = 0,
+            midLevel = 10,
+            trebleLevel = 20,
+            volumeLeveler = false,
+            dialogueEnabled = false,
+            dialogueAmount = 6,
+            hpVirtualizer = true,
+            spkVirtualizer = true,
+            stereoWidening = 40
+        ),
+        Scene(
+            id = "builtin_night",
+            name = context.getString(R.string.scene_builtin_night),
+            isBuiltIn = true,
+            enabled = true,
+            profile = 1,
+            ieqPreset = 0,
+            bassLevel = 15,
+            bassCurve = 0,
+            midLevel = 5,
+            trebleLevel = 5,
+            volumeLeveler = true,
+            dialogueEnabled = true,
+            dialogueAmount = 6,
+            hpVirtualizer = false,
+            spkVirtualizer = false,
+            stereoWidening = 32
+        ),
+        Scene(
+            id = "builtin_vocal",
+            name = context.getString(R.string.scene_builtin_vocal),
+            isBuiltIn = true,
+            enabled = true,
+            profile = 4,
+            ieqPreset = 1,
+            bassLevel = 0,
+            bassCurve = 0,
+            midLevel = 40,
+            trebleLevel = 20,
+            volumeLeveler = true,
+            dialogueEnabled = true,
+            dialogueAmount = 12,
+            hpVirtualizer = false,
+            spkVirtualizer = false,
+            stereoWidening = 32
+        ),
+        Scene(
+            id = "builtin_outdoor",
+            name = context.getString(R.string.scene_builtin_outdoor),
+            isBuiltIn = true,
+            enabled = true,
+            profile = 5,
+            ieqPreset = 0,
+            bassLevel = 50,
+            bassCurve = 2,
+            midLevel = 10,
+            trebleLevel = 30,
+            volumeLeveler = false,
+            dialogueEnabled = false,
+            dialogueAmount = 6,
+            hpVirtualizer = false,
+            spkVirtualizer = true,
+            stereoWidening = 40
         )
     )
 
