@@ -11,11 +11,15 @@ import androidx.lifecycle.viewModelScope
 import org.lunaris.dolby.DolbyConstants
 import org.lunaris.dolby.data.DolbyRepository
 import org.lunaris.dolby.data.SceneRepository
+import org.lunaris.dolby.data.SleepTimerManager
+import org.lunaris.dolby.data.SleepTimerState
 import org.lunaris.dolby.domain.models.*
 import org.lunaris.dolby.service.DolbyEffectService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancelChildren
 
@@ -23,6 +27,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = DolbyRepository(application)
     private val sceneRepository = SceneRepository(application)
+    private val sleepTimer = SleepTimerManager(application)
 
     private val _uiState = MutableStateFlow<DolbyUiState>(DolbyUiState.Loading)
     val uiState: StateFlow<DolbyUiState> = _uiState.asStateFlow()
@@ -30,6 +35,10 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _scenes = MutableStateFlow<List<Scene>>(emptyList())
     val scenes: StateFlow<List<Scene>> = _scenes.asStateFlow()
+
+    private val _sleepState = MutableStateFlow(SleepTimerState())
+    val sleepState: StateFlow<SleepTimerState> = _sleepState.asStateFlow()
+    private var sleepTicker: Job? = null
     
     private var audioOutputStateJob: Job? = null
     private var profileChangeJob: Job? = null
@@ -39,6 +48,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         DolbyConstants.dlog(TAG, "ViewModel initialized")
         loadSettings()
         refreshScenes()
+        refreshSleepState()
         observeAudioOutputState()
         observeProfileChanges()
     }
@@ -355,6 +365,58 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun startSleepTimer(minutes: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                sleepTimer.start(minutes)
+                refreshSleepState()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error starting sleep timer: ${e.message}")
+            }
+        }
+    }
+
+    fun cancelSleepTimer() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                sleepTimer.cancel()
+                _sleepState.value = SleepTimerState()
+                sleepTicker?.cancel()
+                sleepTicker = null
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error cancelling sleep timer: ${e.message}")
+            }
+        }
+    }
+
+    private fun refreshSleepState() {
+        val remaining = SleepTimerManager.remainingMs(getApplication())
+        if (remaining > 0L) {
+            _sleepState.value = SleepTimerState(active = true, remainingMs = remaining)
+            startSleepTicker()
+        } else {
+            _sleepState.value = SleepTimerState()
+            sleepTicker?.cancel()
+            sleepTicker = null
+        }
+    }
+
+    private fun startSleepTicker() {
+        sleepTicker?.cancel()
+        sleepTicker = viewModelScope.launch {
+            while (isActive) {
+                delay(1000L)
+                val remaining = SleepTimerManager.remainingMs(getApplication())
+                if (remaining <= 0L) {
+                    _sleepState.value = SleepTimerState()
+                    loadSettings()
+                    break
+                }
+                _sleepState.value = SleepTimerState(active = true, remainingMs = remaining)
+            }
+        }
+    }
+
     fun updateSpeakerState() {
         if (!isCleared) {
             viewModelScope.launch(Dispatchers.IO) {
@@ -371,6 +433,8 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         audioOutputStateJob = null
         profileChangeJob?.cancel()
         profileChangeJob = null
+        sleepTicker?.cancel()
+        sleepTicker = null
         repository.close()
         super.onCleared()
     }

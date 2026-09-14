@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.lunaris.dolby.R
+import org.lunaris.dolby.data.SleepTimerState
 import org.lunaris.dolby.domain.models.DolbyUiState
 import org.lunaris.dolby.domain.models.Scene
 import org.lunaris.dolby.ui.components.*
@@ -37,6 +38,7 @@ fun ModernDolbySettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scenes by viewModel.scenes.collectAsState()
+    val sleepState by viewModel.sleepState.collectAsState()
     var showResetDialog by remember { mutableStateOf(false) }
     var showCreditsDialog by remember { mutableStateOf(false) }
     var showSaveSceneDialog by remember { mutableStateOf(false) }
@@ -115,6 +117,7 @@ fun ModernDolbySettingsScreen(
                     viewModel = viewModel,
                     navController = navController,
                     scenes = scenes,
+                    sleepState = sleepState,
                     onApplyScene = { scene ->
                         viewModel.applyScene(scene)
                         ToastHelper.showToast(context, context.getString(R.string.scene_applied))
@@ -207,6 +210,7 @@ private fun ModernDolbySettingsContent(
     viewModel: DolbyViewModel,
     navController: NavController,
     scenes: List<Scene>,
+    sleepState: SleepTimerState,
     onApplyScene: (Scene) -> Unit,
     onSaveSceneClick: () -> Unit,
     onDeleteSceneClick: (Scene) -> Unit,
@@ -274,6 +278,20 @@ private fun ModernDolbySettingsContent(
                     onApply = onApplyScene,
                     onSaveClick = onSaveSceneClick,
                     onDeleteClick = onDeleteSceneClick
+                )
+            }
+        }
+
+        item {
+            AnimatedVisibility(
+                visible = state.settings.enabled,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                SleepTimerCard(
+                    state = sleepState,
+                    onStart = { viewModel.startSleepTimer(it) },
+                    onCancel = { viewModel.cancelSleepTimer() }
                 )
             }
         }
