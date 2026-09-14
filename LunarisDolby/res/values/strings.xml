@@ -234,4 +234,11 @@
     <string name="scene_builtin_podcast">Podcast</string>
     <string name="scene_builtin_gaming">Gaming</string>
     <string name="save">Save</string>
+
+    <!-- Sleep timer -->
+    <string name="sleep_timer">Sleep timer</string>
+    <string name="sleep_timer_off">Off</string>
+    <string name="sleep_timer_minutes">%1$d min</string>
+    <string name="sleep_timer_remaining">Turns off in %1$d min</string>
+    <string name="sleep_timer_ended">Sleep timer ended — Dolby off</string>
 </resources>
