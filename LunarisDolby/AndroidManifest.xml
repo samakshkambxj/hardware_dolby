@@ -16,6 +16,10 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <!-- Required to drive the framework Spatializer (setEnabled /
+         setHeadTrackerEnabled are gated by this in AudioService).
+         signature|privileged: granted via platform cert + privapp allowlist. -->
+    <uses-permission android:name="android.permission.MODIFY_DEFAULT_AUDIO_EFFECTS" />
 
     <application
         android:icon="@mipmap/ic_launcher"

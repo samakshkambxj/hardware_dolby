@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -384,7 +385,8 @@ fun ModernSettingSwitch(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    enabled: Boolean = true
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
@@ -397,18 +399,25 @@ fun ModernSettingSwitch(
         animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         label = "switch_row_container"
     )
-    val titleColor = if (checked)
+    val titleColor = if (!enabled) {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+    } else if (checked) {
         MaterialTheme.colorScheme.onSecondaryContainer
-    else
+    } else {
         MaterialTheme.colorScheme.onSurface
-    val subtitleColor = if (checked)
+    }
+    val subtitleColor = if (!enabled) {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+    } else if (checked) {
         MaterialTheme.colorScheme.onSecondaryContainer
-    else
+    } else {
         MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            .alpha(if (enabled) 1f else 0.6f)
             .clip(if (checked) MaterialTheme.shapes.extraLarge else MaterialTheme.shapes.large),
         color = containerColor
     ) {
@@ -451,11 +460,13 @@ fun ModernSettingSwitch(
             Switch(
                 checked = checked,
                 onCheckedChange = { 
+                    if (!enabled) return@Switch
                     scope.launch {
                         haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.CLICK)
                     }
                     onCheckedChange(it)
                 },
+                enabled = enabled,
                 thumbContent = {
                     Crossfade(
                         targetState = checked,
