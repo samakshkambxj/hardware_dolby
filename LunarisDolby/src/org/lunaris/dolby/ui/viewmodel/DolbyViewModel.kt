@@ -355,6 +355,13 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val profile = repository.getCurrentProfile()
                 repository.setStereoWideningAmount(profile, amount)
+                // Widening is inaudible unless the matching virtualizer path is
+                // live — engage it so the slider always yields an actual effect.
+                if (repository.isOnSpeaker.value) {
+                    repository.setSpeakerVirtualizerEnabled(profile, true)
+                } else {
+                    repository.setHeadphoneVirtualizerEnabled(profile, true)
+                }
                 loadSettings()
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error setting stereo widening: ${e.message}")

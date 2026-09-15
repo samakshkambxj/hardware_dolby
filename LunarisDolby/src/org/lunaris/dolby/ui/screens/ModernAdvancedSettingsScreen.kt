@@ -301,6 +301,19 @@ private fun ModernAdvancedSettingsContent(
                                 onCheckedChange = { viewModel.setSpeakerVirtualizer(it) },
                                 icon = Icons.Default.Speaker
                             )
+
+                            AnimatedVisibility(visible = state.profileSettings.speakerVirtualizerEnabled) {
+                                Column {
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    ModernSettingSlider(
+                                        title = stringResource(R.string.dolby_hp_virtualizer_dolby_strength),
+                                        value = state.profileSettings.stereoWideningAmount,
+                                        onValueChange = { viewModel.setStereoWidening(it.toInt()) },
+                                        valueRange = 4f..64f,
+                                        steps = 59
+                                    )
+                                }
+                            }
                         } else {
                             ModernSettingSwitch(
                                 title = stringResource(R.string.dolby_hp_virtualizer),
