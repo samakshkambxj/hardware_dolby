@@ -89,6 +89,7 @@ fun ModernDolbySettingsScreen(
         contentColor = MaterialTheme.colorScheme.onSurface
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
+        FloatingParticles()
         when (val state = uiState) {
             is DolbyUiState.Loading -> {
                 Box(
