@@ -233,23 +233,31 @@ private fun ModernDolbySettingsContent(
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .verticalBouncyEdge(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            DolbyMainCard(
-                enabled = state.settings.enabled,
-                onEnabledChange = { viewModel.setDolbyEnabled(it) }
-            )
+        item(key = "main_card") {
+            BouncyPopIn(delayMillis = 0, key = "main_card") {
+                DolbyMainCard(
+                    enabled = state.settings.enabled,
+                    onEnabledChange = { viewModel.setDolbyEnabled(it) }
+                )
+            }
         }
 
-        item {
-            ActiveAudioDeviceCard(device = state.activeAudioDevice)
+        item(key = "device_card") {
+            BouncyPopIn(delayMillis = 30, key = "device_card") {
+                ActiveAudioDeviceCard(device = state.activeAudioDevice)
+            }
         }
 
-        item {
-            NotificationListenerPermissionCard()
+        item(key = "notif_card") {
+            BouncyPopIn(delayMillis = 60, key = "notif_card") {
+                NotificationListenerPermissionCard()
+            }
         }
 
         item {
