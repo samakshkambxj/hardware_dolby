@@ -272,6 +272,24 @@ class DynamicsEqualizerViewModel(application: Application) : AndroidViewModel(ap
         _uiState.value = buildState()
     }
 
+    fun resetBands() {
+        engine.resetBands()
+        _uiState.value = buildState()
+        persistState()
+    }
+
+    fun resetMbc() {
+        engine.resetMbc()
+        _uiState.value = buildState()
+        persistState()
+    }
+
+    fun resetLimiter() {
+        engine.resetLimiter()
+        _uiState.value = buildState()
+        persistState()
+    }
+
     override fun onCleared() {
         engine.release()
         visualizerEngine.release()

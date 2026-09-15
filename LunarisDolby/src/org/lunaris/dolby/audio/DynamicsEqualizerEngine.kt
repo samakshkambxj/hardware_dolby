@@ -257,6 +257,32 @@ class DynamicsEqualizerEngine(
         dp?.setInputGainAllChannelsTo(preampDb)
     }
 
+    /** Flatlines preamp + all pre-EQ bands back to 0 dB. */
+    fun resetBands() {
+        setPreamp(0f)
+        for (band in bandFrequencies.indices) {
+            setBandGain(band, 0f)
+        }
+    }
+
+    /** Restores MBC thresholds/ratios/attacks/releases to their defaults. */
+    fun resetMbc() {
+        for (band in 0 until mbcBandCount) {
+            setMbcThreshold(band, MBC_DEFAULT_THRESHOLD_DB)
+            setMbcRatio(band, MBC_DEFAULT_RATIO)
+            setMbcAttack(band, MBC_DEFAULT_ATTACK_MS)
+            setMbcRelease(band, MBC_DEFAULT_RELEASE_MS)
+        }
+    }
+
+    /** Restores limiter threshold/release/ratio/post-gain to defaults. */
+    fun resetLimiter() {
+        setLimiterThreshold(LIMITER_DEFAULT_THRESHOLD_DB)
+        setLimiterRelease(LIMITER_DEFAULT_RELEASE_MS)
+        setLimiterRatio(LIMITER_DEFAULT_RATIO)
+        setLimiterPostGain(LIMITER_DEFAULT_POST_GAIN_DB)
+    }
+
     fun release() {
         dp?.release()
         dp = null
@@ -265,5 +291,16 @@ class DynamicsEqualizerEngine(
 
     companion object {
         private const val TAG = "DynamicsEqualizerEngine"
+
+        // Factory defaults for the reset paths below (must match the
+        // MbcBandParams data-class defaults and limiter field initializers).
+        const val MBC_DEFAULT_THRESHOLD_DB = -20f
+        const val MBC_DEFAULT_RATIO = 2f
+        const val MBC_DEFAULT_ATTACK_MS = 10f
+        const val MBC_DEFAULT_RELEASE_MS = 100f
+        const val LIMITER_DEFAULT_THRESHOLD_DB = -1f
+        const val LIMITER_DEFAULT_RELEASE_MS = 50f
+        const val LIMITER_DEFAULT_RATIO = 10f
+        const val LIMITER_DEFAULT_POST_GAIN_DB = 0f
     }
 }

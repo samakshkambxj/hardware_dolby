@@ -6,7 +6,11 @@
 package org.lunaris.dolby.ui.components
 
 import android.content.Context
+import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.AudioPlaybackConfiguration
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
@@ -105,9 +109,31 @@ fun AnimatedWaveformBanner(
     var musicActive by remember { mutableStateOf(false) }
     var volumeFraction by remember { mutableFloatStateOf(0.5f) }
 
+    // Event-driven playback state. The old isMusicActive poll is a sticky
+    // global flag that stays true after pause/stop on several ROMs and
+    // players, leaving the banner stuck at full energy. Playback callbacks
+    // fire immediately on pause/stop with the live config list instead.
+    DisposableEffect(audioManager) {
+        fun refresh(configs: List<AudioPlaybackConfiguration>) {
+            musicActive = configs.any { config ->
+                config.isActive && (config.audioAttributes.usage == AudioAttributes.USAGE_MEDIA ||
+                    config.audioAttributes.usage == AudioAttributes.USAGE_GAME)
+            }
+        }
+        val callback = object : AudioManager.AudioPlaybackCallback() {
+            override fun onPlaybackConfigChanged(configs: List<AudioPlaybackConfiguration>) {
+                refresh(configs)
+            }
+        }
+        audioManager.registerAudioPlaybackCallback(callback, Handler(Looper.getMainLooper()))
+        runCatching { refresh(audioManager.activePlaybackConfigurations) }
+        onDispose {
+            runCatching { audioManager.unregisterAudioPlaybackCallback(callback) }
+        }
+    }
+
     LaunchedEffect(Unit) {
         while (true) {
-            musicActive = runCatching { audioManager.isMusicActive }.getOrDefault(false)
             volumeFraction = runCatching {
                 val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
                     .coerceAtLeast(1)

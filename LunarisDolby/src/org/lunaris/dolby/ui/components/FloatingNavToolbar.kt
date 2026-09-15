@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
 import org.lunaris.dolby.utils.*
@@ -315,16 +316,22 @@ private fun AnimatedNavIcon(
             )
         }
         NavIconMotion.Bob -> {
-            val bob = rememberInfiniteTransition(label = "nav_icon_bob")
-            val y by bob.animateDp(
-                initialValue = 0.dp,
-                targetValue = (-2.5).dp,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(durationMillis = 1500, easing = FastOutSlowInEasing),
-                    repeatMode = RepeatMode.Reverse
-                ),
+            // Note: this tree's Compose keeps the initialValue/targetValue
+            // overload for animateFloat but not for animateDp, so the bob
+            // runs on animateDpAsState driven by a toggling target instead.
+            var bobUp by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) {
+                while (true) {
+                    delay(1500)
+                    bobUp = !bobUp
+                }
+            }
+            val y by animateDpAsState(
+                targetValue = if (bobUp) (-2.5).dp else 0.dp,
+                animationSpec = tween(durationMillis = 1500, easing = FastOutSlowInEasing),
                 label = "bob"
             )
+            val bob = rememberInfiniteTransition(label = "nav_icon_bob")
             val tilt by bob.animateFloat(
                 initialValue = -5f,
                 targetValue = 5f,

@@ -1802,6 +1802,13 @@ private fun DynamicsProcessingSection(
                             valueLabel = { "$it dB" }
                         )
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = { dynamicsVm.resetBands() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Reset bands")
+                    }
                 }
                 1 -> {
                     ModernSettingSwitch(
@@ -1853,6 +1860,13 @@ private fun DynamicsProcessingSection(
                             )
                         }
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = { dynamicsVm.resetMbc() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Reset MBC")
+                    }
                 }
                 else -> {
                     ModernSettingSwitch(
@@ -1895,6 +1909,13 @@ private fun DynamicsProcessingSection(
                             onValueChange = { dynamicsVm.setLimiterPostGain(it) },
                             valueLabel = { "$it dB" }
                         )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = { dynamicsVm.resetLimiter() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Reset limiter")
                     }
                 }
             }
