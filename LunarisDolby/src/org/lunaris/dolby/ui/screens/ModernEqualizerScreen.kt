@@ -40,12 +40,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
 import org.lunaris.dolby.data.autoeq.*
 import org.lunaris.dolby.ui.components.*
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
+import org.lunaris.dolby.ui.viewmodel.DynamicsEqualizerViewModel
 import org.lunaris.dolby.domain.models.*
 import org.lunaris.dolby.utils.*
 
@@ -381,6 +383,8 @@ private fun ModernEqualizerContent(
             },
             enabled = canEdit
         )
+
+        DynamicsProcessingSection()
 
         Spacer(modifier = Modifier.height(70.dp))
     }
@@ -1667,4 +1671,234 @@ private fun AutoEqSelectionDialog(
         titleContentColor = MaterialTheme.colorScheme.onSurface,
         textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
     )
+}
+
+private fun formatDynamicsFrequency(hz: Float): String {
+    return if (hz >= 1000f) {
+        val khz = hz / 1000f
+        if (khz == khz.toInt().toFloat()) "${khz.toInt()} kHz" else "$khz kHz"
+    } else {
+        "${hz.toInt()} Hz"
+    }
+}
+
+@Composable
+private fun DynamicsProcessingSection(
+    dynamicsVm: DynamicsEqualizerViewModel = viewModel()
+) {
+    val state by dynamicsVm.uiState.collectAsState()
+    val spectrum by dynamicsVm.spectrum.collectAsState()
+    var selectedTab by remember { mutableIntStateOf(0) }
+    var showSaveDialog by remember { mutableStateOf(false) }
+    var presetName by remember { mutableStateOf("") }
+    val tabs = listOf("Bands", "MBC", "Limiter")
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            EqualizerSectionHeader(
+                icon = Icons.Default.GraphicEq,
+                title = "Dynamics processing",
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+            Text(
+                text = "Independent pre-EQ, multiband compressor and limiter",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+            ModernSettingSwitch(
+                title = "Enable dynamics",
+                subtitle = "Runs alongside the Dolby effect",
+                checked = state.enabled,
+                onCheckedChange = { dynamicsVm.setEnabled(it) }
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            SpectrumView(bars = spectrum, modifier = Modifier.fillMaxWidth())
+            Spacer(modifier = Modifier.height(12.dp))
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(state.presetNames) { name ->
+                    AssistChip(
+                        onClick = { dynamicsVm.loadPreset(name) },
+                        label = { Text(name) },
+                        trailingIcon = {
+                            IconButton(onClick = { dynamicsVm.deletePreset(name) }) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = "Delete $name",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    )
+                }
+                item {
+                    IconButton(onClick = { showSaveDialog = true }) {
+                        Icon(Icons.Default.Add, contentDescription = "Save preset")
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            SecondaryTabRow(selectedTabIndex = selectedTab) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        text = { Text(title) }
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            when (selectedTab) {
+                0 -> {
+                    ModernSettingSlider(
+                        title = "Preamp",
+                        value = state.preampDb.toInt(),
+                        valueRange = -20f..20f,
+                        steps = 39,
+                        onValueChange = { dynamicsVm.setPreamp(it) },
+                        valueLabel = { "$it dB" }
+                    )
+                    state.bandFrequencies.forEachIndexed { index, freq ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ModernSettingSlider(
+                            title = formatDynamicsFrequency(freq),
+                            value = state.bandGains.getOrElse(index) { 0f }.toInt(),
+                            valueRange = -20f..20f,
+                            steps = 39,
+                            onValueChange = { dynamicsVm.setBandGain(index, it) },
+                            valueLabel = { "$it dB" }
+                        )
+                    }
+                }
+                1 -> {
+                    ModernSettingSwitch(
+                        title = "Multiband compressor",
+                        subtitle = "3-band dynamics control (Low / Mid / High)",
+                        checked = state.mbcEnabled,
+                        onCheckedChange = { dynamicsVm.setMbcEnabled(it) }
+                    )
+                    state.mbcBands.forEachIndexed { index, band ->
+                        if (state.mbcEnabled) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "${band.label} band",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            ModernSettingSlider(
+                                title = "Threshold",
+                                value = band.threshold.toInt(),
+                                valueRange = -60f..0f,
+                                steps = 59,
+                                onValueChange = { dynamicsVm.setMbcThreshold(index, it) },
+                                valueLabel = { "$it dB" }
+                            )
+                            ModernSettingSlider(
+                                title = "Ratio",
+                                value = band.ratio.toInt(),
+                                valueRange = 1f..20f,
+                                steps = 18,
+                                onValueChange = { dynamicsVm.setMbcRatio(index, it) },
+                                valueLabel = { "${it}:1" }
+                            )
+                            ModernSettingSlider(
+                                title = "Attack",
+                                value = band.attackMs.toInt(),
+                                valueRange = 1f..200f,
+                                steps = 198,
+                                onValueChange = { dynamicsVm.setMbcAttack(index, it) },
+                                valueLabel = { "$it ms" }
+                            )
+                            ModernSettingSlider(
+                                title = "Release",
+                                value = band.releaseMs.toInt(),
+                                valueRange = 10f..1000f,
+                                steps = 98,
+                                onValueChange = { dynamicsVm.setMbcRelease(index, it) },
+                                valueLabel = { "$it ms" }
+                            )
+                        }
+                    }
+                }
+                else -> {
+                    ModernSettingSwitch(
+                        title = "Limiter",
+                        subtitle = "Final-stage output limiter, prevents clipping",
+                        checked = state.limiterEnabled,
+                        onCheckedChange = { dynamicsVm.setLimiterEnabled(it) }
+                    )
+                    if (state.limiterEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ModernSettingSlider(
+                            title = "Threshold",
+                            value = state.limiterThreshold.toInt(),
+                            valueRange = -30f..0f,
+                            steps = 29,
+                            onValueChange = { dynamicsVm.setLimiterThreshold(it) },
+                            valueLabel = { "$it dB" }
+                        )
+                        ModernSettingSlider(
+                            title = "Ratio",
+                            value = state.limiterRatio.toInt(),
+                            valueRange = 1f..20f,
+                            steps = 18,
+                            onValueChange = { dynamicsVm.setLimiterRatio(it) },
+                            valueLabel = { "${it}:1" }
+                        )
+                        ModernSettingSlider(
+                            title = "Release",
+                            value = state.limiterRelease.toInt(),
+                            valueRange = 1f..1000f,
+                            steps = 98,
+                            onValueChange = { dynamicsVm.setLimiterRelease(it) },
+                            valueLabel = { "$it ms" }
+                        )
+                        ModernSettingSlider(
+                            title = "Post gain",
+                            value = state.limiterPostGain.toInt(),
+                            valueRange = -20f..20f,
+                            steps = 39,
+                            onValueChange = { dynamicsVm.setLimiterPostGain(it) },
+                            valueLabel = { "$it dB" }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    if (showSaveDialog) {
+        AlertDialog(
+            onDismissRequest = { showSaveDialog = false },
+            title = { Text("Save preset") },
+            text = {
+                OutlinedTextField(
+                    value = presetName,
+                    onValueChange = { presetName = it },
+                    label = { Text("Preset name") }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    dynamicsVm.savePreset(presetName)
+                    presetName = ""
+                    showSaveDialog = false
+                }) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSaveDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
 }
