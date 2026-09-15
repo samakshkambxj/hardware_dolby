@@ -92,6 +92,8 @@ fun MainPagerScreen(
             }
         }
 
+        // Soft fade only: the nav pill blurs the live list behind it, so this
+        // must stay translucent — an opaque scrim would flatten the blur.
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -101,7 +103,7 @@ fun MainPagerScreen(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            MaterialTheme.colorScheme.surfaceContainer
+                            MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.45f)
                         )
                     )
                 )

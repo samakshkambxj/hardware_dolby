@@ -7,7 +7,6 @@ package org.lunaris.dolby.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -17,8 +16,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -37,7 +36,9 @@ import org.lunaris.dolby.utils.*
 fun FloatingNavToolbar(
     currentRoute: String,
     onNavigate: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Re-snapshots the blur when this changes; a ticker covers scrolling. */
+    blurKey: Any = Unit
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
@@ -47,31 +48,13 @@ fun FloatingNavToolbar(
     val isEqualizerSelected = currentRoute == "equalizer"
     val isAdvancedSelected = currentRoute == "advanced"
 
-    // Liquid-glass pill: frosted translucent container, specular gradient
-    // edge (bright top-left, tinted bottom-right) and a primary-tinted glow.
-    // Note: Compose can't live-blur the list behind this bar within the same
-    // window (RenderEffect blurs a composable's own pixels, not its backdrop;
-    // true blur-behind is dialog-window-only, see ApplyDialogWindowBlur), so
-    // the dialog-like blur feel comes from a denser frost stack (neutral
-    // frost band under the tinted sheen) + translucency + glow instead.
-    // Pill shape, tint, glow and selection behavior are unchanged.
-    val glassContainer = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-    val glassFrost = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.38f)
-    val glassEdge = Brush.linearGradient(
-        colors = listOf(
-            Color.White.copy(alpha = 0.75f),
-            Color.White.copy(alpha = 0.12f),
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
-        )
-    )
-    val glassSheen = Brush.verticalGradient(
-        colors = listOf(
-            Color.White.copy(alpha = 0.22f),
-            Color.White.copy(alpha = 0.04f),
-            Color.Transparent,
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-        )
-    )
+    // Real-blur pill: the list behind the bar is snapshotted and GPU-blurred
+    // (same frosted read as the audio-output dialog), under a neutral veil.
+    // No white specular edge, no primary-tinted glow, no sheen — those were
+    // decoration that read as glow next to true blur. Selection behavior and
+    // pill shape are unchanged.
+    val barTint = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f)
+    val barEdge = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
     val onContainerColor = MaterialTheme.colorScheme.onPrimaryContainer
     val primaryColor = MaterialTheme.colorScheme.primary
     val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
@@ -80,38 +63,39 @@ fun FloatingNavToolbar(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
-        HorizontalFloatingToolbar(
-            expanded = true,
-            colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(
-                toolbarContainerColor = glassContainer,
-                toolbarContentColor = onContainerColor
-            ),
+        Box(
             modifier = Modifier
                 .padding(
                     top = FloatingToolbarDefaults.ScreenOffset,
                     bottom = FloatingToolbarDefaults.ScreenOffset
                 )
                 .shadow(
-                    elevation = 18.dp,
+                    elevation = 8.dp,
                     shape = CircleShape,
-                    ambientColor = Color.Black.copy(alpha = 0.22f),
-                    spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f)
+                    ambientColor = Color.Black.copy(alpha = 0.20f),
+                    spotColor = Color.Black.copy(alpha = 0.20f)
                 )
-                .background(
-                    color = glassFrost,
-                    shape = CircleShape
-                )
-                .background(
-                    brush = glassSheen,
-                    shape = CircleShape
-                )
-                .border(
-                    width = 1.25.dp,
-                    brush = glassEdge,
-                    shape = CircleShape
-                )
-                .padding(horizontal = 6.dp, vertical = 6.dp)
+                .clip(CircleShape)
         ) {
+            RealBlurBackdrop(
+                tint = barTint,
+                blurRadiusPx = 26f,
+                updateKey = blurKey,
+                modifier = Modifier.matchParentSize()
+            )
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .border(width = 1.dp, color = barEdge, shape = CircleShape)
+            )
+            HorizontalFloatingToolbar(
+                expanded = true,
+                colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(
+                    toolbarContainerColor = Color.Transparent,
+                    toolbarContentColor = onContainerColor
+                ),
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp)
+            ) {
             NavToolbarItem(
                 icon = Icons.Default.Home,
                 label = stringResource(R.string.home),
@@ -178,6 +162,7 @@ fun FloatingNavToolbar(
                     onNavigate("volume")
                 }
             )
+            }
         }
     }
 }
