@@ -213,21 +213,19 @@ fun DolbyMainCard(
                         .clickable {
                             logoTaps = EasterEggs.recordLogoTap(context)
                             when {
-                                EasterEggs.isUnlocked(EasterEggs.BADGE_PERSISTENT) -> {
-                                    // Owned: a quiet tick, nothing more.
-                                }
                                 logoTaps >= EasterEggs.LOGO_TAP_TARGET -> {
                                     logoTaps = 0
-                                    if (EasterEggs.unlock(context, EasterEggs.BADGE_PERSISTENT)) {
-                                        scope.launch {
-                                            haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.DOUBLE_CLICK)
-                                        }
-                                        ToastHelper.showToast(
-                                            context,
-                                            context.getString(R.string.egg_logo_unlocked)
-                                        )
-                                        onEasterEggUnlocked()
+                                    // unlock() is idempotent; the celebration replays
+                                    // on every completion even when already owned.
+                                    EasterEggs.unlock(context, EasterEggs.BADGE_PERSISTENT)
+                                    scope.launch {
+                                        haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.DOUBLE_CLICK)
                                     }
+                                    ToastHelper.showToast(
+                                        context,
+                                        context.getString(R.string.egg_logo_unlocked)
+                                    )
+                                    onEasterEggUnlocked()
                                 }
                                 logoTaps == 3 -> {
                                     ToastHelper.showToast(
@@ -499,12 +497,18 @@ fun ModernSettingSlider(
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
-    var sliderValue by remember(value) { mutableFloatStateOf(value.toFloat()) }
+    var sliderValue by remember { mutableFloatStateOf(value.toFloat()) }
     var lastHapticValue by remember { mutableIntStateOf(value) }
+    // While the thumb is being dragged the ViewModel round-trip
+    // (onValueChange -> HAL -> loadSettings -> new value) must not move the
+    // thumb under the finger, otherwise it visibly stutters/fights the drag.
+    var isDragging by remember { mutableStateOf(false) }
 
     LaunchedEffect(value) {
-        sliderValue = value.toFloat()
-        lastHapticValue = value
+        if (!isDragging) {
+            sliderValue = value.toFloat()
+            lastHapticValue = value
+        }
     }
 
     val displayValue = sliderValue.toInt()
@@ -541,6 +545,7 @@ fun ModernSettingSlider(
         Slider(
             value = sliderValue,
             onValueChange = { newValue ->
+                isDragging = true
                 val intValue = newValue.toInt()
                 if (intValue != lastHapticValue) {
                     scope.launch {
@@ -550,6 +555,11 @@ fun ModernSettingSlider(
                 }
                 sliderValue = newValue
                 onValueChange(newValue)
+            },
+            onValueChangeFinished = {
+                isDragging = false
+                // Re-sync to the confirmed ViewModel value on the next emission;
+                // if the HAL clamped it, LaunchedEffect(value) will snap back.
             },
             valueRange = valueRange,
             steps = steps,

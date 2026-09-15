@@ -321,6 +321,8 @@
     <string name="egg_badge_wordsmith_desc">Named a preset with power</string>
     <string name="egg_badge_lizard">Lounge Lizard</string>
     <string name="egg_badge_lizard_desc">Found the Lounge</string>
+    <string name="egg_badge_maintainer">Samaksh Approved</string>
+    <string name="egg_badge_maintainer_desc">Said the maintainer\'s name out loud</string>
     <string name="egg_badge_locked">\?\?\?</string>
     <string name="egg_badge_locked_desc">Keep exploring…</string>
     <string name="egg_stats_title">Vital statistics</string>
@@ -337,6 +339,7 @@
     <string name="egg_cheat_iddqd">God mode denied. Style points granted.</string>
     <string name="egg_cheat_lunaris">Home sweet home.</string>
     <string name="egg_cheat_xyzzy">Nothing happens. Or does it?</string>
+    <string name="egg_cheat_samaksh">Samakshhhh approves. Galaxian gang. 🌙</string>
     <string name="egg_cheat_elite">Elite typing detected.</string>
     <string name="egg_secret_preset">🌙 Midnight Snack</string>
     <string name="egg_summon">Summon the secret preset</string>
@@ -344,5 +347,5 @@
     <string name="egg_reset">Forget everything</string>
     <string name="egg_reset_title">Forget everything?</string>
     <string name="egg_reset_message">Badges and counters go back to zero. The Lounge will forget you were here.</string>
-    <string name="egg_hint">Rumor has it this app keeps secrets. Logos like attention. Buttons remember patterns. Names have power.</string>
+    <string name="egg_hint">Rumor has it this app keeps secrets. Logos like attention. Buttons remember patterns. Names have power — especially the maintainer\'s.</string>
 </resources>

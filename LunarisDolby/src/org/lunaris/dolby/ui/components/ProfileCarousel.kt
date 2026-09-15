@@ -162,15 +162,23 @@ fun ProfileCarousel(
 }
 
 /**
- * A profile's colour pair. Each profile gets its own vivid fixed gradient so
- * the carousel looks colorful regardless of dynamic-color theming.
- * Content is always white for contrast on the saturated gradients.
+ * A profile's colour pair. Each profile gets its own muted fixed gradient so
+ * the carousel stays colorful regardless of dynamic-color theming without
+ * shouting. Content is always white for contrast.
  */
 internal data class ProfilePalette(
     val start: Color,
     val end: Color,
     val content: Color
 )
+
+/** Same hue, less shout: scales the HSV saturation down by [factor]. */
+private fun Color.desaturated(factor: Float = 0.5f): Color {
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(this.toArgb(), hsv)
+    hsv[1] = (hsv[1] * factor).coerceIn(0f, 1f)
+    return Color(android.graphics.Color.HSVToColor(hsv))
+}
 
 @Composable
 private fun rememberProfilePalettes(): List<ProfilePalette> {
@@ -191,7 +199,7 @@ private fun rememberProfilePalettes(): List<ProfilePalette> {
             ProfilePalette(Color(0xFFFFAB00), Color(0xFFFF3D00), content),
             // 6 Mood — hot pink → violet
             ProfilePalette(Color(0xFFF50057), Color(0xFF7C4DFF), content)
-        )
+        ).map { it.copy(start = it.start.desaturated(), end = it.end.desaturated()) }
     }
 }
 

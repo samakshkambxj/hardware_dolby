@@ -316,46 +316,49 @@ private fun ModernAdvancedSettingsContent(
                         title = "Surround Virtualizer",
                         icon = Icons.Default.Headphones
                     ) {
-                        if (state.isOnSpeaker) {
-                            ModernSettingSwitch(
-                                title = stringResource(R.string.dolby_spk_virtualizer),
-                                subtitle = stringResource(R.string.dolby_spk_virtualizer_summary),
-                                checked = state.profileSettings.speakerVirtualizerEnabled,
-                                onCheckedChange = { viewModel.setSpeakerVirtualizer(it) },
-                                icon = Icons.Default.Speaker
-                            )
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Column {
+                                ModernSettingSwitch(
+                                    title = stringResource(R.string.dolby_spk_virtualizer),
+                                    subtitle = stringResource(R.string.dolby_spk_virtualizer_summary),
+                                    checked = state.profileSettings.speakerVirtualizerEnabled,
+                                    onCheckedChange = { viewModel.setSpeakerVirtualizer(it) },
+                                    icon = Icons.Default.Speaker
+                                )
 
-                            AnimatedVisibility(visible = state.profileSettings.speakerVirtualizerEnabled) {
-                                Column {
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    ModernSettingSlider(
-                                        title = stringResource(R.string.dolby_hp_virtualizer_dolby_strength),
-                                        value = state.profileSettings.stereoWideningAmount,
-                                        onValueChange = { viewModel.setStereoWidening(it.toInt()) },
-                                        valueRange = 4f..64f,
-                                        steps = 59
-                                    )
+                                AnimatedVisibility(visible = state.profileSettings.speakerVirtualizerEnabled) {
+                                    Column {
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        ModernSettingSlider(
+                                            title = stringResource(R.string.dolby_hp_virtualizer_dolby_strength),
+                                            value = state.profileSettings.stereoWideningAmount,
+                                            onValueChange = { viewModel.setStereoWidening(it.toInt()) },
+                                            valueRange = 4f..64f,
+                                            steps = 59
+                                        )
+                                    }
                                 }
                             }
-                        } else {
-                            ModernSettingSwitch(
-                                title = stringResource(R.string.dolby_hp_virtualizer),
-                                subtitle = stringResource(R.string.dolby_hp_virtualizer_summary),
-                                checked = state.profileSettings.headphoneVirtualizerEnabled,
-                                onCheckedChange = { viewModel.setHeadphoneVirtualizer(it) },
-                                icon = Icons.Default.Headphones
-                            )
-                            
-                            AnimatedVisibility(visible = state.profileSettings.headphoneVirtualizerEnabled) {
-                                Column {
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    ModernSettingSlider(
-                                        title = stringResource(R.string.dolby_hp_virtualizer_dolby_strength),
-                                        value = state.profileSettings.stereoWideningAmount,
-                                        onValueChange = { viewModel.setStereoWidening(it.toInt()) },
-                                        valueRange = 4f..64f,
-                                        steps = 59
-                                    )
+                            Column {
+                                ModernSettingSwitch(
+                                    title = stringResource(R.string.dolby_hp_virtualizer),
+                                    subtitle = stringResource(R.string.dolby_hp_virtualizer_summary),
+                                    checked = state.profileSettings.headphoneVirtualizerEnabled,
+                                    onCheckedChange = { viewModel.setHeadphoneVirtualizer(it) },
+                                    icon = Icons.Default.Headphones
+                                )
+
+                                AnimatedVisibility(visible = state.profileSettings.headphoneVirtualizerEnabled) {
+                                    Column {
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        ModernSettingSlider(
+                                            title = stringResource(R.string.dolby_hp_virtualizer_dolby_strength),
+                                            value = state.profileSettings.stereoWideningAmount,
+                                            onValueChange = { viewModel.setStereoWidening(it.toInt()) },
+                                            valueRange = 4f..64f,
+                                            steps = 59
+                                        )
+                                    }
                                 }
                             }
                         }

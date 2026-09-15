@@ -189,10 +189,13 @@ fun ModernEqualizerScreen(
         SavePresetDialog(
             onSave = { name ->
                 EasterEggs.checkPresetName(name)?.let { code ->
-                    if (EasterEggs.unlock(context, EasterEggs.BADGE_WORDSMITH)) {
-                        scope.launch {
-                            haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.HEAVY_CLICK)
-                        }
+                    if (EasterEggs.isMaintainerCode(code)) {
+                        EasterEggs.unlock(context, EasterEggs.BADGE_MAINTAINER)
+                    } else {
+                        EasterEggs.unlock(context, EasterEggs.BADGE_WORDSMITH)
+                    }
+                    scope.launch {
+                        haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.HEAVY_CLICK)
                     }
                     ToastHelper.showToast(context, context.getString(EasterEggs.cheatMessageRes(code)))
                 }

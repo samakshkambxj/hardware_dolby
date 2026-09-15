@@ -5,13 +5,18 @@
 
 package org.lunaris.dolby.ui.components
 
+import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -22,14 +27,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.lunaris.dolby.R
+import java.io.File
+import java.io.FileOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
 
 data class Contributor(
     val name: String,
@@ -47,13 +62,14 @@ fun CreditsDialog(
     
     val repoUrl = "https://github.com/samakshkambxj/hardware_dolby"
     
+    val maintainer = Contributor(
+        name = "Samakshhhh",
+        githubUsername = "samakshkambxj",
+        contribution = "Maintainer — ported Lunaris Dolby for Nothing Phone (3a) Lite (Galaxian) and adds new features",
+        isHighlighted = true
+    )
+
     val mainContributors = listOf(
-        Contributor(
-            name = "Samakshhhh",
-            githubUsername = "samakshkambxj",
-            contribution = "Port Lunaris Dolby for Nothing Phone (3a) Lite (Galaxian) and add new features",
-            isHighlighted = true
-        ),
         Contributor(
             name = "Anshuman_X",
             githubUsername = "maxxcodebug",
@@ -237,6 +253,18 @@ fun CreditsDialog(
                     }
                     item {
                         Text(
+                            text = "Maintainer",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                        )
+                    }
+                    item {
+                        MaintainerCard(contributor = maintainer)
+                    }
+                    item {
+                        Text(
                             text = "Main Contributors",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
@@ -345,6 +373,187 @@ fun CreditsDialog(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MaintainerCard(
+    contributor: Contributor
+) {
+    val context = LocalContext.current
+    val githubUrl = "https://github.com/${contributor.githubUsername}"
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.extraLarge)
+            .clickable {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(githubUrl))
+                context.startActivity(intent)
+            },
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primaryContainer,
+                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f)
+                        )
+                    )
+                )
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            GithubAvatar(
+                githubUsername = contributor.githubUsername,
+                size = 84.dp
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.primary
+            ) {
+                Text(
+                    text = "MAINTAINER",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = contributor.name,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                textAlign = TextAlign.Center
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Code,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "@${contributor.githubUsername}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = contributor.contribution,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "View on GitHub",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Default.OpenInNew,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * GitHub profile picture with an offline disk cache. Falls back to a person
+ * glyph while loading or when the network is unavailable.
+ */
+@Composable
+private fun GithubAvatar(
+    githubUsername: String,
+    modifier: Modifier = Modifier,
+    size: Dp = 64.dp
+) {
+    val context = LocalContext.current
+    var avatar by remember(githubUsername) { mutableStateOf<ImageBitmap?>(null) }
+
+    LaunchedEffect(githubUsername) {
+        avatar = withContext(Dispatchers.IO) {
+            loadGithubAvatar(context, githubUsername)?.asImageBitmap()
+        }
+    }
+
+    val avatarModifier = modifier.size(size).clip(CircleShape)
+    if (avatar != null) {
+        Image(
+            bitmap = avatar!!,
+            contentDescription = "$githubUsername GitHub avatar",
+            contentScale = ContentScale.Crop,
+            modifier = avatarModifier
+        )
+    } else {
+        Surface(
+            modifier = avatarModifier,
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primary
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(size * 0.55f)
+                )
+            }
+        }
+    }
+}
+
+private fun loadGithubAvatar(context: Context, username: String): Bitmap? {
+    val cacheFile = File(context.cacheDir, "avatar_$username.png")
+    runCatching {
+        if (cacheFile.exists()) BitmapFactory.decodeFile(cacheFile.absolutePath)
+    }.getOrNull()?.let { return it }
+
+    var connection: HttpURLConnection? = null
+    return try {
+        connection = (URL("https://github.com/$username.png").openConnection()
+            as HttpURLConnection).apply {
+            connectTimeout = 10_000
+            readTimeout = 15_000
+            setRequestProperty("User-Agent", "Lunaris-Dolby/1.0")
+            connect()
+        }
+        if (connection.responseCode != HttpURLConnection.HTTP_OK) return null
+        val bitmap = connection.inputStream.use { BitmapFactory.decodeStream(it) }
+            ?: return null
+        runCatching {
+            FileOutputStream(cacheFile).use {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+            }
+        }
+        bitmap
+    } catch (_: Exception) {
+        null
+    } finally {
+        connection?.disconnect()
     }
 }
 
