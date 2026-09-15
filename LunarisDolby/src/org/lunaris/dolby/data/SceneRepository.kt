@@ -56,6 +56,9 @@ class SceneRepository(private val context: Context) {
             ieqPreset = dolby.getIeqPreset(profile),
             bassLevel = dolby.getBassLevel(profile),
             bassCurve = dolby.getBassCurve(profile),
+            subBassLevel = dolby.getSubBassLevel(profile),
+            midBassLevel = dolby.getMidBassLevel(profile),
+            upperBassLevel = dolby.getUpperBassLevel(profile),
             midLevel = dolby.getMidLevel(profile),
             trebleLevel = dolby.getTrebleLevel(profile),
             volumeLeveler = dolby.getVolumeLevelerEnabled(profile),
@@ -100,6 +103,9 @@ class SceneRepository(private val context: Context) {
         dolby.setIeqPreset(scene.profile, scene.ieqPreset)
         dolby.setBassCurve(scene.profile, scene.bassCurve.coerceIn(0, MAX_BASS_CURVE))
         dolby.setBassLevel(scene.profile, scene.bassLevel.coerceIn(0, 100))
+        dolby.setSubBassLevel(scene.profile, scene.subBassLevel.coerceIn(0, 100))
+        dolby.setMidBassLevel(scene.profile, scene.midBassLevel.coerceIn(0, 100))
+        dolby.setUpperBassLevel(scene.profile, scene.upperBassLevel.coerceIn(0, 100))
         dolby.setMidLevel(scene.profile, scene.midLevel.coerceIn(0, 100))
         dolby.setTrebleLevel(scene.profile, scene.trebleLevel.coerceIn(0, 100))
         dolby.setVolumeLevelerEnabled(scene.profile, scene.volumeLeveler)
@@ -270,6 +276,9 @@ class SceneRepository(private val context: Context) {
             .put("ieq", scene.ieqPreset)
             .put("bass", scene.bassLevel)
             .put("bassCurve", scene.bassCurve)
+            .put("subBass", scene.subBassLevel)
+            .put("midBass", scene.midBassLevel)
+            .put("upperBass", scene.upperBassLevel)
             .put("mid", scene.midLevel)
             .put("treble", scene.trebleLevel)
             .put("leveler", scene.volumeLeveler)
@@ -292,6 +301,9 @@ class SceneRepository(private val context: Context) {
             ieqPreset = o.optInt("ieq", 0),
             bassLevel = o.optInt("bass", 0),
             bassCurve = o.optInt("bassCurve", 0),
+            subBassLevel = o.optInt("subBass", 0),
+            midBassLevel = o.optInt("midBass", 0),
+            upperBassLevel = o.optInt("upperBass", 0),
             midLevel = o.optInt("mid", 0),
             trebleLevel = o.optInt("treble", 0),
             volumeLeveler = o.optBoolean("leveler", false),

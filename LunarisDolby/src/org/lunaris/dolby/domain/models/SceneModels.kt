@@ -8,8 +8,8 @@ package org.lunaris.dolby.domain.models
 /**
  * A Scene is a named snapshot of the most relevant Dolby settings that can be
  * applied in one tap. Scenes intentionally capture enhancer-level settings
- * (profile, IEQ, bass/mid/treble, leveler, dialogue, virtualizers) and not raw
- * GEQ band gains, because the bass/mid/treble setters deterministically derive
+ * (profile, IEQ, bass/mid/treble, sub/mid/upper bass trims, leveler, dialogue, virtualizers) and not raw
+ * GEQ band gains, because the bass/mid/treble/trim setters deterministically derive
  * GEQ deltas from the stored levels.
  */
 data class Scene(
@@ -21,6 +21,9 @@ data class Scene(
     val ieqPreset: Int = 0,
     val bassLevel: Int = 0,
     val bassCurve: Int = 0,
+    val subBassLevel: Int = 0,
+    val midBassLevel: Int = 0,
+    val upperBassLevel: Int = 0,
     val midLevel: Int = 0,
     val trebleLevel: Int = 0,
     val volumeLeveler: Boolean = false,
