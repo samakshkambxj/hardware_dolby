@@ -243,7 +243,8 @@ private fun ModernDolbySettingsContent(
             BouncyPopIn(delayMillis = 0, key = "main_card") {
                 DolbyMainCard(
                     enabled = state.settings.enabled,
-                    onEnabledChange = { viewModel.setDolbyEnabled(it) }
+                    onEnabledChange = { viewModel.setDolbyEnabled(it) },
+                    onEasterEggUnlocked = { navController.navigate(Screen.EasterEgg.route) }
                 )
             }
         }

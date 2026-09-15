@@ -14,6 +14,8 @@ import org.lunaris.dolby.audio.DynamicsEqualizerEngine
 import org.lunaris.dolby.audio.DynamicsVisualizerEngine
 import org.lunaris.dolby.data.DynamicsEqualizerPresetRepository
 import org.lunaris.dolby.data.DynamicsPresetData
+import org.lunaris.dolby.data.DynamicsStateData
+import org.lunaris.dolby.data.DynamicsStateStore
 
 data class MbcBandUiState(
     val label: String,
@@ -45,6 +47,7 @@ class DynamicsEqualizerViewModel(application: Application) : AndroidViewModel(ap
     private val engine = DynamicsEqualizerEngine(sessionId = 0, bandCount = 10)
     private val visualizerEngine = DynamicsVisualizerEngine(sessionId = 0, barCount = 32)
     private val presetRepository = DynamicsEqualizerPresetRepository(application)
+    private val stateStore = DynamicsStateStore(application)
 
     private val _spectrum = MutableStateFlow(FloatArray(32))
     val spectrum: StateFlow<FloatArray> = _spectrum.asStateFlow()
@@ -54,9 +57,58 @@ class DynamicsEqualizerViewModel(application: Application) : AndroidViewModel(ap
 
     init {
         engine.init()
+        restorePersistedState()
         _uiState.value = buildState()
         visualizerEngine.onSpectrumUpdate = { bars -> _spectrum.value = bars }
         visualizerEngine.start()
+    }
+
+    /**
+     * Pushes the last persisted state back into the engine so the master
+     * switch, gains and dynamics settings survive app/process restarts.
+     * Engine setters clamp and bounds-check, so stored values of any shape
+     * are safe to apply.
+     */
+    private fun restorePersistedState() {
+        val stored = stateStore.load() ?: return
+        engine.setEnabled(stored.enabled)
+        engine.setPreamp(stored.preampDb)
+        stored.bandGains.forEachIndexed { index, gain ->
+            engine.setBandGain(index, gain)
+        }
+        engine.setMbcEnabled(stored.mbcEnabled)
+        for (i in 0 until engine.mbcBandCount) {
+            engine.setMbcThreshold(i, stored.mbcThresholds.getOrElse(i) { -20f })
+            engine.setMbcRatio(i, stored.mbcRatios.getOrElse(i) { 2f })
+            engine.setMbcAttack(i, stored.mbcAttacks.getOrElse(i) { 10f })
+            engine.setMbcRelease(i, stored.mbcReleases.getOrElse(i) { 100f })
+        }
+        engine.setLimiterEnabled(stored.limiterEnabled)
+        engine.setLimiterThreshold(stored.limiterThreshold)
+        engine.setLimiterRatio(stored.limiterRatio)
+        engine.setLimiterRelease(stored.limiterRelease)
+        engine.setLimiterPostGain(stored.limiterPostGain)
+    }
+
+    private fun persistState() {
+        val s = _uiState.value
+        stateStore.save(
+            DynamicsStateData(
+                enabled = s.enabled,
+                preampDb = s.preampDb,
+                bandGains = s.bandGains,
+                mbcEnabled = s.mbcEnabled,
+                mbcThresholds = s.mbcBands.map { it.threshold },
+                mbcRatios = s.mbcBands.map { it.ratio },
+                mbcAttacks = s.mbcBands.map { it.attackMs },
+                mbcReleases = s.mbcBands.map { it.releaseMs },
+                limiterEnabled = s.limiterEnabled,
+                limiterThreshold = s.limiterThreshold,
+                limiterRatio = s.limiterRatio,
+                limiterRelease = s.limiterRelease,
+                limiterPostGain = s.limiterPostGain
+            )
+        )
     }
 
     private fun buildState(): DynamicsEqualizerUiState {
@@ -88,6 +140,7 @@ class DynamicsEqualizerViewModel(application: Application) : AndroidViewModel(ap
     fun setEnabled(enabled: Boolean) {
         engine.setEnabled(enabled)
         _uiState.value = _uiState.value.copy(enabled = enabled)
+        persistState()
     }
 
     fun setBandGain(band: Int, gainDb: Float) {
@@ -97,61 +150,73 @@ class DynamicsEqualizerViewModel(application: Application) : AndroidViewModel(ap
             updated[band] = gainDb
         }
         _uiState.value = _uiState.value.copy(bandGains = updated)
+        persistState()
     }
 
     fun setPreamp(gainDb: Float) {
         engine.setPreamp(gainDb)
         _uiState.value = _uiState.value.copy(preampDb = gainDb)
+        persistState()
     }
 
     fun setMbcEnabled(enabled: Boolean) {
         engine.setMbcEnabled(enabled)
         _uiState.value = _uiState.value.copy(mbcEnabled = enabled)
+        persistState()
     }
 
     fun setMbcThreshold(band: Int, value: Float) {
         engine.setMbcThreshold(band, value)
         _uiState.value = buildState()
+        persistState()
     }
 
     fun setMbcRatio(band: Int, value: Float) {
         engine.setMbcRatio(band, value)
         _uiState.value = buildState()
+        persistState()
     }
 
     fun setMbcAttack(band: Int, value: Float) {
         engine.setMbcAttack(band, value)
         _uiState.value = buildState()
+        persistState()
     }
 
     fun setMbcRelease(band: Int, value: Float) {
         engine.setMbcRelease(band, value)
         _uiState.value = buildState()
+        persistState()
     }
 
     fun setLimiterEnabled(enabled: Boolean) {
         engine.setLimiterEnabled(enabled)
         _uiState.value = buildState()
+        persistState()
     }
 
     fun setLimiterThreshold(value: Float) {
         engine.setLimiterThreshold(value)
         _uiState.value = buildState()
+        persistState()
     }
 
     fun setLimiterRelease(value: Float) {
         engine.setLimiterRelease(value)
         _uiState.value = buildState()
+        persistState()
     }
 
     fun setLimiterRatio(value: Float) {
         engine.setLimiterRatio(value)
         _uiState.value = buildState()
+        persistState()
     }
 
     fun setLimiterPostGain(value: Float) {
         engine.setLimiterPostGain(value)
         _uiState.value = buildState()
+        persistState()
     }
 
     fun savePreset(name: String) {
@@ -175,6 +240,7 @@ class DynamicsEqualizerViewModel(application: Application) : AndroidViewModel(ap
             )
         )
         _uiState.value = buildState()
+        persistState()
     }
 
     fun loadPreset(name: String) {
@@ -198,6 +264,7 @@ class DynamicsEqualizerViewModel(application: Application) : AndroidViewModel(ap
         engine.setLimiterPostGain(preset.limiterPostGain)
 
         _uiState.value = buildState()
+        persistState()
     }
 
     fun deletePreset(name: String) {

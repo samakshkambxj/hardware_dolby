@@ -9,6 +9,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -23,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -30,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
+import org.lunaris.dolby.data.EasterEggs
 import org.lunaris.dolby.domain.models.ActiveAudioDevice
 import org.lunaris.dolby.domain.models.AudioDeviceCategory
 import org.lunaris.dolby.domain.models.ProfileSettings
@@ -161,11 +164,14 @@ fun ActiveAudioDeviceCard(
 fun DolbyMainCard(
     enabled: Boolean,
     onEnabledChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onEasterEggUnlocked: () -> Unit = {}
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
-    
+    val context = LocalContext.current
+    var logoTaps by remember { mutableStateOf(0) }
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
@@ -201,7 +207,42 @@ fun DolbyMainCard(
                 )
 
                 DolbyLogo(
-                    modifier = Modifier.height(60.dp),
+                    modifier = Modifier
+                        .height(60.dp)
+                        .squishable(enabled = true, scaleDown = 0.9f)
+                        .clickable {
+                            logoTaps = EasterEggs.recordLogoTap(context)
+                            when {
+                                EasterEggs.isUnlocked(EasterEggs.BADGE_PERSISTENT) -> {
+                                    // Owned: a quiet tick, nothing more.
+                                }
+                                logoTaps >= EasterEggs.LOGO_TAP_TARGET -> {
+                                    logoTaps = 0
+                                    if (EasterEggs.unlock(context, EasterEggs.BADGE_PERSISTENT)) {
+                                        scope.launch {
+                                            haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.DOUBLE_CLICK)
+                                        }
+                                        ToastHelper.showToast(
+                                            context,
+                                            context.getString(R.string.egg_logo_unlocked)
+                                        )
+                                        onEasterEggUnlocked()
+                                    }
+                                }
+                                logoTaps == 3 -> {
+                                    ToastHelper.showToast(
+                                        context,
+                                        context.getString(R.string.egg_logo_tease_1)
+                                    )
+                                }
+                                logoTaps == 5 -> {
+                                    ToastHelper.showToast(
+                                        context,
+                                        context.getString(R.string.egg_logo_tease_2)
+                                    )
+                                }
+                            }
+                        },
                     leftColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     rightColor = MaterialTheme.colorScheme.primary
                 )
