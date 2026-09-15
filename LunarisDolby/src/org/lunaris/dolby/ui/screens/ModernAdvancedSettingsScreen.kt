@@ -39,12 +39,25 @@ fun ModernAdvancedSettingsScreen(
     val balanceError by viewModel.balanceError.collectAsState()
     val scenes by viewModel.scenes.collectAsState()
     val deviceScenes by viewModel.deviceScenes.collectAsState()
+    val spatialSupported by viewModel.spatializerSupported.collectAsState()
+    val spatialAvailable by viewModel.spatializerAvailable.collectAsState()
+    val spatialEnabled by viewModel.spatializerEnabled.collectAsState()
+    val headTrackingAvailable by viewModel.headTrackingAvailable.collectAsState()
+    val headTrackingEnabled by viewModel.headTrackingEnabled.collectAsState()
+    val spatialError by viewModel.spatialError.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(balanceError) {
         balanceError?.let {
             ToastHelper.showToast(context, it)
             viewModel.clearBalanceError()
+        }
+    }
+
+    LaunchedEffect(spatialError) {
+        spatialError?.let {
+            ToastHelper.showToast(context, it)
+            viewModel.clearSpatialError()
         }
     }
 
@@ -87,6 +100,11 @@ fun ModernAdvancedSettingsScreen(
                     onBalanceChange = { viewModel.setChannelBalance(it) },
                     scenes = scenes,
                     deviceScenes = deviceScenes,
+                    spatialSupported = spatialSupported,
+                    spatialAvailable = spatialAvailable,
+                    spatialEnabled = spatialEnabled,
+                    headTrackingAvailable = headTrackingAvailable,
+                    headTrackingEnabled = headTrackingEnabled,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -129,6 +147,11 @@ private fun ModernAdvancedSettingsContent(
     onBalanceChange: (Float) -> Unit,
     scenes: List<org.lunaris.dolby.domain.models.Scene>,
     deviceScenes: Map<String, String>,
+    spatialSupported: Boolean,
+    spatialAvailable: Boolean,
+    spatialEnabled: Boolean,
+    headTrackingAvailable: Boolean,
+    headTrackingEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -356,6 +379,18 @@ private fun ModernAdvancedSettingsContent(
             }
         }
         
+        item {
+            SpatialAudioCard(
+                isSupported = spatialSupported,
+                isAvailable = spatialAvailable,
+                isEnabled = spatialEnabled,
+                headTrackingAvailable = headTrackingAvailable,
+                headTrackingEnabled = headTrackingEnabled,
+                onEnabledChange = { viewModel.setSpatialAudioEnabled(it) },
+                onHeadTrackingChange = { viewModel.setHeadTrackingEnabled(it) }
+            )
+        }
+
         item {
             BalanceCard(
                 balance = balance,
