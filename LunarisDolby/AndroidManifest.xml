@@ -125,6 +125,17 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".tile.SpatialTileService"
+            android:icon="@drawable/ic_dolby_qs"
+            android:label="@string/tile_spatial_title"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
         <provider
             android:name=".provider.SummaryProvider"
             android:authorities="org.lunaris.dolby.summary">

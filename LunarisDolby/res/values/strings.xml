@@ -273,6 +273,7 @@
     <!-- Quick Settings tiles -->
     <string name="tile_scene_title">Dolby Scene</string>
     <string name="tile_leveler_title">Volume Leveler</string>
+    <string name="tile_spatial_title">Spatial Audio</string>
 
     <!-- Spatial audio (framework Spatializer) -->
     <string name="spatial_title">Spatial audio</string>
