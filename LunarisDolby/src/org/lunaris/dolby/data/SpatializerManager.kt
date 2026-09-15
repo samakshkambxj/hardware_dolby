@@ -20,6 +20,13 @@ import org.lunaris.dolby.DolbyConstants
  * libswspatializer on this device), NOT the Dolby DAP virtualizer params.
  * All calls are guarded so the UI can render an "unsupported" state on
  * devices/outputs without a spatializer.
+ *
+ * Writes ([setEnabled], head-tracker set, state listener) are SystemApi gated
+ * by MODIFY_DEFAULT_AUDIO_EFFECTS — declared in the manifest and allowlisted
+ * in privapp-permissions-dolby.xml. Without it the platform throws
+ * SecurityException, the set silently no-ops, and the next [refresh]
+ * re-reads the old value (toggle snapping back). Callers must surface a
+ * `false` return to the user instead of assuming success.
  */
 class SpatializerManager(context: Context) {
 
@@ -42,8 +49,56 @@ class SpatializerManager(context: Context) {
     private val _isHeadTrackingEnabled = MutableStateFlow(false)
     val isHeadTrackingEnabled: StateFlow<Boolean> = _isHeadTrackingEnabled.asStateFlow()
 
+    /**
+     * System-side callback so external changes (Settings toggle, output
+     * switch) reflect here live instead of only on next resume/refresh.
+     * Same permission gate as the setters, so registration is a no-op
+     * without MODIFY_DEFAULT_AUDIO_EFFECTS.
+     */
+    private val stateListener =
+        object : android.media.Spatializer.OnSpatializerStateChangedListener {
+            override fun onSpatializerAvailableChanged(
+                spat: android.media.Spatializer,
+                available: Boolean
+            ) {
+                refresh()
+            }
+
+            override fun onSpatializerEnabledChanged(
+                spat: android.media.Spatializer,
+                enabled: Boolean
+            ) {
+                refresh()
+            }
+        }
+    private var listenerRegistered = false
+
     init {
         refresh()
+        registerStateListener()
+    }
+
+    private fun registerStateListener() {
+        if (listenerRegistered || !_isSupported.value) return
+        listenerRegistered = runCatching {
+            val spatializer = audioManager?.spatializer ?: return@runCatching false
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return@runCatching false
+            spatializer.addOnSpatializerStateChangedListener(
+                appContext.mainExecutor,
+                stateListener
+            )
+            true
+        }.getOrDefault(false)
+    }
+
+    /** Unregister the system callback. Call from ViewModel.onCleared(). */
+    fun destroy() {
+        if (!listenerRegistered) return
+        listenerRegistered = false
+        runCatching {
+            audioManager?.spatializer
+                ?.removeOnSpatializerStateChangedListener(stateListener)
+        }
     }
 
     private fun isSpatializerApiPresent(): Boolean {

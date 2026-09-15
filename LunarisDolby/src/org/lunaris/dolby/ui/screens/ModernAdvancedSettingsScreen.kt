@@ -45,6 +45,7 @@ fun ModernAdvancedSettingsScreen(
     val spatialEnabled by viewModel.spatializerEnabled.collectAsState()
     val headTrackingAvailable by viewModel.headTrackingAvailable.collectAsState()
     val headTrackingEnabled by viewModel.headTrackingEnabled.collectAsState()
+    val spatialError by viewModel.spatialError.collectAsState()
     val context = LocalContext.current
     val advListState = rememberLazyListState()
     val advScrollFraction = rememberTopBarScrollFraction(advListState)
@@ -53,6 +54,13 @@ fun ModernAdvancedSettingsScreen(
         balanceError?.let {
             ToastHelper.showToast(context, it)
             viewModel.clearBalanceError()
+        }
+    }
+
+    LaunchedEffect(spatialError) {
+        spatialError?.let {
+            ToastHelper.showToast(context, it)
+            viewModel.clearSpatialError()
         }
     }
 

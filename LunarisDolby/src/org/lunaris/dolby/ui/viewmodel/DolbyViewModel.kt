@@ -40,6 +40,9 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     val headTrackingAvailable: StateFlow<Boolean> = spatializerManager.isHeadTrackingAvailable
     val headTrackingEnabled: StateFlow<Boolean> = spatializerManager.isHeadTrackingEnabled
 
+    private val _spatialError = MutableStateFlow<String?>(null)
+    val spatialError: StateFlow<String?> = _spatialError.asStateFlow()
+
     private val _uiState = MutableStateFlow<DolbyUiState>(DolbyUiState.Loading)
     val uiState: StateFlow<DolbyUiState> = _uiState.asStateFlow()
     val currentProfile: StateFlow<Int> = repository.currentProfile
@@ -102,10 +105,16 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     fun setSpatialAudioEnabled(enabled: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                spatializerManager.setEnabled(enabled)
+                val ok = spatializerManager.setEnabled(enabled)
                 spatializerManager.refresh()
+                if (!ok) {
+                    _spatialError.value =
+                        getApplication<Application>().getString(R.string.spatial_change_failed)
+                }
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error setting spatial audio: ${e.message}")
+                _spatialError.value =
+                    getApplication<Application>().getString(R.string.spatial_change_failed)
             }
         }
     }
@@ -113,12 +122,22 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     fun setHeadTrackingEnabled(enabled: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                spatializerManager.setHeadTrackingEnabled(enabled)
+                val ok = spatializerManager.setHeadTrackingEnabled(enabled)
                 spatializerManager.refresh()
+                if (!ok) {
+                    _spatialError.value =
+                        getApplication<Application>().getString(R.string.spatial_change_failed)
+                }
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error setting head tracking: ${e.message}")
+                _spatialError.value =
+                    getApplication<Application>().getString(R.string.spatial_change_failed)
             }
         }
+    }
+
+    fun clearSpatialError() {
+        _spatialError.value = null
     }
     
     private fun observeProfileChanges() {
@@ -569,6 +588,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         DolbyConstants.dlog(TAG, "ViewModel onCleared")
         isCleared = true
+        spatializerManager.destroy()
         viewModelScope.coroutineContext.cancelChildren()
         audioOutputStateJob?.cancel()
         audioOutputStateJob = null
