@@ -286,7 +286,7 @@ fun Modifier.verticalBouncyEdge(
     if (!enabled) return@composed this
     val offset = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
-    val connection = remember(maxStretchPx, stretchFactor) {
+    val connection = remember(maxStretchPx, stretchFactor, scope, offset) {
         object : NestedScrollConnection {
             var target = 0f
             var settleJob: Job? = null
@@ -299,9 +299,14 @@ fun Modifier.verticalBouncyEdge(
 
             private fun snapToTarget(token: Int) {
                 if (token != generation) return
+                // Snapshot: target is mutated by later scroll deltas on the UI
+                // thread; reading it inside the launched coroutine races with
+                // those writes and could snap to a newer value, then have the
+                // watchdog yank it back to rest mid-gesture (visible jump).
+                val snapshot = target
                 settleJob?.cancel()
                 settleJob = scope.launch {
-                    offset.snapTo(target)
+                    offset.snapTo(snapshot)
                     if (token == generation && abs(offset.value) < 0.5f && target != 0f) {
                         target = 0f
                         offset.snapTo(0f)
@@ -334,10 +339,17 @@ fun Modifier.verticalBouncyEdge(
                 // stretch. Remainder flows to the list so scrolling never
                 // freezes on residual stretch.
                 if (target.sign != available.y.sign) {
-                    val take = available.y.coerceIn(
-                        minimumValue = if (target > 0f) -target else available.y,
-                        maximumValue = if (target < 0f) -target else available.y
-                    )
+                    // Clamp the retraction to exactly what is needed to reach
+                    // rest. The old coerceIn(-target, available.y) inverted
+                    // (min > max) and threw whenever the scroll delta was
+                    // larger than the residual stretch — the fast-fling-up
+                    // case from the crash log. These ranges are always valid
+                    // and can never overshoot past rest.
+                    val take = if (target > 0f) {
+                        available.y.coerceIn(-target, 0f)
+                    } else {
+                        available.y.coerceIn(0f, -target)
+                    }
                     if (take != 0f) {
                         generation += 1
                         target += take

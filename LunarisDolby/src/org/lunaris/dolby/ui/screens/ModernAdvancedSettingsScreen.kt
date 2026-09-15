@@ -162,7 +162,7 @@ private fun ModernAdvancedSettingsContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (state.settings.enabled) {
-            item {
+            item(key = "eq_settings") {
                 ModernSettingsCard(
                     title = stringResource(R.string.dolby_category_settings),
                     icon = Icons.Default.Tune
@@ -270,7 +270,7 @@ private fun ModernAdvancedSettingsContent(
                 }
             }
             
-            item {
+            item(key = "volume_leveler") {
                 ModernSettingsCard(
                     title = "Volume Leveler",
                     icon = Icons.Default.VolumeDown
@@ -286,7 +286,7 @@ private fun ModernAdvancedSettingsContent(
             }
             
             if (state.settings.currentProfile != 0) {
-                item {
+                item(key = "surround_virtualizer") {
                     ModernSettingsCard(
                         title = "Surround Virtualizer",
                         icon = Icons.Default.Headphones
@@ -324,7 +324,7 @@ private fun ModernAdvancedSettingsContent(
                     }
                 }
                 
-                item {
+                item(key = "dialogue_enhancement") {
                     ModernSettingsCard(
                         title = "Dialogue Enhancement",
                         icon = Icons.Default.RecordVoiceOver
@@ -353,7 +353,7 @@ private fun ModernAdvancedSettingsContent(
                 }
             }
         } else {
-            item {
+            item(key = "disabled_notice") {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.large,
@@ -381,7 +381,7 @@ private fun ModernAdvancedSettingsContent(
             }
         }
         
-        item {
+        item(key = "spatial_audio") {
             SpatialAudioCard(
                 isSupported = spatialSupported,
                 isAvailable = spatialAvailable,
@@ -393,18 +393,18 @@ private fun ModernAdvancedSettingsContent(
             )
         }
 
-        item {
+        item(key = "balance") {
             BalanceCard(
                 balance = balance,
                 onBalanceChange = onBalanceChange
             )
         }
 
-        item {
+        item(key = "automation") {
             AutomationCard()
         }
 
-        item {
+        item(key = "device_scene") {
             val deviceKey = remember(state.activeAudioDevice) {
                 viewModel.currentDeviceKey()
             }
@@ -418,7 +418,7 @@ private fun ModernAdvancedSettingsContent(
             )
         }
 
-        item {
+        item(key = "bottom_spacer") {
             Spacer(modifier = Modifier.height(70.dp))
         }
     }

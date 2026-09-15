@@ -579,7 +579,10 @@ private fun SlidersViewContent(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    itemsIndexed(state.bandGains) { index, bandGain ->
+                    itemsIndexed(
+                        items = state.bandGains,
+                        key = { _, bandGain -> bandGain.frequency }
+                    ) { index, bandGain ->
                         ModernEqualizerBand(
                             frequency = bandGain.frequency,
                             gain = bandGain.gain,
@@ -1348,10 +1351,10 @@ private fun FrequencyResponseCurve(
             )
         }
         
-        if (bandGains.isNotEmpty()) {
+        if (bandGains.size >= 2) {
             val path = Path()
             val stepX = width / (bandGains.size - 1)
-            
+
             bandGains.forEachIndexed { index, bandGain ->
                 val x = index * stepX
                 val normalizedGain = (bandGain.gain / 150f).coerceIn(-1f, 1f)
@@ -1729,7 +1732,7 @@ private fun DynamicsProcessingSection(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(state.presetNames) { name ->
+                items(state.presetNames, key = { it }) { name ->
                     AssistChip(
                         onClick = { dynamicsVm.loadPreset(name) },
                         label = { Text(name) },
