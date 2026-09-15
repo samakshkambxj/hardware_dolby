@@ -31,9 +31,11 @@ import org.lunaris.dolby.R
 import org.lunaris.dolby.data.PresetExportManager
 import org.lunaris.dolby.domain.models.EqualizerPreset
 import org.lunaris.dolby.domain.models.EqualizerUiState
+import org.lunaris.dolby.ui.components.ApplyDialogWindowBlur
 import org.lunaris.dolby.ui.components.BouncyListItem
 import org.lunaris.dolby.ui.components.BouncyPopIn
 import org.lunaris.dolby.ui.components.LunarisGlassTopBar
+import org.lunaris.dolby.ui.components.rememberTopBarScrollFraction
 import org.lunaris.dolby.ui.components.verticalBouncyEdge
 import org.lunaris.dolby.ui.components.ModernConfirmDialog
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
@@ -158,9 +160,13 @@ fun PresetImportExportScreen(
         }
     }
 
+    val ioListState = rememberLazyListState()
+    val ioScrollFraction = rememberTopBarScrollFraction(ioListState)
+
     Scaffold(
         topBar = {
             LunarisGlassTopBar(
+                scrollFraction = ioScrollFraction,
                 title = {
                     Text(
                         stringResource(R.string.import_export_presets),
@@ -195,7 +201,7 @@ fun PresetImportExportScreen(
             when (val state = uiState) {
                 is EqualizerUiState.Success -> {
                     LazyColumn(
-                        state = rememberLazyListState(),
+                        state = ioListState,
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalBouncyEdge(),
@@ -434,6 +440,7 @@ fun PresetImportExportScreen(
         AlertDialog(
             onDismissRequest = { showBatchExport = false },
             icon = {
+                ApplyDialogWindowBlur()
                 Surface(
                     modifier = Modifier.size(56.dp),
                     shape = MaterialTheme.shapes.large,

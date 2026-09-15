@@ -148,6 +148,7 @@ fun SaveSceneDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
+            ApplyDialogWindowBlur()
             Text(
                 text = stringResource(R.string.scene_save_title),
                 style = MaterialTheme.typography.titleLarge,

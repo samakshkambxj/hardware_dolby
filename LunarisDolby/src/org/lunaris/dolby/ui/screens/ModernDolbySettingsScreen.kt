@@ -47,10 +47,13 @@ fun ModernDolbySettingsScreen(
     var sceneName by remember { mutableStateOf("") }
     var sceneToDelete by remember { mutableStateOf<Scene?>(null) }
     val context = LocalContext.current
+    val homeListState = rememberLazyListState()
+    val homeScrollFraction = rememberTopBarScrollFraction(homeListState)
 
     Scaffold(
         topBar = {
             LunarisGlassTopBar(
+                scrollFraction = homeScrollFraction,
                 title = {
                     Column {
                         Text(
@@ -116,6 +119,7 @@ fun ModernDolbySettingsScreen(
                     state = state,
                     viewModel = viewModel,
                     navController = navController,
+                    listState = homeListState,
                     scenes = scenes,
                     sleepState = sleepState,
                     onApplyScene = { scene ->
@@ -223,6 +227,7 @@ private fun ModernDolbySettingsContent(
     state: DolbyUiState.Success,
     viewModel: DolbyViewModel,
     navController: NavController,
+    listState: androidx.compose.foundation.lazy.LazyListState,
     scenes: List<Scene>,
     sleepState: SleepTimerState,
     onApplyScene: (Scene) -> Unit,
@@ -231,7 +236,6 @@ private fun ModernDolbySettingsContent(
     onResetScenesClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val listState = rememberLazyListState()
     LazyColumn(
         state = listState,
         modifier = modifier

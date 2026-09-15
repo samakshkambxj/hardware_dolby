@@ -787,6 +787,7 @@ fun ModernConfirmDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
+            ApplyDialogWindowBlur()
             BouncyPopIn(delayMillis = 0) {
                 Surface(
                     modifier = Modifier.size(56.dp),

@@ -35,6 +35,7 @@ import org.lunaris.dolby.domain.models.AppProfileUiState
 import org.lunaris.dolby.ui.components.BouncyListItem
 import org.lunaris.dolby.ui.components.LunarisGlassTopBar
 import org.lunaris.dolby.ui.components.ModernConfirmDialog
+import org.lunaris.dolby.ui.components.rememberTopBarScrollFraction
 import org.lunaris.dolby.ui.components.verticalBouncyEdge
 import org.lunaris.dolby.ui.viewmodel.AppProfileViewModel
 
@@ -47,10 +48,13 @@ fun AppProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var showClearAllDialog by remember { mutableStateOf(false) }
+    val appListState = rememberLazyListState()
+    val appScrollFraction = rememberTopBarScrollFraction(appListState)
 
     Scaffold(
         topBar = {
             LunarisGlassTopBar(
+                scrollFraction = appScrollFraction,
                 title = {
                     Text(
                         stringResource(R.string.app_profiles_title),
@@ -202,7 +206,7 @@ fun AppProfileScreen(
                         }
                     } else {
                         LazyColumn(
-                            state = rememberLazyListState(),
+                            state = appListState,
                             modifier = Modifier
                                 .fillMaxSize()
                                 .verticalBouncyEdge(),

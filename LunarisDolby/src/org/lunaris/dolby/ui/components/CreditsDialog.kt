@@ -94,6 +94,7 @@ fun CreditsDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
+        ApplyDialogWindowBlur()
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.95f)

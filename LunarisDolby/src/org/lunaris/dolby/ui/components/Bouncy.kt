@@ -86,10 +86,17 @@ object BouncySpecs {
         stiffness = Spring.StiffnessMediumLow
     )
 
-    /** Edge-stretch bounce for scroll containers only. */
+    /**
+     * Edge-stretch return for scroll containers only.
+     *
+     * Fast + nearly critical: single small overshoot, settles in ~250-350ms.
+     * The old MediumBouncy/Medium spec oscillated for ~800ms+, which is why
+     * a fast fling felt "stuck" then released late.
+     */
     val overscroll = spring<Float>(
-        dampingRatio = Spring.DampingRatioMediumBouncy,
-        stiffness = Spring.StiffnessMedium
+        dampingRatio = 0.82f,
+        stiffness = 1400f,
+        visibilityThreshold = 0.5f
     )
 }
 
@@ -274,21 +281,22 @@ fun LazyItemScope.BouncyListItem(
  *   Modifier.verticalBouncyEdge().verticalScroll(state)
  *   LazyColumn(Modifier.verticalBouncyEdge(), state = ...)
  *
- * Unconsumed scroll delta at the list ends stretches content (a fraction of
- * the finger travel, capped), then springs back with [BouncySpecs.overscroll].
- * Normal scrolling is untouched (we return Zero until the edge), so fling
- * smoothness is preserved.
- *
- * Implementation note: the stretch target is accumulated synchronously in a
- * plain var and only the Animatable write is posted async, guarded by a
- * generation counter. (Computing the next value from `offset.value` and
- * posting `snapTo` used to read a stale value under rapid scroll events, so
- * deltas collapsed and the stretch visibly lagged behind the finger.)
+ * Fast-scroll fixes vs the old version:
+ * - `offset.stop()` runs synchronously on every new edge delta, so an
+ *   in-flight spring-back never fights the finger (the old "stuck" feeling).
+ * - Diminishing resistance as [target] approaches [maxStretchPx], so a fast
+ *   fling bends instead of slamming into a hard cap and sitting there.
+ * - Snap is posted with UNDISPATCHED so translation follows the finger the
+ *   same frame instead of lagging a dispatch behind.
+ * - Single [settleJob] (cancel-previous) so finger-lift + fling can't launch
+ *   two competing animateTo coroutines on the same Animatable.
+ * - Return spring is fast/critically-damped ([BouncySpecs.overscroll]) and
+ *   carries fling velocity, so release feels instant, not late + wobbly.
  */
 fun Modifier.verticalBouncyEdge(
     enabled: Boolean = true,
-    maxStretchPx: Float = 180f,
-    stretchFactor: Float = 0.45f
+    maxStretchPx: Float = 140f,
+    stretchFactor: Float = 0.32f
 ): Modifier = composed {
     if (!enabled) return@composed this
     val offset = remember { Animatable(0f) }
@@ -296,25 +304,47 @@ fun Modifier.verticalBouncyEdge(
     val connection = remember(maxStretchPx, stretchFactor) {
         object : NestedScrollConnection {
             var target = 0f
-            var generation = 0
+            var settleJob: kotlinx.coroutines.Job? = null
+
+            private fun resistance(): Float {
+                val t = (kotlin.math.abs(target) / maxStretchPx).coerceIn(0f, 1f)
+                // 1.0 at rest -> ~0.15 at the cap: fast scrolls bend, never slam.
+                return 1f - t * t * 0.85f
+            }
 
             private fun stretchBy(delta: Float) {
-                generation += 1
-                val snapshot = generation
-                target = (target + delta * stretchFactor)
+                // Kill a running spring-back instantly: finger owns the offset now.
+                // Single UNDISPATCHED launch does stop+snap back-to-back so the
+                // translation follows the finger the same frame (no dispatch lag).
+                settleJob?.cancel()
+                target = (target + delta * stretchFactor * resistance())
                     .coerceIn(-maxStretchPx, maxStretchPx)
                 val settled = target
-                scope.launch {
-                    // A newer gesture event wins; stale snaps never clobber it.
-                    if (snapshot == generation) offset.snapTo(settled)
+                scope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+                    try {
+                        offset.stop()
+                    } catch (_: Exception) {
+                    }
+                    offset.snapTo(settled)
                 }
             }
 
-            fun settle() {
-                if (target == 0f && offset.value == 0f) return
-                generation += 1
+            fun settle(velocity: Float = 0f) {
+                if (target == 0f && offset.value == 0f && !offset.isRunning) return
                 target = 0f
-                scope.launch { offset.animateTo(0f, BouncySpecs.overscroll) }
+                settleJob?.cancel()
+                val startVelocity = velocity.coerceIn(-2500f, 2500f)
+                settleJob = scope.launch {
+                    try {
+                        offset.animateTo(
+                            targetValue = 0f,
+                            animationSpec = BouncySpecs.overscroll,
+                            initialVelocity = startVelocity
+                        )
+                    } catch (_: kotlinx.coroutines.CancellationException) {
+                        // Superseded by a new stretch/settle; finger owns the offset.
+                    }
+                }
             }
 
             override fun onPostScroll(
@@ -323,6 +353,9 @@ fun Modifier.verticalBouncyEdge(
                 source: NestedScrollSource
             ): Offset {
                 if (available.y != 0f) {
+                    // Only stretch the leftover the list couldn't consume, and
+                    // ignore tiny jitter so normal scroll stays 1:1.
+                    if (kotlin.math.abs(available.y) < 0.5f) return Offset.Zero
                     stretchBy(available.y)
                     // Consume the edge delta so it becomes stretch, not fling.
                     return Offset(0f, available.y)
@@ -352,8 +385,10 @@ fun Modifier.verticalBouncyEdge(
                 consumed: Velocity,
                 available: Velocity
             ): Velocity {
-                if (target != 0f || offset.value != 0f) {
-                    settle()
+                if (target != 0f || offset.value != 0f || offset.isRunning) {
+                    // Carry a fraction of the leftover fling into the spring so
+                    // a fast flick releases with momentum instead of hanging.
+                    settle(velocity = available.y * 0.25f)
                     return available
                 }
                 return Velocity.Zero
@@ -378,11 +413,13 @@ fun Modifier.verticalBouncyEdge(
 
 /**
  * Same edge-stretch for horizontal rows (e.g. sleep-timer chip strip).
+ * Mirrors [verticalBouncyEdge]: synchronous stop, diminishing resistance,
+ * single settle job, velocity-aware fast return.
  */
 fun Modifier.horizontalBouncyEdge(
     enabled: Boolean = true,
-    maxStretchPx: Float = 160f,
-    stretchFactor: Float = 0.45f
+    maxStretchPx: Float = 120f,
+    stretchFactor: Float = 0.32f
 ): Modifier = composed {
     if (!enabled) return@composed this
     val offset = remember { Animatable(0f) }
@@ -390,24 +427,42 @@ fun Modifier.horizontalBouncyEdge(
     val connection = remember(maxStretchPx, stretchFactor) {
         object : NestedScrollConnection {
             var target = 0f
-            var generation = 0
+            var settleJob: kotlinx.coroutines.Job? = null
+
+            private fun resistance(): Float {
+                val t = (kotlin.math.abs(target) / maxStretchPx).coerceIn(0f, 1f)
+                return 1f - t * t * 0.85f
+            }
 
             private fun stretchBy(delta: Float) {
-                generation += 1
-                val snapshot = generation
-                target = (target + delta * stretchFactor)
+                settleJob?.cancel()
+                target = (target + delta * stretchFactor * resistance())
                     .coerceIn(-maxStretchPx, maxStretchPx)
                 val settled = target
-                scope.launch {
-                    if (snapshot == generation) offset.snapTo(settled)
+                scope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+                    try {
+                        offset.stop()
+                    } catch (_: Exception) {
+                    }
+                    offset.snapTo(settled)
                 }
             }
 
-            fun settle() {
-                if (target == 0f && offset.value == 0f) return
-                generation += 1
+            fun settle(velocity: Float = 0f) {
+                if (target == 0f && offset.value == 0f && !offset.isRunning) return
                 target = 0f
-                scope.launch { offset.animateTo(0f, BouncySpecs.overscroll) }
+                settleJob?.cancel()
+                val startVelocity = velocity.coerceIn(-2500f, 2500f)
+                settleJob = scope.launch {
+                    try {
+                        offset.animateTo(
+                            targetValue = 0f,
+                            animationSpec = BouncySpecs.overscroll,
+                            initialVelocity = startVelocity
+                        )
+                    } catch (_: kotlinx.coroutines.CancellationException) {
+                    }
+                }
             }
 
             override fun onPostScroll(
@@ -416,6 +471,7 @@ fun Modifier.horizontalBouncyEdge(
                 source: NestedScrollSource
             ): Offset {
                 if (available.x != 0f) {
+                    if (kotlin.math.abs(available.x) < 0.5f) return Offset.Zero
                     stretchBy(available.x)
                     return Offset(available.x, 0f)
                 }
@@ -426,8 +482,8 @@ fun Modifier.horizontalBouncyEdge(
                 consumed: Velocity,
                 available: Velocity
             ): Velocity {
-                if (target != 0f || offset.value != 0f) {
-                    settle()
+                if (target != 0f || offset.value != 0f || offset.isRunning) {
+                    settle(velocity = available.x * 0.25f)
                     return available
                 }
                 return Velocity.Zero

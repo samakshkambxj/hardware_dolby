@@ -66,10 +66,13 @@ fun ModernEqualizerScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
     var viewMode by remember { mutableStateOf(EqualizerViewMode.CURVE) }
+    val eqScrollState = rememberScrollState()
+    val eqScrollFraction = rememberTopBarScrollFraction(eqScrollState)
 
     Scaffold(
         topBar = {
             LunarisGlassTopBar(
+                scrollFraction = eqScrollFraction,
                 title = {
                     Text(
                         stringResource(R.string.dolby_preset),
@@ -143,6 +146,7 @@ fun ModernEqualizerScreen(
                     viewModel = viewModel,
                     viewMode = viewMode,
                     onViewModeChange = { viewMode = it },
+                    scrollState = eqScrollState,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -230,10 +234,10 @@ private fun ModernEqualizerContent(
     viewModel: EqualizerViewModel,
     viewMode: EqualizerViewMode,
     onViewModeChange: (EqualizerViewMode) -> Unit,
+    scrollState: androidx.compose.foundation.ScrollState,
     modifier: Modifier = Modifier
 ) {
     val isFlatPreset = state.currentPreset.name == stringResource(R.string.dolby_preset_default)
-    val scrollState = rememberScrollState()
     val isBandModeCompatible = state.currentPreset.bandMode == state.bandMode
     val canEdit = isBandModeCompatible || isFlatPreset
     val isActive = canEdit && !isFlatPreset
@@ -1428,6 +1432,7 @@ private fun SavePresetDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
+            ApplyDialogWindowBlur()
             Surface(
                 modifier = Modifier.size(56.dp),
                 shape = MaterialTheme.shapes.large,
@@ -1550,6 +1555,7 @@ private fun AutoEqSelectionDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
+            ApplyDialogWindowBlur()
             Text(
                 text = stringResource(id = R.string.dolby_autoeq_title),
                 style = MaterialTheme.typography.titleLarge,

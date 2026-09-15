@@ -46,6 +46,8 @@ fun ModernAdvancedSettingsScreen(
     val headTrackingAvailable by viewModel.headTrackingAvailable.collectAsState()
     val headTrackingEnabled by viewModel.headTrackingEnabled.collectAsState()
     val context = LocalContext.current
+    val advListState = rememberLazyListState()
+    val advScrollFraction = rememberTopBarScrollFraction(advListState)
 
     LaunchedEffect(balanceError) {
         balanceError?.let {
@@ -57,6 +59,7 @@ fun ModernAdvancedSettingsScreen(
     Scaffold(
         topBar = {
             LunarisGlassTopBar(
+                scrollFraction = advScrollFraction,
                 title = {
                     Text(
                         stringResource(R.string.dolby_category_adv_settings),
@@ -87,6 +90,7 @@ fun ModernAdvancedSettingsScreen(
                     state = state,
                     viewModel = viewModel,
                     navController = navController,
+                    listState = advListState,
                     balance = balance,
                     onBalanceChange = { viewModel.setChannelBalance(it) },
                     scenes = scenes,
@@ -134,6 +138,7 @@ private fun ModernAdvancedSettingsContent(
     state: DolbyUiState.Success,
     viewModel: DolbyViewModel,
     navController: NavController,
+    listState: androidx.compose.foundation.lazy.LazyListState,
     balance: Float,
     onBalanceChange: (Float) -> Unit,
     scenes: List<org.lunaris.dolby.domain.models.Scene>,
@@ -145,7 +150,6 @@ private fun ModernAdvancedSettingsContent(
     headTrackingEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val listState = rememberLazyListState()
     LazyColumn(
         state = listState,
         modifier = modifier

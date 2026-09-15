@@ -125,9 +125,13 @@ fun VolumeControlScreen() {
         }
     }
 
+    val volListState = rememberLazyListState()
+    val volScrollFraction = org.lunaris.dolby.ui.components.rememberTopBarScrollFraction(volListState)
+
     Scaffold(
         topBar = {
             LunarisGlassTopBar(
+                scrollFraction = volScrollFraction,
                 title = {
                     Text(
                         stringResource(R.string.volume),
@@ -143,7 +147,7 @@ fun VolumeControlScreen() {
         Box(modifier = Modifier.fillMaxSize()) {
         FloatingParticles()
         LazyColumn(
-            state = rememberLazyListState(),
+            state = volListState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
