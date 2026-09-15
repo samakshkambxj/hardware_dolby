@@ -47,6 +47,7 @@ import org.lunaris.dolby.R
 import org.lunaris.dolby.data.EasterEggs
 import org.lunaris.dolby.data.autoeq.*
 import org.lunaris.dolby.ui.components.*
+import org.lunaris.dolby.ui.components.FloatingParticles
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
 import org.lunaris.dolby.ui.viewmodel.DynamicsEqualizerViewModel
 import org.lunaris.dolby.domain.models.*
@@ -134,6 +135,7 @@ fun ModernEqualizerScreen(
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
+        FloatingParticles()
         when (val state = uiState) {
             is EqualizerUiState.Loading -> {
                 Box(

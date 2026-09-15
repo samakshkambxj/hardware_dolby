@@ -25,6 +25,7 @@ import androidx.navigation.NavController
 import org.lunaris.dolby.R
 import org.lunaris.dolby.domain.models.DolbyUiState
 import org.lunaris.dolby.ui.components.*
+import org.lunaris.dolby.ui.components.FloatingParticles
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
 import org.lunaris.dolby.utils.ToastHelper
 
@@ -80,6 +81,7 @@ fun ModernAdvancedSettingsScreen(
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
+        FloatingParticles()
         when (val state = uiState) {
             is DolbyUiState.Loading -> {
                 Box(
