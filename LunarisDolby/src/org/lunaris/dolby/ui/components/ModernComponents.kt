@@ -836,6 +836,7 @@ fun ModernConfirmDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
+            ApplyDialogWindowBlur()
             Surface(
                 modifier = Modifier.size(56.dp),
                 shape = MaterialTheme.shapes.large,
