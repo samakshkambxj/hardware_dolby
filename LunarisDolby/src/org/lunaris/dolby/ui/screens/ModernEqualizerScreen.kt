@@ -1410,6 +1410,7 @@ private fun SavePresetDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
+            ApplyDialogWindowBlur()
             Surface(
                 modifier = Modifier.size(56.dp),
                 shape = MaterialTheme.shapes.large,
@@ -1532,6 +1533,7 @@ private fun AutoEqSelectionDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
+            ApplyDialogWindowBlur()
             Text(
                 text = stringResource(id = R.string.dolby_autoeq_title),
                 style = MaterialTheme.typography.titleLarge,
@@ -1881,7 +1883,10 @@ private fun DynamicsProcessingSection(
     if (showSaveDialog) {
         AlertDialog(
             onDismissRequest = { showSaveDialog = false },
-            title = { Text("Save preset") },
+            title = {
+                ApplyDialogWindowBlur()
+                Text("Save preset")
+            },
             text = {
                 OutlinedTextField(
                     value = presetName,

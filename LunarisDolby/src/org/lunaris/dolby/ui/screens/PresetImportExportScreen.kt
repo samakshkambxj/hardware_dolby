@@ -30,6 +30,7 @@ import org.lunaris.dolby.R
 import org.lunaris.dolby.data.PresetExportManager
 import org.lunaris.dolby.domain.models.EqualizerPreset
 import org.lunaris.dolby.domain.models.EqualizerUiState
+import org.lunaris.dolby.ui.components.ApplyDialogWindowBlur
 import org.lunaris.dolby.ui.components.ModernConfirmDialog
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
 import org.lunaris.dolby.utils.ToastHelper
@@ -422,6 +423,7 @@ fun PresetImportExportScreen(
         AlertDialog(
             onDismissRequest = { showBatchExport = false },
             icon = {
+                ApplyDialogWindowBlur()
                 Surface(
                     modifier = Modifier.size(56.dp),
                     shape = MaterialTheme.shapes.large,

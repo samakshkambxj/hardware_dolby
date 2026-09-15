@@ -377,6 +377,7 @@ fun AppProfileSettingsCard(
         AlertDialog(
             onDismissRequest = { showPermissionDialog = false },
             icon = {
+                ApplyDialogWindowBlur()
                 Surface(
                     modifier = Modifier.size(56.dp),
                     shape = MaterialTheme.shapes.large,
