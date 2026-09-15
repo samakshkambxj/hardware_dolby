@@ -264,6 +264,9 @@
     <string name="automation_hint_profile">Int extra "profile" (0–6)</string>
     <string name="automation_hint_scene">String extra "scene_id"</string>
 
+    <!-- Dynamics processing -->
+    <string name="dynamics_spectrum">Live spectrum</string>
+
     <!-- Quick Settings tiles -->
     <string name="tile_scene_title">Dolby Scene</string>
     <string name="tile_leveler_title">Volume Leveler</string>
@@ -302,4 +305,41 @@
     <string name="onboarding_eq_body">10 to 20 bands, AutoEQ headphone correction, plus dynamics processing with a live spectrum.</string>
     <string name="onboarding_pro_title">Pro tools included</string>
     <string name="onboarding_pro_body">Spatial audio, channel balance, sleep timer, per-app profiles and Quick Settings tiles.</string>
+
+    <!-- Easter eggs -->
+    <string name="egg_lounge_title">Lunar Lounge</string>
+    <string name="egg_lounge_sub">Members only. You found it.</string>
+    <string name="egg_badges_title">Badge shelf</string>
+    <string name="egg_badge_persistent">Persistent</string>
+    <string name="egg_badge_persistent_desc">Tapped the logo seven times</string>
+    <string name="egg_badge_masher">Button Masher</string>
+    <string name="egg_badge_masher_desc">Up, up, down, down…</string>
+    <string name="egg_badge_wordsmith">Wordsmith</string>
+    <string name="egg_badge_wordsmith_desc">Named a preset with power</string>
+    <string name="egg_badge_lizard">Lounge Lizard</string>
+    <string name="egg_badge_lizard_desc">Found the Lounge</string>
+    <string name="egg_badge_locked">???</string>
+    <string name="egg_badge_locked_desc">Keep exploring…</string>
+    <string name="egg_stats_title">Vital statistics</string>
+    <string name="egg_stat_taps">Logo taps</string>
+    <string name="egg_stat_opens">App opens</string>
+    <string name="egg_stat_badges">Badges</string>
+    <string name="egg_stat_band">Band mode</string>
+    <string name="egg_stat_profile">Profile</string>
+    <string name="egg_logo_tease_1">The logo seems to like attention…</string>
+    <string name="egg_logo_tease_2">Something stirs… keep going.</string>
+    <string name="egg_logo_unlocked">Persistent! Welcome to the club.</string>
+    <string name="egg_masher_unlocked">Button Masher! The buttons remember.</string>
+    <string name="egg_cheat_konami">↑↑↓↓←→←→BA. Respect.</string>
+    <string name="egg_cheat_iddqd">God mode denied. Style points granted.</string>
+    <string name="egg_cheat_lunaris">Home sweet home.</string>
+    <string name="egg_cheat_xyzzy">Nothing happens. Or does it?</string>
+    <string name="egg_cheat_elite">Elite typing detected.</string>
+    <string name="egg_secret_preset">🌙 Midnight Snack</string>
+    <string name="egg_summon">Summon the secret preset</string>
+    <string name="egg_summoned">Summoned! Check your presets.</string>
+    <string name="egg_reset">Forget everything</string>
+    <string name="egg_reset_title">Forget everything?</string>
+    <string name="egg_reset_message">Badges and counters go back to zero. The Lounge will forget you were here.</string>
+    <string name="egg_hint">Rumor has it this app keeps secrets. Logos like attention. Buttons remember patterns. Names have power.</string>
 </resources>

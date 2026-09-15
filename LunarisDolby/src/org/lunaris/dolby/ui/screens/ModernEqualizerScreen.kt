@@ -44,6 +44,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
+import org.lunaris.dolby.data.EasterEggs
 import org.lunaris.dolby.data.autoeq.*
 import org.lunaris.dolby.ui.components.*
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
@@ -63,6 +64,9 @@ fun ModernEqualizerScreen(
     navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val haptic = rememberHapticFeedback()
+    val scope = rememberCoroutineScope()
     var showAutoEqDialog by remember { mutableStateOf(false) }
     var showSaveDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -182,6 +186,14 @@ fun ModernEqualizerScreen(
     if (showSaveDialog) {
         SavePresetDialog(
             onSave = { name ->
+                EasterEggs.checkPresetName(name)?.let { code ->
+                    if (EasterEggs.unlock(context, EasterEggs.BADGE_WORDSMITH)) {
+                        scope.launch {
+                            haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.HEAVY_CLICK)
+                        }
+                    }
+                    ToastHelper.showToast(context, context.getString(EasterEggs.cheatMessageRes(code)))
+                }
                 val error = viewModel.savePreset(name)
                 if (error == null) {
                     showSaveDialog = false

@@ -11,6 +11,14 @@ import android.media.AudioManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.KeyEvent
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import org.lunaris.dolby.R
+import org.lunaris.dolby.data.EasterEggs
+import org.lunaris.dolby.utils.HapticFeedbackHelper
+import org.lunaris.dolby.utils.ToastHelper
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -32,6 +40,7 @@ class DolbyActivity : ComponentActivity() {
     
     private val audioManager by lazy { getSystemService(AudioManager::class.java) }
     private val handler = Handler(Looper.getMainLooper())
+    private val eggScope = MainScope()
     
     private var isAudioCallbackRegistered = false
     private var isActivityActive = false
@@ -102,6 +111,8 @@ class DolbyActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         DolbyConstants.dlog(TAG, "Activity onCreate")
+        EasterEggs.init(this)
+        EasterEggs.recordAppOpen(this)
         lifecycle.addObserver(lifecycleObserver)
         
         setContent {
@@ -144,10 +155,28 @@ class DolbyActivity : ComponentActivity() {
         }
     }
     
+    // Volume keys keep working normally (super handles them); we only
+    // observe the press pattern for the Konami easter egg.
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            if (EasterEggs.recordVolumeKey(this, keyCode == KeyEvent.KEYCODE_VOLUME_UP)) {
+                ToastHelper.showToast(this, getString(R.string.egg_masher_unlocked))
+                eggScope.launch {
+                    HapticFeedbackHelper.triggerVibration(
+                        this@DolbyActivity,
+                        HapticFeedbackHelper.HapticIntensity.HEAVY_CLICK
+                    )
+                }
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
     private fun cleanupResources() {
         try {
             unregisterAudioCallback()
             handler.removeCallbacksAndMessages(null)
+            eggScope.cancel()
             lifecycle.removeObserver(lifecycleObserver)
             DolbyConstants.dlog(TAG, "Resources cleaned up successfully")
         } catch (e: Exception) {
