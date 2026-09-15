@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import org.lunaris.dolby.R
 import org.lunaris.dolby.ui.components.ModernSettingSlider
 import org.lunaris.dolby.ui.components.ModernSettingsCard
+import org.lunaris.dolby.ui.components.verticalBouncyEdge
 
 private data class VolumeStreamInfo(
     val streamType: Int,
@@ -141,6 +142,7 @@ fun VolumeControlScreen() {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalBouncyEdge()
                 .padding(paddingValues),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)

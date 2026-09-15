@@ -9,8 +9,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -23,13 +22,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.indication
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,49 +36,8 @@ import org.lunaris.dolby.domain.models.ProfileSettings
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
 import org.lunaris.dolby.utils.*
 
-@Composable
-fun Modifier.squishable(
-    enabled: Boolean = true,
-    scaleDown: Float = 0.93f
-): Modifier {
-    var isPressed by remember { mutableStateOf(false) }
-    
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed && enabled) scaleDown else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "squish_scale"
-    )
-    
-    return this
-        .graphicsLayer {
-            scaleX = scale
-            scaleY = scale
-        }
-        .indication(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = null
-        )
-        .pointerInput(enabled) {
-            if (enabled) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        when (event.type) {
-                            PointerEventType.Press -> {
-                                isPressed = true
-                            }
-                            PointerEventType.Release -> {
-                                isPressed = false
-                            }
-                        }
-                    }
-                }
-            }
-        }
-}
+// Press-bounce lives in Bouncy.kt (single source of truth).
+// squishable() there is gesture-safe + scroll-aware; do not duplicate it here.
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
