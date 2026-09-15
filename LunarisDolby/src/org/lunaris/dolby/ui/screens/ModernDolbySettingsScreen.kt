@@ -27,6 +27,7 @@ import org.lunaris.dolby.data.SleepTimerState
 import org.lunaris.dolby.domain.models.DolbyUiState
 import org.lunaris.dolby.domain.models.Scene
 import org.lunaris.dolby.ui.components.*
+import org.lunaris.dolby.ui.components.FloatingParticles
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
 import org.lunaris.dolby.utils.ToastHelper
 
@@ -91,6 +92,7 @@ fun ModernDolbySettingsScreen(
         contentColor = MaterialTheme.colorScheme.onSurface
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
+        FloatingParticles()
         when (val state = uiState) {
             is DolbyUiState.Loading -> {
                 Box(

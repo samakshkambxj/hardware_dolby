@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.lunaris.dolby.R
+import org.lunaris.dolby.ui.components.FloatingParticles
 import org.lunaris.dolby.ui.components.ModernSettingSlider
 import org.lunaris.dolby.ui.components.ModernSettingsCard
 import org.lunaris.dolby.ui.components.verticalBouncyEdge
@@ -139,6 +140,8 @@ fun VolumeControlScreen() {
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize()) {
+        FloatingParticles()
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -212,6 +215,7 @@ fun VolumeControlScreen() {
             item {
                 Spacer(modifier = Modifier.height(70.dp))
             }
+        }
         }
     }
 }
