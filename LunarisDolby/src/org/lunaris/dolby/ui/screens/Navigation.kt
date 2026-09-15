@@ -17,6 +17,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +42,7 @@ sealed class Screen(val route: String) {
     object Advanced : Screen("advanced")
     object AppProfiles : Screen("app_profiles")
     object ImportExport : Screen("import_export")
+    object Onboarding : Screen("onboarding")
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -137,11 +139,21 @@ fun DolbyNavHost(
     equalizerViewModel: EqualizerViewModel
 ) {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val startDestination = remember {
+        if (isOnboardingDone(context)) "main_pager" else Screen.Onboarding.route
+    }
 
     NavHost(
         navController = navController,
-        startDestination = "main_pager"
+        startDestination = startDestination
     ) {
+        composable(Screen.Onboarding.route) {
+            OnboardingScreen(
+                viewModel = dolbyViewModel,
+                navController = navController
+            )
+        }
         composable("main_pager") {
             MainPagerScreen(
                 dolbyViewModel = dolbyViewModel,
