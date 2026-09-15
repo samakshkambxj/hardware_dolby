@@ -138,10 +138,11 @@ private fun ModernAdvancedSettingsContent(
     ) {
         if (state.settings.enabled) {
             item {
-                ModernSettingsCard(
-                    title = stringResource(R.string.dolby_category_settings),
-                    icon = Icons.Default.Tune
-                ) {
+                BouncyPopIn(delayMillis = 0) {
+                    ModernSettingsCard(
+                        title = stringResource(R.string.dolby_category_settings),
+                        icon = Icons.Default.Tune
+                    ) {
                     Column {
                         ModernSettingSwitch(
                             title = stringResource(R.string.dolby_bass_enhancer),
@@ -244,28 +245,32 @@ private fun ModernAdvancedSettingsContent(
                     }
                 }
             }
-            
+            }
+
             item {
-                ModernSettingsCard(
-                    title = "Volume Leveler",
-                    icon = Icons.Default.VolumeDown
-                ) {
-                    ModernSettingSwitch(
-                        title = stringResource(R.string.dolby_volume_leveler),
-                        subtitle = stringResource(R.string.dolby_volume_leveler_summary),
-                        checked = state.settings.volumeLevelerEnabled,
-                        onCheckedChange = { viewModel.setVolumeLeveler(it) },
-                        icon = Icons.Default.BarChart
-                    )
+                BouncyPopIn(delayMillis = 60) {
+                    ModernSettingsCard(
+                        title = "Volume Leveler",
+                        icon = Icons.Default.VolumeDown
+                    ) {
+                        ModernSettingSwitch(
+                            title = stringResource(R.string.dolby_volume_leveler),
+                            subtitle = stringResource(R.string.dolby_volume_leveler_summary),
+                            checked = state.settings.volumeLevelerEnabled,
+                            onCheckedChange = { viewModel.setVolumeLeveler(it) },
+                            icon = Icons.Default.BarChart
+                        )
+                    }
                 }
             }
             
             if (state.settings.currentProfile != 0) {
                 item {
-                    ModernSettingsCard(
-                        title = "Surround Virtualizer",
-                        icon = Icons.Default.Headphones
-                    ) {
+                    BouncyPopIn(delayMillis = 100) {
+                        ModernSettingsCard(
+                            title = "Surround Virtualizer",
+                            icon = Icons.Default.Headphones
+                        ) {
                         if (state.isOnSpeaker) {
                             ModernSettingSwitch(
                                 title = stringResource(R.string.dolby_spk_virtualizer),
@@ -297,13 +302,15 @@ private fun ModernAdvancedSettingsContent(
                             }
                         }
                     }
+                    }
                 }
                 
                 item {
-                    ModernSettingsCard(
-                        title = "Dialogue Enhancement",
-                        icon = Icons.Default.RecordVoiceOver
-                    ) {
+                    BouncyPopIn(delayMillis = 130) {
+                        ModernSettingsCard(
+                            title = "Dialogue Enhancement",
+                            icon = Icons.Default.RecordVoiceOver
+                        ) {
                         ModernSettingSwitch(
                             title = stringResource(R.string.dolby_dialogue_enhancer),
                             subtitle = stringResource(R.string.dolby_dialogue_enhancer_summary),
@@ -326,6 +333,7 @@ private fun ModernAdvancedSettingsContent(
                         }
                     }
                 }
+            }
             }
         } else {
             item {

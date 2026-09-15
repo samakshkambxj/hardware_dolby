@@ -11,7 +11,7 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -30,6 +30,7 @@ import org.lunaris.dolby.R
 import org.lunaris.dolby.data.PresetExportManager
 import org.lunaris.dolby.domain.models.EqualizerPreset
 import org.lunaris.dolby.domain.models.EqualizerUiState
+import org.lunaris.dolby.ui.components.BouncyPopIn
 import org.lunaris.dolby.ui.components.ModernConfirmDialog
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
 import org.lunaris.dolby.utils.ToastHelper
@@ -198,13 +199,14 @@ fun PresetImportExportScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = MaterialTheme.shapes.extraLarge,
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                                )
-                            ) {
+                            BouncyPopIn(delayMillis = 0) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = MaterialTheme.shapes.extraLarge,
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                                    )
+                                ) {
                                 Column(modifier = Modifier.padding(20.dp)) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
@@ -312,6 +314,7 @@ fun PresetImportExportScreen(
                                     }
                                 }
                             }
+                            }
                         }
                         item {
                             Text(
@@ -322,8 +325,9 @@ fun PresetImportExportScreen(
                                 modifier = Modifier.padding(vertical = 8.dp)
                             )
                         }
-                        items(state.presets.filter { it.isUserDefined }) { preset ->
-                            PresetExportCard(
+                        itemsIndexed(state.presets.filter { it.isUserDefined }) { index, preset ->
+                            BouncyPopIn(delayMillis = (index * 30).coerceAtMost(200)) {
+                                PresetExportCard(
                                 preset = preset,
                                 onExportFile = {
                                     selectedPreset = preset
@@ -371,6 +375,7 @@ fun PresetImportExportScreen(
                                     showDeleteDialog = true
                                 }
                             )
+                            }
                         }
                         item {
                             Spacer(Modifier.height(70.dp))

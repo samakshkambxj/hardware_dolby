@@ -6,6 +6,8 @@
 package org.lunaris.dolby.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -238,46 +240,41 @@ private fun ModernDolbySettingsContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            DolbyMainCard(
-                enabled = state.settings.enabled,
-                onEnabledChange = { viewModel.setDolbyEnabled(it) }
-            )
-        }
-
-        item {
-            ActiveAudioDeviceCard(device = state.activeAudioDevice)
-        }
-
-        item {
-            NotificationListenerPermissionCard()
-        }
-
-        item {
-            AnimatedVisibility(
-                visible = state.settings.enabled,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                ModernProfileSelector(
-                    currentProfile = state.settings.currentProfile,
-                    onProfileChange = { viewModel.setProfile(it) }
+            BouncyPopIn(delayMillis = 0) {
+                DolbyMainCard(
+                    enabled = state.settings.enabled,
+                    onEnabledChange = { viewModel.setDolbyEnabled(it) }
                 )
             }
         }
 
         item {
+            BouncyPopIn(delayMillis = 50) {
+                ActiveAudioDeviceCard(device = state.activeAudioDevice)
+            }
+        }
+
+        item {
+            BouncyPopIn(delayMillis = 90) {
+                NotificationListenerPermissionCard()
+            }
+        }
+
+        item {
             AnimatedVisibility(
-                visible = state.settings.enabled && state.settings.currentProfile != 0,
-                enter = fadeIn() + expandVertically(),
+                visible = state.settings.enabled,
+                enter = fadeIn() + expandVertically(
+                    animationSpec = spring(
+                        dampingRatio = 0.75f,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                ModernSettingsCard(
-                    title = stringResource(R.string.dolby_ieq),
-                    icon = Icons.Default.GraphicEq
-                ) {
-                    ModernIeqSelector(
-                        currentPreset = state.profileSettings.ieqPreset,
-                        onPresetChange = { viewModel.setIeqPreset(it) }
+                BouncyPopIn(delayMillis = 120) {
+                    ModernProfileSelector(
+                        currentProfile = state.settings.currentProfile,
+                        onProfileChange = { viewModel.setProfile(it) }
                     )
                 }
             }
@@ -285,8 +282,38 @@ private fun ModernDolbySettingsContent(
 
         item {
             AnimatedVisibility(
+                visible = state.settings.enabled && state.settings.currentProfile != 0,
+                enter = fadeIn() + expandVertically(
+                    animationSpec = spring(
+                        dampingRatio = 0.75f,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                BouncyPopIn(delayMillis = 150) {
+                    ModernSettingsCard(
+                        title = stringResource(R.string.dolby_ieq),
+                        icon = Icons.Default.GraphicEq
+                    ) {
+                        ModernIeqSelector(
+                            currentPreset = state.profileSettings.ieqPreset,
+                            onPresetChange = { viewModel.setIeqPreset(it) }
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            AnimatedVisibility(
                 visible = state.settings.enabled,
-                enter = fadeIn() + expandVertically(),
+                enter = fadeIn() + expandVertically(
+                    animationSpec = spring(
+                        dampingRatio = 0.75f,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ),
                 exit = fadeOut() + shrinkVertically()
             ) {
                 SceneSection(
@@ -303,26 +330,40 @@ private fun ModernDolbySettingsContent(
         item {
             AnimatedVisibility(
                 visible = state.settings.enabled,
-                enter = fadeIn() + expandVertically(),
+                enter = fadeIn() + expandVertically(
+                    animationSpec = spring(
+                        dampingRatio = 0.75f,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                SleepTimerCard(
-                    state = sleepState,
-                    onStart = { viewModel.startSleepTimer(it) },
-                    onCancel = { viewModel.cancelSleepTimer() }
-                )
+                BouncyPopIn(delayMillis = 210) {
+                    SleepTimerCard(
+                        state = sleepState,
+                        onStart = { viewModel.startSleepTimer(it) },
+                        onCancel = { viewModel.cancelSleepTimer() }
+                    )
+                }
             }
         }
 
         item {
             AnimatedVisibility(
                 visible = state.settings.enabled,
-                enter = fadeIn() + expandVertically(),
+                enter = fadeIn() + expandVertically(
+                    animationSpec = spring(
+                        dampingRatio = 0.75f,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                AppProfileSettingsCard(
-                    onManageClick = { navController.navigate("app_profiles") }
-                )
+                BouncyPopIn(delayMillis = 240) {
+                    AppProfileSettingsCard(
+                        onManageClick = { navController.navigate("app_profiles") }
+                    )
+                }
             }
         }
         

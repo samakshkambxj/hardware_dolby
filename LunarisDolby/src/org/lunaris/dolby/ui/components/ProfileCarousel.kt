@@ -247,7 +247,7 @@ private fun ProfileCard(
             ) {
                 val iconScale by animateFloatAsState(
                     targetValue = if (isSelected) 1f else 0.85f,
-                    animationSpec = MaterialTheme.motionScheme.slowSpatialSpec(),
+                    animationSpec = BouncySpecs.pop,
                     label = "icon_scale"
                 )
                 
@@ -280,7 +280,15 @@ private fun ProfileCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                if (isSelected) {
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = isSelected,
+                    enter = androidx.compose.animation.scaleIn(
+                        animationSpec = BouncySpecs.pop,
+                        initialScale = 0.4f
+                    ) + androidx.compose.animation.fadeIn(),
+                    exit = androidx.compose.animation.fadeOut(),
+                    label = "profile_underline"
+                ) {
                     Surface(
                         modifier = Modifier.height(2.dp).width(24.dp),
                         shape = CircleShape,
@@ -294,7 +302,8 @@ private fun ProfileCard(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(10.dp)
-                        .size(24.dp),
+                        .size(24.dp)
+                        .squishable(enabled = true, scaleDown = 0.8f),
                     shape = CircleShape,
                     color = palette.content
                 ) {

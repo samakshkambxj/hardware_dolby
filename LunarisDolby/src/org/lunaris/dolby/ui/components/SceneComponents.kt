@@ -40,12 +40,14 @@ fun SceneSection(
         modifier = modifier
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            scenes.forEach { scene ->
-                SceneRow(
-                    scene = scene,
-                    onApply = { onApply(scene) },
-                    onDeleteClick = if (scene.isBuiltIn) null else ({ onDeleteClick(scene) })
-                )
+            scenes.forEachIndexed { index, scene ->
+                BouncyPopIn(delayMillis = (index * 35).coerceAtMost(280)) {
+                    SceneRow(
+                        scene = scene,
+                        onApply = { onApply(scene) },
+                        onDeleteClick = if (scene.isBuiltIn) null else ({ onDeleteClick(scene) })
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(4.dp))
             OutlinedButton(
@@ -90,6 +92,7 @@ private fun SceneRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
+            .squishable(enabled = true, scaleDown = 0.96f)
             .clickable(onClick = onApply),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerHigh

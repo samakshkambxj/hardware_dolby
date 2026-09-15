@@ -46,38 +46,30 @@ fun Modifier.squishable(
     enabled: Boolean = true,
     scaleDown: Float = 0.93f
 ): Modifier {
+    // Bouncy press scale. Ripple-safe: we only track press for the scale
+    // and never override indication, so Surface(onClick)/clickable ripples
+    // keep working underneath.
     var isPressed by remember { mutableStateOf(false) }
-    
     val scale by animateFloatAsState(
         targetValue = if (isPressed && enabled) scaleDown else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
+        animationSpec = BouncySpecs.press,
         label = "squish_scale"
     )
-    
+
     return this
         .graphicsLayer {
             scaleX = scale
             scaleY = scale
         }
-        .indication(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = null
-        )
         .pointerInput(enabled) {
             if (enabled) {
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent()
                         when (event.type) {
-                            PointerEventType.Press -> {
-                                isPressed = true
-                            }
-                            PointerEventType.Release -> {
-                                isPressed = false
-                            }
+                            PointerEventType.Press -> isPressed = true
+                            PointerEventType.Release,
+                            PointerEventType.Cancel -> isPressed = false
                         }
                     }
                 }
@@ -743,6 +735,7 @@ private fun IeqTile(
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
+    val iconBounce = rememberBouncySelectedScale(isSelected)
     
     Surface(
         onClick = { 
@@ -776,7 +769,12 @@ private fun IeqTile(
             horizontalArrangement = Arrangement.Start
         ) {
             Surface(
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier
+                    .size(40.dp)
+                    .graphicsLayer {
+                        scaleX = iconBounce
+                        scaleY = iconBounce
+                    },
                 shape = if (isSelected)
                     MaterialTheme.shapes.extraLarge
                 else
@@ -825,18 +823,20 @@ fun ModernConfirmDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
-            Surface(
-                modifier = Modifier.size(56.dp),
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+            BouncyPopIn(delayMillis = 0) {
+                Surface(
+                    modifier = Modifier.size(56.dp),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
             }
         },

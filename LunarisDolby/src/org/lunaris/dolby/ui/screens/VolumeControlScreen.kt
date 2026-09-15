@@ -13,7 +13,7 @@ import android.media.AudioManager
 import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.lunaris.dolby.R
+import org.lunaris.dolby.ui.components.BouncyPopIn
 import org.lunaris.dolby.ui.components.ModernSettingSlider
 import org.lunaris.dolby.ui.components.ModernSettingsCard
 
@@ -145,11 +146,12 @@ fun VolumeControlScreen() {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(
+            itemsIndexed(
                 items = streams,
-                key = { it.streamType }
-            ) { stream ->
-                val max = remember(stream.streamType) {
+                key = { _, stream -> stream.streamType }
+            ) { index, stream ->
+                BouncyPopIn(delayMillis = (index * 45).coerceAtMost(225)) {
+                    val max = remember(stream.streamType) {
                     try {
                         audioManager.getStreamMaxVolume(stream.streamType)
                     } catch (_: Exception) {
@@ -204,6 +206,7 @@ fun VolumeControlScreen() {
                             }
                         }
                     )
+                }
                 }
             }
 

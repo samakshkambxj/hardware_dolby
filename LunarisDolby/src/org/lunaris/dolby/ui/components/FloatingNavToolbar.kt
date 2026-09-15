@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -164,6 +165,7 @@ private fun NavToolbarItem(
     isEqualizer: Boolean = false
 ) {
     val currentSelectionKey = remember(selected) { selected }
+    val iconBounce = rememberBouncySelectedScale(selected)
     
     ToggleButton(
         checked = selected,
@@ -195,7 +197,11 @@ private fun NavToolbarItem(
                 ) { isEq ->
                     if (isEq) {
                         AnimatedEqualizerIconDynamic(
-                            modifier = if (selected) Modifier else Modifier.semantics {
+                            modifier = if (selected) Modifier
+                                .graphicsLayer {
+                                    scaleX = iconBounce
+                                    scaleY = iconBounce
+                                } else Modifier.semantics {
                                 contentDescription = label
                             },
                             color = if (selected) onPrimaryColor else onContainerColor,
@@ -205,7 +211,12 @@ private fun NavToolbarItem(
                         Icon(
                             imageVector = icon,
                             contentDescription = label,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier
+                                .size(24.dp)
+                                .graphicsLayer {
+                                    scaleX = iconBounce
+                                    scaleY = iconBounce
+                                }
                         )
                     }
                 }

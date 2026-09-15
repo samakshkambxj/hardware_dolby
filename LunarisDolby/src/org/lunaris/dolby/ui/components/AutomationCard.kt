@@ -63,11 +63,12 @@ fun AutomationCard(modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
-            commands.forEach { command ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            commands.forEachIndexed { index, command ->
+                BouncyPopIn(delayMillis = (index * 35).coerceAtMost(175)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = command.action.substringAfterLast(".action."),
@@ -95,6 +96,7 @@ fun AutomationCard(modifier: Modifier = Modifier) {
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
+                    }
                     }
                 }
             }
