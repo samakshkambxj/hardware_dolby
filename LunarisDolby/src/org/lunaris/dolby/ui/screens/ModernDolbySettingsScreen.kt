@@ -46,9 +46,19 @@ fun ModernDolbySettingsScreen(
     var showResetScenesDialog by remember { mutableStateOf(false) }
     var sceneName by remember { mutableStateOf("") }
     var sceneToDelete by remember { mutableStateOf<Scene?>(null) }
+    var showOutputDialog by remember { mutableStateOf(false) }
+    val outputDevices by viewModel.outputDevices.collectAsState()
+    val outputError by viewModel.outputError.collectAsState()
     val context = LocalContext.current
     val homeListState = rememberLazyListState()
     val homeScrollFraction = rememberTopBarScrollFraction(homeListState)
+
+    LaunchedEffect(outputError) {
+        outputError?.let {
+            ToastHelper.showToast(context, it)
+            viewModel.clearOutputError()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -122,6 +132,10 @@ fun ModernDolbySettingsScreen(
                     listState = homeListState,
                     scenes = scenes,
                     sleepState = sleepState,
+                    onOutputCardClick = {
+                        viewModel.refreshOutputDevices()
+                        showOutputDialog = true
+                    },
                     onApplyScene = { scene ->
                         viewModel.applyScene(scene)
                         ToastHelper.showToast(context, context.getString(R.string.scene_applied))
@@ -220,6 +234,17 @@ fun ModernDolbySettingsScreen(
             onDismiss = { showResetScenesDialog = false }
         )
     }
+
+    if (showOutputDialog) {
+        AudioOutputDialog(
+            devices = outputDevices,
+            onSelect = { key ->
+                viewModel.selectOutputDevice(key)
+                showOutputDialog = false
+            },
+            onDismiss = { showOutputDialog = false }
+        )
+    }
 }
 
 @Composable
@@ -230,6 +255,7 @@ private fun ModernDolbySettingsContent(
     listState: androidx.compose.foundation.lazy.LazyListState,
     scenes: List<Scene>,
     sleepState: SleepTimerState,
+    onOutputCardClick: () -> Unit,
     onApplyScene: (Scene) -> Unit,
     onSaveSceneClick: () -> Unit,
     onDeleteSceneClick: (Scene) -> Unit,
@@ -255,7 +281,10 @@ private fun ModernDolbySettingsContent(
 
         item(key = "device_card") {
             BouncyPopIn(delayMillis = 30, key = "home:device_card") {
-                ActiveAudioDeviceCard(device = state.activeAudioDevice)
+                ActiveAudioDeviceCard(
+                    device = state.activeAudioDevice,
+                    onClick = onOutputCardClick
+                )
             }
         }
 

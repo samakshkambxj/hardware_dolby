@@ -144,6 +144,132 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
         return devices.firstOrNull()
     }
 
+    /**
+     * Connected user-meaningful sinks for the output picker, priority-ordered
+     * and de-duplicated (e.g. a BT headset exposing A2DP + SCO collapses to
+     * one row). Active state follows the MediaRouter live-audio route.
+     */
+    fun getOutputDevices(): List<OutputDevice> {
+        return try {
+            val infos = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+                .filter { it.type in OUTPUT_DEVICE_PRIORITY }
+            val activeKey = resolveRoutedOutputKey(infos)
+            val seen = mutableSetOf<String>()
+            OUTPUT_DEVICE_PRIORITY.flatMap { type ->
+                infos.filter { it.type == type }
+            }.mapNotNull { info ->
+                val key = deviceStateManager.deviceKey(info)
+                if (!seen.add(key)) return@mapNotNull null
+                OutputDevice(
+                    key = key,
+                    name = deviceStateManager.deviceDisplayName(info),
+                    category = info.toAudioCategory(),
+                    isActive = key == activeKey
+                )
+            }
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Failed to list outputs: ${e.message}")
+            emptyList()
+        }
+    }
+
+    /**
+     * Switch the media output route. We can only steer routing between
+     * connected sinks (a physically unplugged jack can't be forced), so this
+     * returns false when there is no live-audio route to select and the UI
+     * should tell the user to use the system switcher instead.
+     */
+    fun selectOutputDevice(key: String): Boolean {
+        return try {
+            val infos = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            val target = infos.firstOrNull {
+                it.type in OUTPUT_DEVICE_PRIORITY && deviceStateManager.deviceKey(it) == key
+            } ?: return false
+            val router = context.getSystemService(android.media.MediaRouter::class.java)
+                ?: return false
+            val liveType = android.media.MediaRouter.ROUTE_TYPE_LIVE_AUDIO
+            val liveRoutes = (0 until router.routeCount).map { router.getRouteAt(it) }
+                .filter { (it.supportedTypes and liveType) != 0 }
+            val route = pickLiveRoute(liveRoutes, target) ?: return false
+            router.selectRoute(liveType, route)
+            true
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Output switch failed: ${e.message}")
+            false
+        }
+    }
+
+    /** Match an AudioDeviceInfo to a MediaRouter live-audio route. */
+    private fun pickLiveRoute(
+        liveRoutes: List<android.media.MediaRouter.RouteInfo>,
+        target: AudioDeviceInfo
+    ): android.media.MediaRouter.RouteInfo? {
+        if (liveRoutes.isEmpty()) return null
+        val wanted = routeDeviceTypes(target.toAudioCategory())
+        val typed = if (wanted.isEmpty()) liveRoutes
+            else liveRoutes.filter { it.deviceType in wanted }
+        if (typed.isEmpty()) return null
+        if (typed.size == 1) return typed[0]
+        // Several devices of the same kind (e.g. two BT headsets): match by name.
+        val targetName = deviceStateManager.deviceDisplayName(target).lowercase()
+        return typed.firstOrNull { route ->
+            val routeName = route.name?.toString()?.lowercase().orEmpty()
+            routeName.isNotBlank() && targetName.isNotBlank() &&
+                (routeName.contains(targetName) || targetName.contains(routeName))
+        } ?: typed[0]
+    }
+
+    /** Active output key derived from the selected live-audio route. */
+    private fun resolveRoutedOutputKey(
+        infos: List<AudioDeviceInfo>
+    ): String? {
+        return try {
+            val router = context.getSystemService(android.media.MediaRouter::class.java)
+                ?: return currentDeviceKey()
+            val selected =
+                router.getSelectedRoute(android.media.MediaRouter.ROUTE_TYPE_LIVE_AUDIO)
+                    ?: return currentDeviceKey()
+            val match = infos.firstOrNull { info ->
+                info.toAudioCategory().let { cat ->
+                    val wanted = routeDeviceTypes(cat)
+                    (wanted.isEmpty() || selected.deviceType in wanted) &&
+                        (selected.name?.toString()?.let { routeName ->
+                            val devName = deviceStateManager.deviceDisplayName(info)
+                            routeName.contains(devName, ignoreCase = true) ||
+                                devName.contains(routeName, ignoreCase = true)
+                        } ?: false)
+                }
+            } ?: infos.firstOrNull {
+                // Single connected sink of the routed kind: name match is overkill.
+                val wanted = routeDeviceTypes(it.toAudioCategory())
+                wanted.isNotEmpty() && selected.deviceType in wanted &&
+                    infos.count { other ->
+                        routeDeviceTypes(other.toAudioCategory())
+                            .any { t -> t in wanted }
+                    } == 1
+            }
+            match?.let { deviceStateManager.deviceKey(it) } ?: currentDeviceKey()
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Route resolve failed: ${e.message}")
+            currentDeviceKey()
+        }
+    }
+
+    private fun routeDeviceTypes(category: AudioDeviceCategory): Set<Int> {
+        return when (category) {
+            AudioDeviceCategory.SPEAKER ->
+                setOf(android.media.MediaRouter.RouteInfo.DEVICE_TYPE_SPEAKER)
+            AudioDeviceCategory.BLUETOOTH ->
+                setOf(android.media.MediaRouter.RouteInfo.DEVICE_TYPE_BLUETOOTH)
+            // android.media.MediaRouter.RouteInfo only defines UNKNOWN, TV,
+            // SPEAKER and BLUETOOTH device types; wired/USB routes are
+            // matched by name instead (wanted.isEmpty() path).
+            AudioDeviceCategory.WIRED,
+            AudioDeviceCategory.USB,
+            AudioDeviceCategory.OTHER -> emptySet()
+        }
+    }
+
     /** Stable key for the current output device, matching DeviceStateManager keys. */
     fun currentDeviceKey(): String? {
         return try {

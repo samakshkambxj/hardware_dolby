@@ -77,6 +77,19 @@ data class ActiveAudioDevice(
     }
 }
 
+/**
+ * One user-meaningful connected sink for the output picker.
+ * [key] matches DeviceStateManager.deviceKey so selection can round-trip
+ * back to the underlying AudioDeviceInfo. [isActive] reflects the current
+ * MediaRouter live-audio route, not the DSP priority pick.
+ */
+data class OutputDevice(
+    val key: String,
+    val name: String,
+    val category: AudioDeviceCategory,
+    val isActive: Boolean
+)
+
 sealed class DolbyUiState {
     object Loading : DolbyUiState()
     data class Success(
