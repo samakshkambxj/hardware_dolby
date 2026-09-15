@@ -5,6 +5,8 @@
 
 package org.lunaris.dolby.ui.components
 
+import android.content.Context
+import android.media.AudioManager
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
@@ -15,8 +17,10 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlin.math.exp
 import kotlin.math.pow
 import kotlin.math.sin
@@ -90,27 +94,75 @@ fun AnimatedWaveformBanner(
     barCount: Int = 56,
     animated: Boolean = true
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "waveform_banner")
+    // Playback-aware motion (no permission needed): poll whether music is
+    // actually playing and the current music-volume fraction, then ease the
+    // banner between a calm idle drift and a fast, deep ripple. Smoothed so
+    // play/pause never pops.
+    val context = LocalContext.current
+    val audioManager = remember {
+        context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    }
+    var musicActive by remember { mutableStateOf(false) }
+    var volumeFraction by remember { mutableFloatStateOf(0.5f) }
 
-    val phase by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = (2f * Math.PI).toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2600, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "waveform_phase"
+    LaunchedEffect(Unit) {
+        while (true) {
+            musicActive = runCatching { audioManager.isMusicActive }.getOrDefault(false)
+            volumeFraction = runCatching {
+                val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                    .coerceAtLeast(1)
+                (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / max)
+                    .coerceIn(0f, 1f)
+            }.getOrDefault(0.5f)
+            delay(500)
+        }
+    }
+
+    // 1 = full-energy playback, 0.25 = idle drift. Animated off = static.
+    val energyTarget = when {
+        !animated -> 0f
+        musicActive -> 1f
+        else -> 0.25f
+    }
+    val energy by animateFloatAsState(
+        targetValue = energyTarget,
+        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        label = "waveform_energy"
     )
 
-    val swell by infiniteTransition.animateFloat(
+    // Phase is advanced manually per frame so speed can follow energy
+    // smoothly (an infiniteTransition can't retime mid-flight).
+    val speedRef = rememberUpdatedState(
+        (0.9f + 2.3f * energy) * if (animated) 1f else 0f
+    )
+    var phase by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(Unit) {
+        var last = 0L
+        val tau = (2f * Math.PI).toFloat()
+        while (true) {
+            withFrameNanos { now ->
+                if (last != 0L) {
+                    val dt = (now - last) / 1_000_000_000f
+                    phase = (phase + dt * speedRef.value) % tau
+                }
+                last = now
+            }
+        }
+    }
+
+    // Slow breathing swell stays alive even when idle so the card never
+    // looks dead; playback energy scales how hard it breathes.
+    val swellTransition = rememberInfiniteTransition(label = "waveform_swell")
+    val swellBase by swellTransition.animateFloat(
         initialValue = 0.82f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 1900, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "waveform_swell"
+        label = "swell_base"
     )
+    val swell = swellBase * (0.35f + 0.65f * volumeFraction)
 
     Canvas(modifier = modifier) {
         val canvasWidth = size.width
@@ -122,6 +174,15 @@ fun AnimatedWaveformBanner(
         val barWidth = slotWidth * 0.42f
         val radius = barWidth / 2f
         val maxHalfHeight = centerY * 0.86f
+
+        // Idle: tall, shallow ripple. Playing: deeper troughs + volume scale.
+        val rippleBase = 0.9f - 0.22f * energy
+        val rippleDepth = 0.1f + 0.22f * energy
+        val levelScale = if (!animated) {
+            0.9f
+        } else {
+            0.55f + 0.45f * energy * (0.4f + 0.6f * volumeFraction)
+        }
 
         for (index in 0 until barCount) {
             val position = (index + 0.5f) / barCount
@@ -136,11 +197,11 @@ fun AnimatedWaveformBanner(
             ).coerceIn(0f, 1f)
 
             val ripple = if (animated) {
-                0.72f + 0.28f * sin(phase + position * 14f)
+                rippleBase + rippleDepth * sin(phase + position * 14f)
             } else {
                 0.85f
             }
-            val level = envelope * ripple * if (animated) swell else 0.9f
+            val level = envelope * ripple * if (animated) swell * levelScale / 0.9f else 0.9f
             val halfHeight = maxHalfHeight * level
 
             val alpha = (0.28f + envelope * 0.72f).coerceIn(0f, 1f)
