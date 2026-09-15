@@ -214,6 +214,33 @@ private fun ModernAdvancedSettingsContent(
                                     steps = 19,
                                     valueLabel = { "$it%" }
                                 )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                ModernSettingSlider(
+                                    title = stringResource(R.string.dolby_sub_bass_level),
+                                    value = state.profileSettings.subBassLevel,
+                                    onValueChange = { viewModel.setSubBassLevel(it.toInt()) },
+                                    valueRange = 0f..100f,
+                                    steps = 19,
+                                    valueLabel = { "$it%" }
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                ModernSettingSlider(
+                                    title = stringResource(R.string.dolby_mid_bass_level),
+                                    value = state.profileSettings.midBassLevel,
+                                    onValueChange = { viewModel.setMidBassLevel(it.toInt()) },
+                                    valueRange = 0f..100f,
+                                    steps = 19,
+                                    valueLabel = { "$it%" }
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                ModernSettingSlider(
+                                    title = stringResource(R.string.dolby_upper_bass_level),
+                                    value = state.profileSettings.upperBassLevel,
+                                    onValueChange = { viewModel.setUpperBassLevel(it.toInt()) },
+                                    valueRange = 0f..100f,
+                                    steps = 19,
+                                    valueLabel = { "$it%" }
+                                )
                             }
                         }
                     }

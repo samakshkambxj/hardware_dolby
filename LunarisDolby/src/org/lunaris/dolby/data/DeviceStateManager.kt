@@ -72,6 +72,9 @@ class DeviceStateManager(private val context: Context) {
         editor.putBoolean(KEY_BASS_ENABLED, repository.getBassEnhancerEnabled(profile))
         editor.putInt(KEY_BASS_LEVEL, repository.getBassLevel(profile))
         editor.putInt(KEY_BASS_CURVE, repository.getBassCurve(profile))
+        editor.putInt(KEY_SUB_BASS_LEVEL, repository.getSubBassLevel(profile))
+        editor.putInt(KEY_MID_BASS_LEVEL, repository.getMidBassLevel(profile))
+        editor.putInt(KEY_UPPER_BASS_LEVEL, repository.getUpperBassLevel(profile))
 
         editor.putBoolean(KEY_TREBLE_ENABLED, repository.getTrebleEnhancerEnabled(profile))
         editor.putInt(KEY_TREBLE_LEVEL, repository.getTrebleLevel(profile))
@@ -129,6 +132,9 @@ class DeviceStateManager(private val context: Context) {
             repository.setBassEnhancerEnabled(profile, prefs.getBoolean(KEY_BASS_ENABLED, false))
             repository.setBassCurve(profile, prefs.getInt(KEY_BASS_CURVE, 0))
             repository.setBassLevel(profile, prefs.getInt(KEY_BASS_LEVEL, 0))
+            repository.setSubBassLevel(profile, prefs.getInt(KEY_SUB_BASS_LEVEL, 0))
+            repository.setMidBassLevel(profile, prefs.getInt(KEY_MID_BASS_LEVEL, 0))
+            repository.setUpperBassLevel(profile, prefs.getInt(KEY_UPPER_BASS_LEVEL, 0))
 
             repository.setTrebleEnhancerEnabled(profile, prefs.getBoolean(KEY_TREBLE_ENABLED, false))
             repository.setTrebleLevel(profile, prefs.getInt(KEY_TREBLE_LEVEL, 0))
@@ -223,7 +229,7 @@ class DeviceStateManager(private val context: Context) {
     companion object {
         private const val TAG = "DeviceStateManager"
 
-        const val SNAPSHOT_VERSION = 1
+        const val SNAPSHOT_VERSION = 2
         const val PREF_FILE_DEVICE_SCENES = "dolby_device_scenes"
 
         private const val KEY_VERSION = "snapshot_version"
@@ -237,6 +243,9 @@ class DeviceStateManager(private val context: Context) {
         private const val KEY_BASS_ENABLED = "bass_enabled"
         private const val KEY_BASS_LEVEL = "bass_level"
         private const val KEY_BASS_CURVE = "bass_curve"
+        private const val KEY_SUB_BASS_LEVEL = "sub_bass_level"
+        private const val KEY_MID_BASS_LEVEL = "mid_bass_level"
+        private const val KEY_UPPER_BASS_LEVEL = "upper_bass_level"
         private const val KEY_TREBLE_ENABLED = "treble_enabled"
         private const val KEY_TREBLE_LEVEL = "treble_level"
         private const val KEY_MID_ENABLED = "mid_enabled"
