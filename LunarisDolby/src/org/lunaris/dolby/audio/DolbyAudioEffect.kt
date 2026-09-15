@@ -83,6 +83,19 @@ class DolbyAudioEffect(priority: Int, audioSession: Int) : AudioEffect(
     fun getDapParameterInt(param: DsParam, profile: Int = this.profile): Int =
         getDapParameter(param, profile)[0]
 
+    /**
+     * Read-only probe of an arbitrary DAP parameter ID (for IDs with no
+     * [DsParam] entry, e.g. 106/107/109/112). Throws when the HAL rejects
+     * the ID — callers must treat failure as "unsupported".
+     */
+    fun getRawDapParameter(paramId: Int, profile: Int = this.profile): Int {
+        DolbyConstants.dlog(TAG, "getRawDapParameter: profile=$profile paramId=$paramId")
+        val buf = ByteArray((1 + 2) * 4)
+        val p = (paramId shl 16) + (profile shl 8) + EFFECT_PARAM_GET_PROFILE_PARAMETER
+        checkStatus(getParameter(p, buf))
+        return byteArrayToInt32Array(buf, 1)[0]
+    }
+
     companion object {
         private const val TAG = "DolbyAudioEffect"
         private val EFFECT_TYPE_DAP = UUID.fromString("9d4921da-8225-4f29-aefa-39537a04bcaa")

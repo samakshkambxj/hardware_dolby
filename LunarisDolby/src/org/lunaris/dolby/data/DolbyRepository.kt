@@ -118,6 +118,13 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
             if (volumeLevelerSupported) {
                 val volumeLeveler = prefs.getBoolean(DolbyConstants.PREF_VOLUME, false)
                 dolbyEffect.setDapParameter(DsParam.VOLUME_LEVELER_ENABLE, volumeLeveler, profile)
+                // Isolated: a HAL without param 116 must not break the restore.
+                runCatching {
+                    val levelerAmount = prefs.getInt(DolbyConstants.PREF_VOLUME_AMOUNT, LEVELER_AMOUNT_DEFAULT)
+                    dolbyEffect.setDapParameter(DsParam.VOLUME_LEVELER_AMOUNT, levelerAmount, profile)
+                }.onFailure {
+                    DolbyConstants.dlog(TAG, "Leveler amount (116) unsupported: ${it.message}")
+                }
             }
             
             DolbyConstants.dlog(TAG, "Successfully restored all settings for profile $profile")
@@ -485,6 +492,36 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
         }
     }
 
+    fun getVolumeLevelerAmount(profile: Int): Int {
+        if (!volumeLevelerSupported) return LEVELER_AMOUNT_DEFAULT
+        val prefs = getProfilePrefs(profile)
+        if (prefs.contains(DolbyConstants.PREF_VOLUME_AMOUNT)) {
+            return prefs.getInt(DolbyConstants.PREF_VOLUME_AMOUNT, LEVELER_AMOUNT_DEFAULT)
+        }
+        return try {
+            val amount = dolbyEffect.getDapParameterInt(DsParam.VOLUME_LEVELER_AMOUNT, profile)
+            prefs.edit().putInt(DolbyConstants.PREF_VOLUME_AMOUNT, amount).apply()
+            amount
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error getting volume leveler amount: ${e.message}")
+            // Cache the default so a HAL without 116 doesn't spam every load.
+            prefs.edit().putInt(DolbyConstants.PREF_VOLUME_AMOUNT, LEVELER_AMOUNT_DEFAULT).apply()
+            LEVELER_AMOUNT_DEFAULT
+        }
+    }
+
+    fun setVolumeLevelerAmount(profile: Int, amount: Int) {
+        if (!volumeLevelerSupported || isReleased) return
+
+        try {
+            checkEffect()
+            dolbyEffect.setDapParameter(DsParam.VOLUME_LEVELER_AMOUNT, amount, profile)
+            getProfilePrefs(profile).edit().putInt(DolbyConstants.PREF_VOLUME_AMOUNT, amount).apply()
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error setting volume leveler amount: ${e.message}")
+        }
+    }
+
     fun getIeqPreset(profile: Int): Int {
         return try {
             dolbyEffect.getDapParameterInt(DsParam.IEQ_PRESET, profile)
@@ -775,6 +812,17 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
         }
     }
 
+    /**
+     * Read-only probe of an arbitrary DAP parameter ID. Success carries the
+     * HAL-reported value (which still needs a sanity listen — some HALs
+     * return 0 for unknown IDs instead of failing). Must be called off the
+     * main thread.
+     */
+    fun probeDapParam(paramId: Int, profile: Int): Result<Int> = runCatching {
+        checkEffect()
+        dolbyEffect.getRawDapParameter(paramId, profile)
+    }
+
     fun resetProfile(profile: Int) {
         if (isReleased) return
         
@@ -1013,6 +1061,8 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
     companion object {
         private const val TAG = "DolbyRepository"
         private const val EFFECT_PRIORITY = 100
+        /** Codec default for VOLUME_LEVELER_AMOUNT (param 116), range 0-10. */
+        const val LEVELER_AMOUNT_DEFAULT = 7
         // Platform "master_balance" setting (use the literal: the SDK constant
         // is not guaranteed present on every target).
         private const val MASTER_BALANCE_KEY = "master_balance"
