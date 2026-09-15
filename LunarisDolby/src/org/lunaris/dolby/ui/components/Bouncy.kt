@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.Velocity
 import kotlin.math.abs
 import kotlin.math.sign
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -314,19 +315,32 @@ fun Modifier.verticalBouncyEdge(
                 }
             }
 
-            private fun settle(velocity: Float) {
-                generation += 1
-                val token = generation
+            fun settle(velocity: Float = 0f) {
+                if (target == 0f && offset.value == 0f && !offset.isRunning) return
                 target = 0f
                 settleJob?.cancel()
+                val token = ++generation
                 settleJob = scope.launch {
-                    offset.stop()
-                    offset.animateTo(
-                        targetValue = 0f,
-                        animationSpec = BouncySpecs.overscroll,
-                        initialVelocity = velocity * stretchFactor
-                    )
-                    if (token == generation) offset.snapTo(0f)
+                    try {
+                        offset.stop()
+                        offset.animateTo(
+                            targetValue = 0f,
+                            animationSpec = BouncySpecs.overscroll,
+                            initialVelocity = velocity.coerceIn(-2500f, 2500f)
+                        )
+                    } catch (_: CancellationException) {
+                        // Superseded by a newer stretch/settle.
+                        return@launch
+                    }
+                    // Watchdog: if anything displaced the offset after the
+                    // spring finished, force exact rest instead of sitting
+                    // visibly stretched.
+                    try {
+                        if (token == generation && offset.value != 0f && !offset.isRunning) {
+                            offset.snapTo(0f)
+                        }
+                    } catch (_: Exception) {
+                    }
                 }
             }
 
@@ -382,9 +396,9 @@ fun Modifier.verticalBouncyEdge(
                 consumed: Velocity,
                 available: Velocity
             ): Velocity {
-                if (target == 0f) return Velocity.Zero
+                val stretched = target != 0f || offset.value != 0f || offset.isRunning
                 settle(available.y)
-                return available
+                return if (stretched) available else Velocity.Zero
             }
         }
     }
@@ -392,4 +406,19 @@ fun Modifier.verticalBouncyEdge(
         .clipToBounds()
         .graphicsLayer { translationY = offset.value }
         .nestedScroll(connection)
+        // Spring back on finger lift even when no fling is dispatched: a
+        // slow lift leaves no fling for onPostFling, which used to leave the
+        // edge visibly stretched until the next scroll event freed it.
+        // NOTE: inside awaitEachGesture the receiver is
+        // AwaitPointerEventScope, not a CoroutineScope, so the outer scope
+        // is used. requireUnconsumed = false means this only observes and
+        // never steals touches from the list.
+        .pointerInput(enabled) {
+            if (!enabled) return@pointerInput
+            awaitEachGesture {
+                awaitFirstDown(requireUnconsumed = false)
+                waitForUpOrCancellation()
+                connection.settle()
+            }
+        }
 }

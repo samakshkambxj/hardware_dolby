@@ -318,7 +318,7 @@
     <string name="egg_badge_wordsmith_desc">Named a preset with power</string>
     <string name="egg_badge_lizard">Lounge Lizard</string>
     <string name="egg_badge_lizard_desc">Found the Lounge</string>
-    <string name="egg_badge_locked">???</string>
+    <string name="egg_badge_locked">\?\?\?</string>
     <string name="egg_badge_locked_desc">Keep exploring…</string>
     <string name="egg_stats_title">Vital statistics</string>
     <string name="egg_stat_taps">Logo taps</string>
