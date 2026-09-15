@@ -65,13 +65,22 @@ fun InteractiveFrequencyResponseCurve(
     val borderWidth = if (isActive) 2.dp else 1.dp
     
     var draggedIndex by remember { mutableStateOf<Int?>(null) }
-    var controlPoints by remember { mutableStateOf(bandGains.map { it.gain }) }
-    
+    // Keyed on the band list itself so a band-mode/preset switch (which changes
+    // the list size) resyncs synchronously during composition. An unkeyed
+    // remember left the old-sized list alive until the LaunchedEffect below ran,
+    // and indexing it with new-list indices crashed with IndexOutOfBoundsException.
+    var controlPoints by remember(bandGains) { mutableStateOf(bandGains.map { it.gain }) }
+
     LaunchedEffect(bandGains) {
         if (draggedIndex == null) {
             controlPoints = bandGains.map { it.gain }
         }
     }
+
+    // Snapshot for UI/draw use only (highlight + tooltip). Gesture callbacks
+    // above read draggedIndex live instead. The band list can shrink underneath
+    // an active drag (band-mode switch); never let a stale index touch the arrays.
+    val safeDraggedIndex = draggedIndex?.takeIf { it in controlPoints.indices }
     
     Box(modifier = modifier) {
         Canvas(
@@ -88,52 +97,62 @@ fun InteractiveFrequencyResponseCurve(
                     if (isEditable) {
                         detectDragGestures(
                             onDragStart = { offset ->
-                                val width = size.width
-                                val height = size.height
-                                val stepX = width / (bandGains.size - 1).toFloat()
-                                
-                                var closestIndex = -1
-                                var closestDistance = Float.MAX_VALUE
-                                
-                                bandGains.forEachIndexed { index, _ ->
-                                    val x = index * stepX
-                                    val normalizedGain = (controlPoints[index] / 150f).coerceIn(-1f, 1f)
-                                    val y = height / 2 - (normalizedGain * height / 2 * 0.85f)
-                                    
-                                    val distance = kotlin.math.sqrt(
-                                        (offset.x - x) * (offset.x - x) + 
-                                        (offset.y - y) * (offset.y - y)
-                                    )
-                                    
-                                    if (distance < closestDistance && distance < 120f) {
-                                        closestDistance = distance
-                                        closestIndex = index
+                                if (bandGains.isNotEmpty() && controlPoints.size == bandGains.size) {
+                                    val width = size.width
+                                    val height = size.height
+                                    val stepX = if (bandGains.size > 1) width / (bandGains.size - 1).toFloat() else 0f
+
+                                    var closestIndex = -1
+                                    var closestDistance = Float.MAX_VALUE
+
+                                    bandGains.forEachIndexed { index, _ ->
+                                        val gain = controlPoints.getOrNull(index) ?: return@forEachIndexed
+                                        val x = if (bandGains.size > 1) index * stepX else width / 2f
+                                        val normalizedGain = (gain / 150f).coerceIn(-1f, 1f)
+                                        val y = height / 2 - (normalizedGain * height / 2 * 0.85f)
+
+                                        val distance = kotlin.math.sqrt(
+                                            (offset.x - x) * (offset.x - x) +
+                                            (offset.y - y) * (offset.y - y)
+                                        )
+
+                                        if (distance < closestDistance && distance < 120f) {
+                                            closestDistance = distance
+                                            closestIndex = index
+                                        }
                                     }
-                                }
-                                
-                                if (closestIndex != -1) {
-                                    draggedIndex = closestIndex
+
+                                    if (closestIndex != -1) {
+                                        draggedIndex = closestIndex
+                                    }
                                 }
                             },
                             onDrag = { change, _ ->
-                                draggedIndex?.let { index ->
+                                // Read draggedIndex live here: this gesture block outlives
+                                // the composition that launched it, so a composed snapshot
+                                // would stay null for the whole drag.
+                                val index = draggedIndex
+                                if (index != null && index in controlPoints.indices) {
                                     val height = size.height
                                     val centerY = height / 2
                                     val y = change.position.y
                                     val normalizedGain = ((centerY - y) / (height / 2 * 0.85f)).coerceIn(-1f, 1f)
                                     val newGain = (normalizedGain * 150).toInt().coerceIn(-150, 150)
-                                    
-                                    if (controlPoints[index] != newGain) {
+
+                                    if (controlPoints.getOrNull(index) != newGain) {
                                         controlPoints = controlPoints.toMutableList().apply {
-                                            this[index] = newGain
+                                            if (index in indices) this[index] = newGain
                                         }
                                     }
                                     change.consume()
                                 }
                             },
                             onDragEnd = {
-                                draggedIndex?.let { index ->
-                                    onBandGainChange(index, controlPoints[index])
+                                val index = draggedIndex
+                                if (index != null) {
+                                    controlPoints.getOrNull(index)?.let { gain ->
+                                        onBandGainChange(index, gain)
+                                    }
                                 }
                                 draggedIndex = null
                             },
@@ -167,22 +186,24 @@ fun InteractiveFrequencyResponseCurve(
                 )
             }
             
-            val stepX = width / (bandGains.size - 1)
-            bandGains.forEachIndexed { index, _ ->
-                val x = index * stepX
-                drawLine(
-                    color = gridVerticalColor,
-                    start = Offset(x, 0f),
-                    end = Offset(x, height),
-                    strokeWidth = 1f
-                )
-            }
-            
-            if (bandGains.isNotEmpty() && controlPoints.isNotEmpty()) {
-                val path = Path()
-                
-                controlPoints.forEachIndexed { index, gain ->
+            val stepX = if (bandGains.size > 1) width / (bandGains.size - 1) else 0f
+            if (bandGains.size > 1) {
+                bandGains.forEachIndexed { index, _ ->
                     val x = index * stepX
+                    drawLine(
+                        color = gridVerticalColor,
+                        start = Offset(x, 0f),
+                        end = Offset(x, height),
+                        strokeWidth = 1f
+                    )
+                }
+            }
+
+            if (bandGains.isNotEmpty() && controlPoints.size == bandGains.size) {
+                val path = Path()
+
+                controlPoints.forEachIndexed { index, gain ->
+                    val x = if (bandGains.size > 1) index * stepX else width / 2f
                     val normalizedGain = (gain / 150f).coerceIn(-1f, 1f)
                     val y = centerY - (normalizedGain * centerY * 0.85f)
                     
@@ -227,11 +248,11 @@ fun InteractiveFrequencyResponseCurve(
                 )
                 
                 controlPoints.forEachIndexed { index, gain ->
-                    val x = index * stepX
+                    val x = if (bandGains.size > 1) index * stepX else width / 2f
                     val normalizedGain = (gain / 150f).coerceIn(-1f, 1f)
                     val y = centerY - (normalizedGain * centerY * 0.85f)
-                    
-                    val isBeingDragged = draggedIndex == index
+
+                    val isBeingDragged = safeDraggedIndex == index
                     val pointRadius = if (isBeingDragged) 14f else 10f
                     
                     if (isBeingDragged) {
@@ -311,8 +332,8 @@ fun InteractiveFrequencyResponseCurve(
             )
         }
         
-        draggedIndex?.let { index ->
-            val gain = controlPoints[index]
+        safeDraggedIndex?.let { index ->
+            val gain = controlPoints.getOrNull(index) ?: return@let
             val gainDb = gain / 10f
             
             Surface(

@@ -260,7 +260,7 @@ private fun ModernDolbySettingsContent(
             }
         }
 
-        item {
+        item(key = "profile_selector") {
             AnimatedVisibility(
                 visible = state.settings.enabled,
                 enter = fadeIn() + expandVertically(),
@@ -273,7 +273,7 @@ private fun ModernDolbySettingsContent(
             }
         }
 
-        item {
+        item(key = "ieq_selector") {
             AnimatedVisibility(
                 visible = state.settings.enabled && state.settings.currentProfile != 0,
                 enter = fadeIn() + expandVertically(),
@@ -291,7 +291,7 @@ private fun ModernDolbySettingsContent(
             }
         }
 
-        item {
+        item(key = "scene_section") {
             AnimatedVisibility(
                 visible = state.settings.enabled,
                 enter = fadeIn() + expandVertically(),
@@ -308,7 +308,7 @@ private fun ModernDolbySettingsContent(
             }
         }
 
-        item {
+        item(key = "sleep_timer") {
             AnimatedVisibility(
                 visible = state.settings.enabled,
                 enter = fadeIn() + expandVertically(),
@@ -322,7 +322,7 @@ private fun ModernDolbySettingsContent(
             }
         }
 
-        item {
+        item(key = "app_profiles") {
             AnimatedVisibility(
                 visible = state.settings.enabled,
                 enter = fadeIn() + expandVertically(),
@@ -334,7 +334,7 @@ private fun ModernDolbySettingsContent(
             }
         }
         
-        item {
+        item(key = "bottom_spacer") {
             Spacer(modifier = Modifier.height(70.dp))
         }
     }
