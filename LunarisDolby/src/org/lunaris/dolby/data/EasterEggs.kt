@@ -24,8 +24,11 @@ object EasterEggs {
     const val BADGE_MASHER = "masher"
     const val BADGE_WORDSMITH = "wordsmith"
     const val BADGE_LIZARD = "lizard"
+    const val BADGE_MAINTAINER = "maintainer"
 
-    val ALL_BADGES = listOf(BADGE_PERSISTENT, BADGE_MASHER, BADGE_WORDSMITH, BADGE_LIZARD)
+    val ALL_BADGES = listOf(
+        BADGE_PERSISTENT, BADGE_MASHER, BADGE_WORDSMITH, BADGE_LIZARD, BADGE_MAINTAINER
+    )
 
     const val LOGO_TAP_TARGET = 7
     const val LOGO_TAP_WINDOW_MS = 10_000L
@@ -35,7 +38,13 @@ object EasterEggs {
     private const val KONAMI_WINDOW_MS = 2_000L
 
     /** Preset-name cheat codes (matched case-insensitively after trim). */
-    val CHEAT_CODES = setOf("konami", "iddqd", "lunaris", "xyzzy", "1337")
+    val CHEAT_CODES = setOf(
+        "konami", "iddqd", "lunaris", "xyzzy", "1337", "samaksh", "samakshhhh"
+    )
+
+    /** Cheat codes that invoke the maintainer by name. */
+    fun isMaintainerCode(code: String): Boolean =
+        code == "samaksh" || code == "samakshhhh"
 
     private const val PREFS = "easter_eggs"
     private const val KEY_BADGES = "badges"
@@ -89,25 +98,29 @@ object EasterEggs {
 
     /**
      * Records a logo tap. Returns the current consecutive streak
-     * (1..[LOGO_TAP_TARGET]), or 0 when the badge is already owned.
+     * (1..[LOGO_TAP_TARGET]). The streak keeps counting even after the badge
+     * is owned so the celebration can replay on every completion.
      */
     fun recordLogoTap(context: Context, now: Long = SystemClock.uptimeMillis()): Int {
         init(context)
         _logoTaps.value = _logoTaps.value + 1
         prefs.edit().putInt(KEY_LOGO_TAPS, _logoTaps.value).apply()
-        if (isUnlocked(BADGE_PERSISTENT)) return 0
         logoStreak = if (now - logoLastTap > LOGO_TAP_WINDOW_MS) 1 else logoStreak + 1
         logoLastTap = now
-        return logoStreak.coerceAtMost(LOGO_TAP_TARGET)
+        val result = logoStreak.coerceAtMost(LOGO_TAP_TARGET)
+        // Auto-reset so the next streak starts fresh and every 7-tap
+        // run celebrates instead of firing on a single follow-up tap.
+        if (result >= LOGO_TAP_TARGET) logoStreak = 0
+        return result
     }
 
     /**
-     * Feeds one volume-key press into the Konami detector. Returns true only
-     * on a fresh completion (also unlocks the badge).
+     * Feeds one volume-key press into the Konami detector. Returns true on
+     * every completion (also unlocks the badge on the first one) so the
+     * celebration replays instead of firing only once.
      */
     fun recordVolumeKey(context: Context, up: Boolean, now: Long = SystemClock.uptimeMillis()): Boolean {
         init(context)
-        if (isUnlocked(BADGE_MASHER)) return false
         if (now - konamiLastTime > KONAMI_WINDOW_MS) konamiProgress = 0
         konamiLastTime = now
         konamiProgress = if (KONAMI_SEQUENCE.getOrNull(konamiProgress) == up) {
@@ -135,6 +148,7 @@ object EasterEggs {
         "iddqd" -> R.string.egg_cheat_iddqd
         "lunaris" -> R.string.egg_cheat_lunaris
         "xyzzy" -> R.string.egg_cheat_xyzzy
+        "samaksh", "samakshhhh" -> R.string.egg_cheat_samaksh
         else -> R.string.egg_cheat_elite
     }
 

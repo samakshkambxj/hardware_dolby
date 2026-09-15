@@ -23,7 +23,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -117,15 +120,37 @@ class DolbyActivity : ComponentActivity() {
         
         setContent {
             DolbyTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.surfaceContainer,
+                // App-wide Material host for ToastHelper: foreground toasts
+                // render as themed snackbars (inverseSurface / inverseOnSurface
+                // per the M3 spec). Background callers fall back to a system
+                // toast inside ToastHelper itself.
+                val snackbarHostState = remember { SnackbarHostState() }
+                LaunchedEffect(Unit) {
+                    ToastHelper.events.collect { event ->
+                        snackbarHostState.showSnackbar(
+                            message = event.message,
+                            duration = if (event.long) SnackbarDuration.Long
+                            else SnackbarDuration.Short
+                        )
+                    }
+                }
+                Scaffold(
+                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     contentColor = MaterialTheme.colorScheme.onSurface
-                ) {
-                    DolbyNavHost(
-                        dolbyViewModel = dolbyViewModel,
-                        equalizerViewModel = equalizerViewModel
-                    )
+                ) { paddingValues ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ) {
+                        DolbyNavHost(
+                            dolbyViewModel = dolbyViewModel,
+                            equalizerViewModel = equalizerViewModel
+                        )
+                    }
                 }
             }
         }

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -109,6 +110,12 @@ private val BADGE_METAS = listOf(
         Icons.Default.NightsStay,
         R.string.egg_badge_lizard,
         R.string.egg_badge_lizard_desc
+    ),
+    BadgeMeta(
+        EasterEggs.BADGE_MAINTAINER,
+        Icons.Default.Star,
+        R.string.egg_badge_maintainer,
+        R.string.egg_badge_maintainer_desc
     )
 )
 
