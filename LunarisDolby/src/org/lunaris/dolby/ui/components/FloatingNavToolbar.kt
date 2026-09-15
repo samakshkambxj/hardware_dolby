@@ -107,6 +107,7 @@ fun FloatingNavToolbar(
                 icon = Icons.Default.Settings,
                 label = stringResource(R.string.advanced),
                 selected = isAdvancedSelected,
+                motion = NavIconMotion.Spin,
                 primaryColor = primaryColor,
                 onPrimaryColor = onPrimaryColor,
                 containerColor = containerColor,
@@ -123,6 +124,7 @@ fun FloatingNavToolbar(
                 icon = Icons.Default.VolumeUp,
                 label = stringResource(R.string.volume),
                 selected = isVolumeSelected,
+                motion = NavIconMotion.Pulse,
                 primaryColor = primaryColor,
                 onPrimaryColor = onPrimaryColor,
                 containerColor = containerColor,
@@ -152,7 +154,8 @@ private fun NavToolbarItem(
     onContainerColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isEqualizer: Boolean = false
+    isEqualizer: Boolean = false,
+    motion: NavIconMotion = NavIconMotion.Bob
 ) {
     val currentSelectionKey = remember(selected) { selected }
     val iconBounce = rememberBouncySelectedScale(selected)
@@ -198,9 +201,10 @@ private fun NavToolbarItem(
                             size = 24.dp
                         )
                     } else {
-                        Icon(
-                            imageVector = icon,
+                        AnimatedNavIcon(
+                            icon = icon,
                             contentDescription = label,
+                            motion = motion,
                             modifier = Modifier
                                 .size(24.dp)
                                 .graphicsLayer {
@@ -237,6 +241,106 @@ private fun NavToolbarItem(
                     modifier = Modifier.padding(start = ButtonDefaults.IconSpacing)
                 )
             }
+        }
+    }
+}
+
+/** Idle motion style for a nav-pill icon, complementing the equalizer bars. */
+enum class NavIconMotion {
+    /** Gentle float + tilt (home). */
+    Bob,
+    /** Slow continuous rotation (settings gear). */
+    Spin,
+    /** Breathing scale + wobble (volume speaker). */
+    Pulse
+}
+
+/**
+ * Static vector icon with a looping idle motion in the spirit of the animated
+ * equalizer icon. Runs at the same gentle energy selected or not — selection
+ * already gets the bounce scale + expanding pill from the caller.
+ */
+@Composable
+private fun AnimatedNavIcon(
+    icon: ImageVector,
+    contentDescription: String?,
+    motion: NavIconMotion,
+    modifier: Modifier = Modifier
+) {
+    when (motion) {
+        NavIconMotion.Spin -> {
+            val spin = rememberInfiniteTransition(label = "nav_icon_spin")
+            val angle by spin.animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 9000, easing = LinearEasing)
+                ),
+                label = "angle"
+            )
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                modifier = modifier.graphicsLayer { rotationZ = angle }
+            )
+        }
+        NavIconMotion.Pulse -> {
+            val pulse = rememberInfiniteTransition(label = "nav_icon_pulse")
+            val scale by pulse.animateFloat(
+                initialValue = 1f,
+                targetValue = 1.15f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 1100, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "scale"
+            )
+            val wobble by pulse.animateFloat(
+                initialValue = -6f,
+                targetValue = 6f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 1600, easing = LinearEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "wobble"
+            )
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                modifier = modifier.graphicsLayer {
+                    scaleX *= scale
+                    scaleY *= scale
+                    rotationZ = wobble
+                }
+            )
+        }
+        NavIconMotion.Bob -> {
+            val bob = rememberInfiniteTransition(label = "nav_icon_bob")
+            val y by bob.animateDp(
+                initialValue = 0.dp,
+                targetValue = (-2.5).dp,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 1500, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "bob"
+            )
+            val tilt by bob.animateFloat(
+                initialValue = -5f,
+                targetValue = 5f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 2100, easing = LinearEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "tilt"
+            )
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                modifier = modifier
+                    .offset(y = y)
+                    .graphicsLayer { rotationZ = tilt }
+            )
         }
     }
 }
