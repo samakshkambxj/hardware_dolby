@@ -44,6 +44,7 @@ sealed class Screen(val route: String) {
     object ImportExport : Screen("import_export")
     object Onboarding : Screen("onboarding")
     object EasterEgg : Screen("easter_egg")
+    object DapProbe : Screen("dap_probe")
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -188,6 +189,13 @@ fun DolbyNavHost(
             EasterEggScreen(
                 dolbyViewModel = dolbyViewModel,
                 equalizerViewModel = equalizerViewModel,
+                navController = navController
+            )
+        }
+
+        composable(Screen.DapProbe.route) {
+            DapProbeScreen(
+                viewModel = dolbyViewModel,
                 navController = navController
             )
         }

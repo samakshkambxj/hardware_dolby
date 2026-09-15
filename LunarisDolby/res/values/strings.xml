@@ -45,6 +45,7 @@
     <string name="dolby_reset_all_message">This will reset all profiles to factory defaults.</string>
     <string name="dolby_reset_all_toast">Succesfully reset all profiles</string>
     <string name="dolby_hp_virtualizer_dolby_strength">Surround virtualizer Strength</string>
+    <string name="dolby_volume_leveler_amount">Leveling strength</string>
     <string name="dolby_stage_width">Stage width</string>
     <string name="dolby_stage_width_summary">Widen the stereo image. Engages the surround virtualizer automatically.</string>
     <string name="dolby_dialogue_enhancer_dolby_strength">Dialogue enhancer Strength</string>

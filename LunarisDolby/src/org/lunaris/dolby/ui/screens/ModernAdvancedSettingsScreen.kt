@@ -7,6 +7,7 @@ package org.lunaris.dolby.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -47,6 +48,8 @@ fun ModernAdvancedSettingsScreen(
     val headTrackingEnabled by viewModel.headTrackingEnabled.collectAsState()
     val spatialError by viewModel.spatialError.collectAsState()
     val context = LocalContext.current
+    // Hidden entry to the DAP probe debug screen: 5 taps on the title.
+    var probeTaps by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(balanceError) {
         balanceError?.let {
@@ -70,7 +73,14 @@ fun ModernAdvancedSettingsScreen(
                         stringResource(R.string.dolby_category_adv_settings),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.clickable {
+                            probeTaps++
+                            if (probeTaps >= 5) {
+                                probeTaps = 0
+                                navController.navigate(Screen.DapProbe.route)
+                            }
+                        }
                     ) 
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -284,6 +294,19 @@ private fun ModernAdvancedSettingsContent(
                         onCheckedChange = { viewModel.setVolumeLeveler(it) },
                         icon = Icons.Default.BarChart
                     )
+
+                    AnimatedVisibility(visible = state.settings.volumeLevelerEnabled) {
+                        Column {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            ModernSettingSlider(
+                                title = stringResource(R.string.dolby_volume_leveler_amount),
+                                value = state.settings.volumeLevelerAmount,
+                                onValueChange = { viewModel.setVolumeLevelerAmount(it.toInt()) },
+                                valueRange = 0f..10f,
+                                steps = 9
+                            )
+                        }
+                    }
                 }
             }
             

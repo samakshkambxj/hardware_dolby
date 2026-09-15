@@ -28,6 +28,7 @@ object DolbyConstants {
     const val PREF_TREBLE = "dolby_treble"
     const val PREF_TREBLE_LEVEL = "dolby_treble_level"
     const val PREF_VOLUME = "dolby_volume"
+    const val PREF_VOLUME_AMOUNT = "dolby_volume_amount"
     const val PREF_PRESETS_MIGRATED = "presets_migrated"
     const val PREF_BAND_MODE = "dolby_band_mode"
     const val PREF_DEVICE_STATE_MEMORY = "device_state_memory_enabled"
@@ -46,7 +47,9 @@ object DolbyConstants {
         DIALOGUE_ENHANCER_AMOUNT(108),
         GEQ_BAND_GAINS(110, 20),
         BASS_ENHANCER_ENABLE(111),
-        STEREO_WIDENING_AMOUNT(113);
+        STEREO_WIDENING_AMOUNT(113),
+        // Seen in Xiaomi DAP trees; codec range 0-10 (Dolby default 7).
+        VOLUME_LEVELER_AMOUNT(116);
 
         override fun toString(): String = "${name}(${id})"
     }

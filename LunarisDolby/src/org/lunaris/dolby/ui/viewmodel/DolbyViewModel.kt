@@ -169,6 +169,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
                     currentProfile = profile,
                     bassEnhancerEnabled = repository.getBassEnhancerEnabled(profile),
                     volumeLevelerEnabled = repository.getVolumeLevelerEnabled(profile),
+                    volumeLevelerAmount = repository.getVolumeLevelerAmount(profile),
                     bandMode = bandMode
                 )
                 
@@ -314,6 +315,21 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun setVolumeLevelerAmount(amount: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val profile = repository.getCurrentProfile()
+                repository.setVolumeLevelerAmount(profile, amount)
+                // Leveling is inaudible unless the leveler is engaged —
+                // turn it on so the slider always yields an actual effect.
+                repository.setVolumeLevelerEnabled(profile, true)
+                loadSettings()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error setting volume leveler amount: ${e.message}")
+            }
+        }
+    }
+
     fun setIeqPreset(preset: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -392,6 +408,12 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+    /** Debug-only: read an arbitrary DAP parameter ID. See DAP probe screen. */
+    suspend fun probeDapParam(paramId: Int, profile: Int): Result<Int> =
+        kotlinx.coroutines.withContext(Dispatchers.IO) {
+            repository.probeDapParam(paramId, profile)
+        }
 
     fun resetAllProfiles() {
         viewModelScope.launch(Dispatchers.IO) {
