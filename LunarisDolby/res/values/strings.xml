@@ -288,4 +288,18 @@
     <string name="device_scene_assign">Assign to this device</string>
     <string name="device_scene_clear">Clear</string>
     <string name="device_scene_assigned">%1$s → %2$s</string>
+
+    <!-- First-run tutorial -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_back">Back</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_get_started">Get started</string>
+    <string name="onboarding_welcome_title">Meet Lunaris Dolby</string>
+    <string name="onboarding_welcome_body">System-wide Dolby Atmos with profiles, scenes and a full equalizer — tuned for your phone.</string>
+    <string name="onboarding_scenes_title">One-tap scenes</string>
+    <string name="onboarding_scenes_body">Movies, music, games and more. Scenes can even auto-apply when a device connects.</string>
+    <string name="onboarding_eq_title">Serious equalizer</string>
+    <string name="onboarding_eq_body">10 to 20 bands, AutoEQ headphone correction, plus dynamics processing with a live spectrum.</string>
+    <string name="onboarding_pro_title">Pro tools included</string>
+    <string name="onboarding_pro_body">Spatial audio, channel balance, sleep timer, per-app profiles and Quick Settings tiles.</string>
 </resources>
