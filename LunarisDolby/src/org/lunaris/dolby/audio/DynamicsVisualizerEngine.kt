@@ -65,26 +65,26 @@ class DynamicsVisualizerEngine(
 
     private fun computeBars(fft: ByteArray): FloatArray {
         // fft format: [0]=Re(0)(DC), [1]=Re(N/2), then interleaved Re/Im pairs.
+        // Bytes are signed 8-bit, so a bin magnitude tops out at ~181.
+        // Averaging raw linear magnitudes then dividing by 255 buries
+        // typical music levels near zero — use the per-bar peak on a dB
+        // scale instead so quiet and loud passages both read clearly.
         val n = fft.size / 2
-        val magnitudes = FloatArray(n)
-        for (i in 0 until n) {
-            val re = fft.getOrElse(i * 2) { 0 }.toInt()
-            val im = fft.getOrElse(i * 2 + 1) { 0 }.toInt()
-            magnitudes[i] = kotlin.math.sqrt((re * re + im * im).toFloat())
-        }
-
         val bars = FloatArray(barCount)
-        val bandSize = (magnitudes.size / barCount).coerceAtLeast(1)
+        val bandSize = (n / barCount).coerceAtLeast(1)
         for (bar in 0 until barCount) {
             val start = bar * bandSize
-            val end = (start + bandSize).coerceAtMost(magnitudes.size)
-            var sum = 0f
-            var count = 0
+            val end = (start + bandSize).coerceAtMost(n)
+            var peak = 0f
             for (i in start until end) {
-                sum += magnitudes[i]
-                count++
+                val re = fft.getOrElse(i * 2) { 0 }.toInt()
+                val im = fft.getOrElse(i * 2 + 1) { 0 }.toInt()
+                val mag = kotlin.math.sqrt((re * re + im * im).toFloat())
+                if (mag > peak) peak = mag
             }
-            bars[bar] = if (count > 0) (sum / count).coerceIn(0f, 255f) / 255f else 0f
+            // Full-scale bin ≈ 42 dB; silence/noise floor sits below 8 dB.
+            val db = 20f * kotlin.math.log10(peak.coerceAtLeast(1f))
+            bars[bar] = ((db - MIN_DB) / (MAX_DB - MIN_DB)).coerceIn(0f, 1f)
         }
         return bars
     }
@@ -101,5 +101,9 @@ class DynamicsVisualizerEngine(
 
     companion object {
         private const val TAG = "DynamicsVisualizerEngine"
+        // dB window mapped to 0..1 bars. Full-scale FFT bin ≈ 42 dB,
+        // silence/noise floor sits below 8 dB.
+        private const val MIN_DB = 8f
+        private const val MAX_DB = 42f
     }
 }

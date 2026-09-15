@@ -528,9 +528,12 @@ private fun GithubAvatar(
 
 private fun loadGithubAvatar(context: Context, username: String): Bitmap? {
     val cacheFile = File(context.cacheDir, "avatar_$username.png")
-    runCatching {
-        if (cacheFile.exists()) BitmapFactory.decodeFile(cacheFile.absolutePath)
-    }.getOrNull()?.let { return it }
+    // Note: no `if` without `else` inside runCatching — that makes the
+    // lambda return Unit and breaks the Bitmap? chain below.
+    if (cacheFile.exists()) {
+        runCatching { BitmapFactory.decodeFile(cacheFile.absolutePath) }
+            .getOrNull()?.let { return it }
+    }
 
     var connection: HttpURLConnection? = null
     return try {
