@@ -55,7 +55,7 @@ private data class Particle(
  * }
  * ```
  *
- * Cheap by design: one shared [rememberInfiniteTransition], ~20
+ * Cheap by design: one shared [rememberInfiniteTransition], ~[particleCount]
  * `drawCircle` calls per frame, no allocations in the draw scope, no blur
  * passes. Honors animator-duration-scale == 0 (accessibility / battery saver)
  * by rendering a static frame.
@@ -63,7 +63,7 @@ private data class Particle(
 @Composable
 fun FloatingParticles(
     modifier: Modifier = Modifier,
-    particleCount: Int = 20
+    particleCount: Int = 42
 ) {
     if (particleCount <= 0) return
 

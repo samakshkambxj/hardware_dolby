@@ -46,9 +46,12 @@ import androidx.compose.ui.unit.dp
  *   content visibly slides *under* glass instead of clipping on a hard line.
  * - Elevation animates 0dp -> 8dp with scroll for physical lift.
  *
- * True backdrop blur isn't available to Compose content in the same window
- * (RenderEffect blurs a composable's own pixels, not what's behind it), so
- * depth comes from translucency + tonal veil + animated scrim + elevation.
+ * Dialog-grade frost: matches the [ApplyDialogWindowBlur] frosted-glass read
+ * (translucency + tonal veil + scrim). True backdrop blur is window-level
+ * only (FLAG_BLUR_BEHIND) and unavailable to same-window Compose content —
+ * a RenderEffect here would blur the bar's own text, not the rows behind it —
+ * so the blur feel comes from a denser frost stack that melts rows under
+ * glass instead of clipping them on a hard line.
  *
  * @param scrollFraction 0f (top) .. 1f (scrolled). Pass
  * [rememberTopBarScrollFraction] output to make the bar react to scroll;
@@ -73,11 +76,12 @@ fun LunarisGlassTopBar(
         label = "topbar_scrolled"
     )
 
-    // Resting: airy and translucent. Scrolled: solid enough for legibility.
-    val baseAlpha = 0.55f + 0.37f * scrolled
-    val veilAlpha = 0.03f + 0.04f * scrolled
+    // Resting: frosted like dialog blur-behind. Scrolled: near-solid for legibility.
+    val baseAlpha = 0.70f + 0.27f * scrolled
+    val veilAlpha = 0.05f + 0.05f * scrolled
+    val depthAlpha = 0.10f + 0.10f * scrolled
     val hairlineAlpha = 0.10f + 0.38f * scrolled
-    val scrimAlpha = 0.00f + 0.38f * scrolled
+    val scrimAlpha = 0.00f + 0.45f * scrolled
     val elevation = (scrolled * 8f).dp
 
     val frostBase = Brush.verticalGradient(
@@ -91,6 +95,14 @@ fun LunarisGlassTopBar(
     val tonalVeil = Brush.verticalGradient(
         colors = listOf(
             scheme.primary.copy(alpha = veilAlpha),
+            Color.Transparent
+        )
+    )
+    // Second frost band (neutral depth) that emulates the dialog blur's
+    // frosted thickness over scrolling rows.
+    val frostDepth = Brush.verticalGradient(
+        colors = listOf(
+            scheme.surfaceContainerHighest.copy(alpha = depthAlpha),
             Color.Transparent
         )
     )
@@ -113,6 +125,7 @@ fun LunarisGlassTopBar(
             )
             .background(frostBase, RectangleShape)
             .background(tonalVeil, RectangleShape)
+            .background(frostDepth, RectangleShape)
     ) {
         TopAppBar(
             title = title,

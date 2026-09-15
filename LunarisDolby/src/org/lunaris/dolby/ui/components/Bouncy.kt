@@ -290,6 +290,11 @@ fun LazyItemScope.BouncyListItem(
  *   same frame instead of lagging a dispatch behind.
  * - Single [settleJob] (cancel-previous) so finger-lift + fling can't launch
  *   two competing animateTo coroutines on the same Animatable.
+ * - Over-stretch guard: every mutation is serialized through one snap owner
+ *   plus a generation token, so a stale snap can never resume after release
+ *   and yank the offset back out (the "stretched past the limit gets stuck"
+ *   bug). Redundant snaps at the cap are skipped entirely, and a watchdog
+ *   forces exact rest after the return spring.
  * - Return spring is fast/critically-damped ([BouncySpecs.overscroll]) and
  *   carries fling velocity, so release feels instant, not late + wobbly.
  */
@@ -305,6 +310,11 @@ fun Modifier.verticalBouncyEdge(
         object : NestedScrollConnection {
             var target = 0f
             var settleJob: kotlinx.coroutines.Job? = null
+            var snapJob: kotlinx.coroutines.Job? = null
+            // Owner token bumped on every mutation. Suspended snaps capture
+            // the token at launch and abort if a newer mutation (or the
+            // release settle) has since taken ownership of the offset.
+            var generation = 0
 
             private fun resistance(): Float {
                 val t = (kotlin.math.abs(target) / maxStretchPx).coerceIn(0f, 1f)
@@ -314,28 +324,44 @@ fun Modifier.verticalBouncyEdge(
 
             private fun stretchBy(delta: Float) {
                 // Kill a running spring-back instantly: finger owns the offset now.
-                // Single UNDISPATCHED launch does stop+snap back-to-back so the
-                // translation follows the finger the same frame (no dispatch lag).
+                // Previous snap is cancelled first so only the latest delta owns
+                // the Animatable; UNDISPATCHED stop+snap then follows the finger
+                // the same frame (no dispatch lag).
                 settleJob?.cancel()
+                snapJob?.cancel()
+                val prev = target
                 target = (target + delta * stretchFactor * resistance())
                     .coerceIn(-maxStretchPx, maxStretchPx)
+                // Past the cap, repeated deltas resolve to the same target the
+                // offset already holds: skip the snap instead of churning the
+                // Animatable mutex with stale work that could resume post-release.
+                if (target == prev && offset.value == target && !offset.isRunning) return
                 val settled = target
-                scope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+                val myGen = ++generation
+                snapJob = scope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
                     try {
                         offset.stop()
                     } catch (_: Exception) {
                     }
-                    offset.snapTo(settled)
+                    if (myGen != generation) return@launch
+                    try {
+                        offset.snapTo(settled)
+                    } catch (_: kotlinx.coroutines.CancellationException) {
+                        // Superseded by a newer stretch/settle.
+                    }
                 }
             }
 
             fun settle(velocity: Float = 0f) {
                 if (target == 0f && offset.value == 0f && !offset.isRunning) return
                 target = 0f
+                snapJob?.cancel()
                 settleJob?.cancel()
+                val myGen = ++generation
                 val startVelocity = velocity.coerceIn(-2500f, 2500f)
                 settleJob = scope.launch {
                     try {
+                        if (myGen != generation) return@launch
                         offset.animateTo(
                             targetValue = 0f,
                             animationSpec = BouncySpecs.overscroll,
@@ -343,6 +369,15 @@ fun Modifier.verticalBouncyEdge(
                         )
                     } catch (_: kotlinx.coroutines.CancellationException) {
                         // Superseded by a new stretch/settle; finger owns the offset.
+                        return@launch
+                    }
+                    // Watchdog: if anything displaced the offset after the
+                    // spring (stale snap, missed fling), force exact rest.
+                    try {
+                        if (myGen == generation && offset.value != 0f && !offset.isRunning) {
+                            offset.snapTo(0f)
+                        }
+                    } catch (_: Exception) {
                     }
                 }
             }
@@ -414,6 +449,7 @@ fun Modifier.verticalBouncyEdge(
 /**
  * Same edge-stretch for horizontal rows (e.g. sleep-timer chip strip).
  * Mirrors [verticalBouncyEdge]: synchronous stop, diminishing resistance,
+ * serialized snap owner + generation guard against over-stretch stuck,
  * single settle job, velocity-aware fast return.
  */
 fun Modifier.horizontalBouncyEdge(
@@ -428,6 +464,8 @@ fun Modifier.horizontalBouncyEdge(
         object : NestedScrollConnection {
             var target = 0f
             var settleJob: kotlinx.coroutines.Job? = null
+            var snapJob: kotlinx.coroutines.Job? = null
+            var generation = 0
 
             private fun resistance(): Float {
                 val t = (kotlin.math.abs(target) / maxStretchPx).coerceIn(0f, 1f)
@@ -436,31 +474,49 @@ fun Modifier.horizontalBouncyEdge(
 
             private fun stretchBy(delta: Float) {
                 settleJob?.cancel()
+                snapJob?.cancel()
+                val prev = target
                 target = (target + delta * stretchFactor * resistance())
                     .coerceIn(-maxStretchPx, maxStretchPx)
+                if (target == prev && offset.value == target && !offset.isRunning) return
                 val settled = target
-                scope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+                val myGen = ++generation
+                snapJob = scope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
                     try {
                         offset.stop()
                     } catch (_: Exception) {
                     }
-                    offset.snapTo(settled)
+                    if (myGen != generation) return@launch
+                    try {
+                        offset.snapTo(settled)
+                    } catch (_: kotlinx.coroutines.CancellationException) {
+                    }
                 }
             }
 
             fun settle(velocity: Float = 0f) {
                 if (target == 0f && offset.value == 0f && !offset.isRunning) return
                 target = 0f
+                snapJob?.cancel()
                 settleJob?.cancel()
+                val myGen = ++generation
                 val startVelocity = velocity.coerceIn(-2500f, 2500f)
                 settleJob = scope.launch {
                     try {
+                        if (myGen != generation) return@launch
                         offset.animateTo(
                             targetValue = 0f,
                             animationSpec = BouncySpecs.overscroll,
                             initialVelocity = startVelocity
                         )
                     } catch (_: kotlinx.coroutines.CancellationException) {
+                        return@launch
+                    }
+                    try {
+                        if (myGen == generation && offset.value != 0f && !offset.isRunning) {
+                            offset.snapTo(0f)
+                        }
+                    } catch (_: Exception) {
                     }
                 }
             }

@@ -50,9 +50,13 @@ fun FloatingNavToolbar(
     // Liquid-glass pill: frosted translucent container, specular gradient
     // edge (bright top-left, tinted bottom-right) and a primary-tinted glow.
     // Note: Compose can't live-blur the list behind this bar within the same
-    // window (RenderEffect blurs a composable's own pixels, not its backdrop),
-    // so the frosted depth comes from translucency + sheen + glow instead.
+    // window (RenderEffect blurs a composable's own pixels, not its backdrop;
+    // true blur-behind is dialog-window-only, see ApplyDialogWindowBlur), so
+    // the dialog-like blur feel comes from a denser frost stack (neutral
+    // frost band under the tinted sheen) + translucency + glow instead.
+    // Pill shape, tint, glow and selection behavior are unchanged.
     val glassContainer = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+    val glassFrost = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.38f)
     val glassEdge = Brush.linearGradient(
         colors = listOf(
             Color.White.copy(alpha = 0.75f),
@@ -92,6 +96,10 @@ fun FloatingNavToolbar(
                     shape = CircleShape,
                     ambientColor = Color.Black.copy(alpha = 0.22f),
                     spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f)
+                )
+                .background(
+                    color = glassFrost,
+                    shape = CircleShape
                 )
                 .background(
                     brush = glassSheen,
