@@ -40,6 +40,8 @@ data class DynamicsEqualizerUiState(
 
 class DynamicsEqualizerViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val mbcLabels = listOf("Low", "Mid", "High")
+
     private val engine = DynamicsEqualizerEngine(sessionId = 0, bandCount = 10)
     private val visualizerEngine = DynamicsVisualizerEngine(sessionId = 0, barCount = 32)
     private val presetRepository = DynamicsEqualizerPresetRepository(application)
@@ -56,8 +58,6 @@ class DynamicsEqualizerViewModel(application: Application) : AndroidViewModel(ap
         visualizerEngine.onSpectrumUpdate = { bars -> _spectrum.value = bars }
         visualizerEngine.start()
     }
-
-    private val mbcLabels = listOf("Low", "Mid", "High")
 
     private fun buildState(): DynamicsEqualizerUiState {
         return DynamicsEqualizerUiState(

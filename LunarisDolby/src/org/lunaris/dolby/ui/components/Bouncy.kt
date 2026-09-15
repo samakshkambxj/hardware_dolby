@@ -359,7 +359,7 @@ fun Modifier.verticalBouncyEdge(
                 val y = available.y
                 if (y == 0f) return Offset.Zero
                 generation += 1
-                offset.stop()
+                settleJob?.cancel()
                 val delta = y * stretchFactor * resistance()
                 target = (target + delta).coerceIn(-maxStretchPx, maxStretchPx)
                 snapToTarget(generation)
