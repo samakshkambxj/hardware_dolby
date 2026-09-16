@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -33,7 +34,9 @@ import org.lunaris.dolby.R
  * Live output spectrum drawn as a smooth filled curve, in the same visual
  * language as the frequency response graphs. Incoming FFT bars are jittery
  * frame to frame, so values are eased toward each new capture instead of
- * snapping to it.
+ * snapping to it. The easing is deliberately fast (single-frame follow) and
+ * decays to zero when captures stop (pause/background), so the curve never
+ * keeps swimming after the music does.
  */
 @Composable
 fun SpectrumView(
@@ -45,13 +48,39 @@ fun SpectrumView(
     val plotInkColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     var smoothed by remember(bars.size) { mutableStateOf(FloatArray(bars.size)) }
+    var lastCaptureMs by remember(bars.size) { mutableLongStateOf(0L) }
     LaunchedEffect(bars) {
+        val now = System.currentTimeMillis()
+        lastCaptureMs = now
         val next = FloatArray(bars.size) { i ->
             val prev = smoothed.getOrElse(i) { 0f }
             val target = bars.getOrElse(i) { 0f }.coerceIn(0f, 1f)
-            prev + (target - prev) * 0.45f
+            // Fast attack, slightly softer release: responsive without jitter,
+            // and no long tail after the finger / music stops.
+            val factor = if (target > prev) 0.75f else 0.55f
+            prev + (target - prev) * factor
         }
         smoothed = next
+    }
+    // When FFT captures stop (paused, silent, screen covered) the last frame
+    // would otherwise freeze mid-air. Decay toward zero shortly after the
+    // last capture so the curve settles instead of lingering.
+    LaunchedEffect(bars.size) {
+        while (true) {
+            kotlinx.coroutines.delay(120)
+            if (System.currentTimeMillis() - lastCaptureMs > 250) {
+                val next = FloatArray(smoothed.size) { i ->
+                    (smoothed.getOrElse(i) { 0f } * 0.5f).let {
+                        if (it < 0.02f) 0f else it
+                    }
+                }
+                if (next.any { it != 0f }) {
+                    smoothed = next
+                } else if (smoothed.any { it != 0f }) {
+                    smoothed = next
+                }
+            }
+        }
     }
     val values = smoothed
 
