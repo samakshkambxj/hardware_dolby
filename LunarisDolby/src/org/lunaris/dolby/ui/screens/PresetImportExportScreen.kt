@@ -402,7 +402,7 @@ fun PresetImportExportScreen(
                         contentColor = MaterialTheme.colorScheme.onSurface
                     ) {
                         Column(
-                            modifier = Modifier.padding(24.dp),
+                            modifier = Modifier.padding(20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)

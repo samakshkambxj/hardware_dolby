@@ -5,6 +5,9 @@
 
 package org.lunaris.dolby.ui.screens
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -160,9 +163,19 @@ fun DolbyNavHost(
         if (isOnboardingDone(context)) "main_pager" else Screen.Onboarding.route
     }
 
+    // Fade-only transitions on all four directions: the back-arrow button
+    // calls navigateUp()/popBackStack() while an edge swipe drives the same
+    // pop via the system gesture. Without explicit transitions the gesture
+    // path falls back to the platform predictive-back animation (window
+    // scale/shift), which looks unrelated to the in-app fade. Pinning all
+    // four to the same fade keeps button-back and swipe-back identical.
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = startDestination,
+        enterTransition = { fadeIn(animationSpec = tween(250)) },
+        exitTransition = { fadeOut(animationSpec = tween(200)) },
+        popEnterTransition = { fadeIn(animationSpec = tween(250)) },
+        popExitTransition = { fadeOut(animationSpec = tween(200)) }
     ) {
         composable(Screen.Onboarding.route) {
             OnboardingScreen(
