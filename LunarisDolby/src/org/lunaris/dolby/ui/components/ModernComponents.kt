@@ -362,6 +362,47 @@ fun ModernSettingsCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val pageStyle by rememberPageStyle()
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = pageStyle.cardShape,
+        colors = CardDefaults.cardColors(
+            containerColor = pageStyle.cardContainer()
+        ),
+        border = pageStyle.cardBorder(),
+        elevation = pageStyle.cardElevation()
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                SettingsCardIcon(icon = icon)
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            content()
+        }
+    }
+}
+
+/**
+ * Leading icon badge shared by [ModernSettingsCard] and standalone
+ * expandable cards. Honors Page Style icon color/shape/size.
+ */
+@Composable
+fun SettingsCardIcon(
+    icon: ImageVector,
+    modifier: Modifier = Modifier
+) {
+    val pageStyle by rememberPageStyle()
     val iconBg: Color
     val iconTint: Color
     when (pageStyle.iconStyle) {
@@ -378,46 +419,18 @@ fun ModernSettingsCard(
             iconTint = MaterialTheme.colorScheme.onPrimary
         }
     }
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = pageStyle.cardShape,
-        colors = CardDefaults.cardColors(
-            containerColor = pageStyle.cardContainer()
-        ),
-        border = pageStyle.cardBorder(),
-        elevation = pageStyle.cardElevation()
+    Surface(
+        modifier = modifier.size(pageStyle.iconSize.box),
+        shape = pageStyle.iconShape.shape(),
+        color = iconBg
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 16.dp)
-            ) {
-                Surface(
-                    modifier = Modifier.size(pageStyle.iconSize.box),
-                    shape = pageStyle.iconShape.shape(),
-                    color = iconBg
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = iconTint,
-                            modifier = Modifier.size(pageStyle.iconSize.icon)
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.width(12.dp))
-                
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            
-            content()
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(pageStyle.iconSize.icon)
+            )
         }
     }
 }
