@@ -20,6 +20,10 @@
          setHeadTrackerEnabled are gated by this in AudioService).
          signature|privileged: granted via platform cert + privapp allowlist. -->
     <uses-permission android:name="android.permission.MODIFY_DEFAULT_AUDIO_EFFECTS" />
+    <!-- Required for the output picker to actually steer routing
+         (setSpeakerphoneOn / setBluetoothA2dpOn / stopBluetoothSco).
+         Normal permission: auto-granted at install. -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <application
         android:icon="@mipmap/ic_launcher"

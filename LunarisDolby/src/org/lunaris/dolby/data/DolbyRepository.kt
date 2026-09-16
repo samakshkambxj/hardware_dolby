@@ -151,6 +151,213 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
         return devices.firstOrNull()
     }
 
+    /**
+     * Connected user-meaningful sinks for the output picker, priority-ordered
+     * and de-duplicated (e.g. a BT headset exposing A2DP + SCO collapses to
+     * one row). Active state follows the MediaRouter live-audio route.
+     */
+    fun getOutputDevices(): List<OutputDevice> {
+        return try {
+            val infos = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+                .filter { it.type in OUTPUT_DEVICE_PRIORITY }
+            val activeKey = resolveRoutedOutputKey(infos)
+            val seen = mutableSetOf<String>()
+            OUTPUT_DEVICE_PRIORITY.flatMap { type ->
+                infos.filter { it.type == type }
+            }.mapNotNull { info ->
+                val key = deviceStateManager.deviceKey(info)
+                if (!seen.add(key)) return@mapNotNull null
+                OutputDevice(
+                    key = key,
+                    name = deviceStateManager.deviceDisplayName(info),
+                    category = info.toAudioCategory(),
+                    isActive = key == activeKey
+                )
+            }
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Failed to list outputs: ${e.message}")
+            emptyList()
+        }
+    }
+
+    /**
+     * Switch the media output route.
+     *
+     * The previous implementation only called
+     * MediaRouter.selectRoute(ROUTE_TYPE_LIVE_AUDIO, …). That never moved
+     * audio: the legacy MediaRouter only publishes non-default routes while
+     * the app holds an active route-discovery callback (we hold none, so
+     * routeCount is just the default route and selecting it is a silent
+     * no-op), and wired/USB sinks have no MediaRouter device type at all,
+     * so matching degenerated to typed[0]. Hence taps looked accepted but
+     * nothing switched.
+     *
+     * This drives the global AudioManager force flags instead, which is
+     * what actually steers routing between connected sinks:
+     * - SPEAKER: drop SCO/A2DP, force speaker.
+     * - BLUETOOTH: drop speaker force, force media to A2DP.
+     * - WIRED/USB/OTHER: clear both forces so the policy auto-falls to the
+     *   connected wired sink (a physically unplugged jack can't be forced).
+     * A best-effort MediaRouter hop is kept afterwards for BT
+     * disambiguation; it is harmless when undiscovered. Needs
+     * MODIFY_AUDIO_SETTINGS (manifest, normal permission).
+     */
+    fun selectOutputDevice(key: String): Boolean {
+        return try {
+            val infos = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            val target = infos.firstOrNull {
+                it.type in OUTPUT_DEVICE_PRIORITY && deviceStateManager.deviceKey(it) == key
+            } ?: return false
+            when (target.toAudioCategory()) {
+                AudioDeviceCategory.SPEAKER -> {
+                    runCatching { audioManager.stopBluetoothSco() }
+                    runCatching { audioManager.isBluetoothA2dpOn = false }
+                    audioManager.isSpeakerphoneOn = true
+                }
+                AudioDeviceCategory.BLUETOOTH -> {
+                    runCatching { audioManager.isSpeakerphoneOn = false }
+                    audioManager.isBluetoothA2dpOn = true
+                }
+                AudioDeviceCategory.WIRED,
+                AudioDeviceCategory.USB,
+                AudioDeviceCategory.OTHER -> {
+                    runCatching { audioManager.stopBluetoothSco() }
+                    runCatching { audioManager.isBluetoothA2dpOn = false }
+                    runCatching { audioManager.isSpeakerphoneOn = false }
+                }
+            }
+            // Best-effort legacy hop; ignored when routes are undiscovered.
+            runCatching { selectLiveRouteBestEffort(target) }
+            true
+        } catch (e: SecurityException) {
+            DolbyConstants.dlog(TAG, "Output switch denied: ${e.message}")
+            false
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Output switch failed: ${e.message}")
+            false
+        }
+    }
+
+    /** Legacy MediaRouter hop, best-effort: false when routes undiscovered. */
+    private fun selectLiveRouteBestEffort(target: AudioDeviceInfo): Boolean {
+        return try {
+            val router = context.getSystemService(android.media.MediaRouter::class.java)
+                ?: return false
+            val liveType = android.media.MediaRouter.ROUTE_TYPE_LIVE_AUDIO
+            val liveRoutes = (0 until router.routeCount).map { router.getRouteAt(it) }
+                .filter { (it.supportedTypes and liveType) != 0 }
+            // A lone default route means discovery is off; selecting it is a
+            // no-op, so don't pretend we switched via this path.
+            if (liveRoutes.size <= 1) return false
+            val route = pickLiveRoute(liveRoutes, target) ?: return false
+            router.selectRoute(liveType, route)
+            true
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Route hop failed: ${e.message}")
+            false
+        }
+    }
+
+    /** Match an AudioDeviceInfo to a MediaRouter live-audio route. */
+    private fun pickLiveRoute(
+        liveRoutes: List<android.media.MediaRouter.RouteInfo>,
+        target: AudioDeviceInfo
+    ): android.media.MediaRouter.RouteInfo? {
+        if (liveRoutes.isEmpty()) return null
+        val wanted = routeDeviceTypes(target.toAudioCategory())
+        val typed = if (wanted.isEmpty()) liveRoutes
+            else liveRoutes.filter { it.deviceType in wanted }
+        if (typed.isEmpty()) return null
+        if (typed.size == 1) return typed[0]
+        // Several devices of the same kind (e.g. two BT headsets): match by name.
+        val targetName = deviceStateManager.deviceDisplayName(target).lowercase()
+        return typed.firstOrNull { route ->
+            val routeName = route.name?.toString()?.lowercase().orEmpty()
+            routeName.isNotBlank() && targetName.isNotBlank() &&
+                (routeName.contains(targetName) || targetName.contains(routeName))
+        } ?: typed[0]
+    }
+
+    /**
+     * Active output key. The AudioManager force flags (set by
+     * [selectOutputDevice]) are read first because they reflect reality
+     * better than MediaRouter matching, which needs route discovery we
+     * don't run. MediaRouter matching stays as a fallback.
+     */
+    private fun resolveRoutedOutputKey(
+        infos: List<AudioDeviceInfo>
+    ): String? {
+        // Explicit speaker force always wins for the badge.
+        if (runCatching { audioManager.isSpeakerphoneOn }.getOrDefault(false)) {
+            infos.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+                ?.let { return deviceStateManager.deviceKey(it) }
+        }
+        // Connected wired sink captures media once forces are cleared.
+        infos.firstOrNull {
+            it.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
+                it.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+                it.type == AudioDeviceInfo.TYPE_USB_HEADSET ||
+                it.type == AudioDeviceInfo.TYPE_USB_DEVICE
+        }?.let { return deviceStateManager.deviceKey(it) }
+        // Connected BT sink, unless media was forced off BT.
+        if (runCatching { audioManager.isBluetoothA2dpOn }.getOrDefault(true)) {
+            infos.firstOrNull {
+                it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
+                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                    it.type == AudioDeviceInfo.TYPE_BLE_HEADSET ||
+                    it.type == AudioDeviceInfo.TYPE_BLE_SPEAKER ||
+                    it.type == AudioDeviceInfo.TYPE_BLE_BROADCAST
+            }?.let { return deviceStateManager.deviceKey(it) }
+        }
+        infos.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+            ?.let { return deviceStateManager.deviceKey(it) }
+        return try {
+            val router = context.getSystemService(android.media.MediaRouter::class.java)
+                ?: return currentDeviceKey()
+            val selected =
+                router.getSelectedRoute(android.media.MediaRouter.ROUTE_TYPE_LIVE_AUDIO)
+                    ?: return currentDeviceKey()
+            val match = infos.firstOrNull { info ->
+                info.toAudioCategory().let { cat ->
+                    val wanted = routeDeviceTypes(cat)
+                    (wanted.isEmpty() || selected.deviceType in wanted) &&
+                        (selected.name?.toString()?.let { routeName ->
+                            val devName = deviceStateManager.deviceDisplayName(info)
+                            routeName.contains(devName, ignoreCase = true) ||
+                                devName.contains(routeName, ignoreCase = true)
+                        } ?: false)
+                }
+            } ?: infos.firstOrNull {
+                // Single connected sink of the routed kind: name match is overkill.
+                val wanted = routeDeviceTypes(it.toAudioCategory())
+                wanted.isNotEmpty() && selected.deviceType in wanted &&
+                    infos.count { other ->
+                        routeDeviceTypes(other.toAudioCategory())
+                            .any { t -> t in wanted }
+                    } == 1
+            }
+            match?.let { deviceStateManager.deviceKey(it) } ?: currentDeviceKey()
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Route resolve failed: ${e.message}")
+            currentDeviceKey()
+        }
+    }
+
+    private fun routeDeviceTypes(category: AudioDeviceCategory): Set<Int> {
+        return when (category) {
+            AudioDeviceCategory.SPEAKER ->
+                setOf(android.media.MediaRouter.RouteInfo.DEVICE_TYPE_SPEAKER)
+            AudioDeviceCategory.BLUETOOTH ->
+                setOf(android.media.MediaRouter.RouteInfo.DEVICE_TYPE_BLUETOOTH)
+            // android.media.MediaRouter.RouteInfo only defines UNKNOWN, TV,
+            // SPEAKER and BLUETOOTH device types; wired/USB routes are
+            // matched by name instead (wanted.isEmpty() path).
+            AudioDeviceCategory.WIRED,
+            AudioDeviceCategory.USB,
+            AudioDeviceCategory.OTHER -> emptySet()
+        }
+    }
+
     /** Stable key for the current output device, matching DeviceStateManager keys. */
     fun currentDeviceKey(): String? {
         return try {

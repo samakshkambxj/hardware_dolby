@@ -88,16 +88,10 @@ fun DolbyLogo(
 @Composable
 fun ActiveAudioDeviceCard(
     device: ActiveAudioDevice,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** When non-null the card opens the output picker on tap. */
+    onClick: (() -> Unit)? = null
 ) {
-    val icon = when (device.category) {
-        AudioDeviceCategory.SPEAKER -> Icons.Default.VolumeUp
-        AudioDeviceCategory.WIRED -> Icons.Default.Headphones
-        AudioDeviceCategory.BLUETOOTH -> Icons.Default.Bluetooth
-        AudioDeviceCategory.USB -> Icons.Default.Usb
-        AudioDeviceCategory.OTHER -> Icons.Default.Speaker
-    }
-
     val categoryLabel = when (device.category) {
         AudioDeviceCategory.SPEAKER -> stringResource(R.string.audio_output_speaker)
         AudioDeviceCategory.WIRED -> stringResource(R.string.audio_output_wired)
@@ -107,6 +101,8 @@ fun ActiveAudioDeviceCard(
     }
 
     Card(
+        onClick = { onClick?.invoke() },
+        enabled = onClick != null,
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
@@ -122,19 +118,11 @@ fun ActiveAudioDeviceCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .size(24.dp)
-                )
-            }
+            AudioDeviceIcon(
+                category = device.category,
+                active = true,
+                size = 52.dp
+            )
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -155,6 +143,14 @@ fun ActiveAudioDeviceCard(
                     text = categoryLabel,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                )
+            }
+            if (onClick != null) {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = stringResource(R.string.output_title),
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f),
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }

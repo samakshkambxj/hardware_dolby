@@ -222,6 +222,12 @@
     <string name="audio_output_bluetooth">Bluetooth</string>
     <string name="audio_output_usb">USB audio</string>
     <string name="audio_output_unknown">Audio device</string>
+
+    <!-- Output picker -->
+    <string name="output_title">Audio output</string>
+    <string name="output_active">Active</string>
+    <string name="output_empty">No audio outputs found</string>
+    <string name="output_switch_failed">Couldn\'t switch audio output</string>
     <string name="volume">Volume</string>
 
     <!-- Scenes -->
