@@ -172,6 +172,12 @@ private fun ModernAdvancedSettingsContent(
     codecs: List<DolbyCodecSupport>?,
     modifier: Modifier = Modifier
 ) {
+    var query by remember { mutableStateOf("") }
+    fun match(vararg keywords: String): Boolean {
+        val q = query.trim().lowercase()
+        if (q.isEmpty()) return true
+        return keywords.any { it.lowercase().contains(q) }
+    }
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -179,7 +185,58 @@ private fun ModernAdvancedSettingsContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item(key = "search") {
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerHighest
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    TextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        placeholder = {
+                            Text(
+                                stringResource(R.string.advanced_search_hint),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            cursorColor = MaterialTheme.colorScheme.primary
+                        ),
+                        singleLine = true
+                    )
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { query = "" }) {
+                            Icon(
+                                Icons.Default.Clear,
+                                contentDescription = "Clear search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
         if (state.settings.enabled) {
+            if (match("bass", "mid", "treble", "curve", "enhancer", "audio tuning")) {
             item(key = "eq_settings") {
                 ModernSettingsCard(
                     title = stringResource(R.string.dolby_category_settings),
@@ -314,7 +371,9 @@ private fun ModernAdvancedSettingsContent(
                     }
                 }
             }
+            }
             
+            if (match("leveler", "volume", "loudness")) {
             item(key = "volume_leveler") {
                 ModernSettingsCard(
                     title = "Volume Leveler",
@@ -329,8 +388,10 @@ private fun ModernAdvancedSettingsContent(
                     )
                 }
             }
+            }
             
             if (state.settings.currentProfile != 0) {
+                if (match("surround", "virtualizer", "widening", "headphone", "speaker", "stage", "width")) {
                 item(key = "surround_virtualizer") {
                     ModernSettingsCard(
                         title = "Surround Virtualizer",
@@ -381,7 +442,9 @@ private fun ModernAdvancedSettingsContent(
                         }
                     }
                 }
+                }
                 
+                if (match("dialogue", "voice", "speech", "clarity")) {
                 item(key = "dialogue_enhancement") {
                     ModernSettingsCard(
                         title = "Dialogue Enhancement",
@@ -409,8 +472,10 @@ private fun ModernAdvancedSettingsContent(
                         }
                     }
                 }
+                }
             }
 
+            if (match("lab", "tuning", "dap", "experimental", "param")) {
             item(key = "tuning_lab") {
                 TuningLabCard(
                     labParams = state.profileSettings.labParams,
@@ -420,7 +485,9 @@ private fun ModernAdvancedSettingsContent(
                     onReset = { viewModel.resetLabParams() }
                 )
             }
+            }
 
+            if (match("reverb", "height", "experimental", "dap")) {
             item(key = "reverb_height") {
                 ReverbHeightCard(
                     labParams = state.profileSettings.labParams,
@@ -429,7 +496,9 @@ private fun ModernAdvancedSettingsContent(
                     }
                 )
             }
+            }
         } else {
+            if (match("dolby", "profile", "advanced")) {
             item(key = "disabled_notice") {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -456,8 +525,10 @@ private fun ModernAdvancedSettingsContent(
                     }
                 }
             }
+            }
         }
         
+        if (match("spatial", "head tracking", "transaural")) {
         item(key = "spatial_audio") {
             SpatialAudioCard(
                 isSupported = spatialSupported,
@@ -469,22 +540,30 @@ private fun ModernAdvancedSettingsContent(
                 onHeadTrackingChange = { viewModel.setHeadTrackingEnabled(it) }
             )
         }
+        }
 
+        if (match("balance", "left", "right", "channel")) {
         item(key = "balance") {
             BalanceCard(
                 balance = balance,
                 onBalanceChange = onBalanceChange
             )
         }
+        }
 
+        if (match("codec", "decoder", "atmos", "ac-3", "ac-4", "eac3")) {
         item(key = "codecs") {
             CodecInfoCard(codecs = codecs)
         }
+        }
 
+        if (match("automation", "tasker", "broadcast", "macrodroid")) {
         item(key = "automation") {
             AutomationCard()
         }
+        }
 
+        if (match("device", "scene", "auto-apply", "per-device")) {
         item(key = "device_scene") {
             val deviceKey = remember(state.activeAudioDevice) {
                 viewModel.currentDeviceKey()
@@ -497,6 +576,7 @@ private fun ModernAdvancedSettingsContent(
                 onAssign = { viewModel.assignDeviceScene(it) },
                 onClear = { viewModel.clearDeviceScene(it) }
             )
+        }
         }
 
         item(key = "bottom_spacer") {

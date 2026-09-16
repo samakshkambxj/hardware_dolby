@@ -80,6 +80,23 @@ class SceneRepository(private val context: Context) {
     }
 
     /**
+     * Reinserts a previously deleted custom scene under its original id
+     * (undo path — no fresh id, so per-app/per-device references keep
+     * working). Returns false for built-in ids.
+     */
+    fun restoreScene(scene: Scene): Boolean {
+        if (scene.isBuiltIn || !scene.id.startsWith(CUSTOM_ID_PREFIX)) return false
+        return try {
+            deserialize(scene.id, serialize(scene))
+            prefs.edit().putString(scene.id, serialize(scene)).apply()
+            true
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Restore failed for ${scene.id}: ${e.message}")
+            false
+        }
+    }
+
+    /**
      * Clipboard export of one scene (built-in or custom) as a single JSON
      * object. Pairs with [importScenesJson]; the stored copy is untouched.
      */

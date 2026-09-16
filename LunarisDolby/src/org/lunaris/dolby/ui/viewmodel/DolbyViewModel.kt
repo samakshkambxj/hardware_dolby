@@ -68,6 +68,10 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     private val _channelBalance = MutableStateFlow(0f)
     val channelBalance: StateFlow<Float> = _channelBalance.asStateFlow()
 
+    private val _dirtyProfiles = MutableStateFlow<Set<Int>>(emptySet())
+    /** Profiles holding any non-default setting (dirty dots, reset affordance). */
+    val dirtyProfiles: StateFlow<Set<Int>> = _dirtyProfiles.asStateFlow()
+
     private val _balanceError = MutableStateFlow<String?>(null)
     val balanceError: StateFlow<String?> = _balanceError.asStateFlow()
     
@@ -246,6 +250,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
                         isOnSpeaker = repository.isOnSpeaker.value,
                         activeAudioDevice = repository.activeAudioDevice.value
                     )
+                    refreshDirtyProfiles()
                 }
             } catch (e: Exception) {
                 if (!isCleared) {
@@ -566,6 +571,68 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
                 loadSettings()
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error resetting profiles: ${e.message}")
+            }
+        }
+    }
+
+    fun undoProfilesReset(onDone: (Boolean) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val ok = try {
+                repository.restoreProfilesBackup()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error undoing reset: ${e.message}")
+                false
+            }
+            if (ok) loadSettings()
+            kotlinx.coroutines.withContext(Dispatchers.Main) {
+                onDone(ok)
+            }
+        }
+    }
+
+    fun resetProfile(profile: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.backupProfiles(listOf(profile))
+                repository.resetProfile(profile)
+                loadSettings()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error resetting profile: ${e.message}")
+            }
+        }
+    }
+
+    fun refreshDirtyProfiles() {
+        if (isCleared) return
+        try {
+            _dirtyProfiles.value = repository.getProfileIds()
+                .filter { repository.isProfileCustomized(it) }
+                .toSet()
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error refreshing dirty profiles: ${e.message}")
+        }
+    }
+
+    fun restoreScene(scene: Scene) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                sceneRepository.restoreScene(scene)
+                refreshScenes()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error restoring scene: ${e.message}")
+            }
+        }
+    }
+
+    /** One-tap starter (onboarding nudge): applies a built-in scene by id. */
+    fun applySceneById(sceneId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val scene = sceneRepository.getScene(sceneId) ?: return@launch
+                sceneRepository.applyScene(scene, repository)
+                loadSettings()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error applying scene $sceneId: ${e.message}")
             }
         }
     }

@@ -449,6 +449,20 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    /** Undo path for preset delete: reinserts the removed user preset. */
+    fun restorePreset(preset: EqualizerPreset) {
+        if (!preset.isUserDefined) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.addUserPreset(preset.name, preset.bandGains, preset.bandMode)
+                loadEqualizer()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error restoring preset: ${e.message}")
+            }
+        }
+    }
+
     fun saveImportedPreset(preset: EqualizerPreset): String? {
         val state = _uiState.value
         if (state !is EqualizerUiState.Success) return "Invalid state"

@@ -298,6 +298,26 @@
     <string name="scene_import_done">Imported %1$d scene(s)</string>
     <string name="scene_import_failed">Couldn\'t import scenes from clipboard</string>
 
+    <!-- Undo -->
+    <string name="undo">Undo</string>
+    <string name="scene_deleted">Scene deleted</string>
+    <string name="preset_deleted">Preset deleted</string>
+    <string name="reset_undone">Restored</string>
+
+    <!-- Live playback dot -->
+    <string name="dolby_live_dot">Audio playing through Dolby</string>
+
+    <!-- Onboarding starter scene -->
+    <string name="onboarding_try_scene">Try Movie Night</string>
+
+    <!-- Advanced search -->
+    <string name="advanced_search_hint">Filter settings…</string>
+
+    <!-- Per-profile reset -->
+    <string name="profile_reset">Reset this profile</string>
+    <string name="profile_reset_done">Profile reset</string>
+    <string name="profile_customized">Customized</string>
+
     <!-- Automation -->
     <string name="automation">Automation</string>
     <string name="automation_summary">Control Dolby from Tasker, MacroDroid or scripts via broadcast</string>

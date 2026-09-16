@@ -24,6 +24,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
 import org.lunaris.dolby.data.SleepTimerState
 import org.lunaris.dolby.domain.models.DolbyUiState
@@ -42,17 +43,18 @@ fun ModernDolbySettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val scenes by viewModel.scenes.collectAsState()
     val sleepState by viewModel.sleepState.collectAsState()
-    var showResetDialog by remember { mutableStateOf(false) }
+    val dirtyProfiles by viewModel.dirtyProfiles.collectAsState()
     var showSaveSceneDialog by remember { mutableStateOf(false) }
     var showResetScenesDialog by remember { mutableStateOf(false) }
     var sceneName by remember { mutableStateOf("") }
-    var sceneToDelete by remember { mutableStateOf<Scene?>(null) }
     var showOutputDialog by remember { mutableStateOf(false) }
     val outputDevices by viewModel.outputDevices.collectAsState()
     val outputError by viewModel.outputError.collectAsState()
     val pageStyle by rememberPageStyle()
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
+    val scope = rememberCoroutineScope()
+    val snackbarHost = remember { SnackbarHostState() }
 
     LaunchedEffect(outputError) {
         outputError?.let {
@@ -71,12 +73,30 @@ fun ModernDolbySettingsScreen(
                 title = {
                     Column {
                         if (pageStyle.showTitle) {
-                            Text(
-                                pageStyle.headerTitle,
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    pageStyle.headerTitle,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                // Live dot: Dolby on AND audio actually
+                                // playing — not just the master switch.
+                                val playing = rememberIsAudioPlaying()
+                                val live = (uiState as? DolbyUiState.Success)
+                                    ?.settings?.enabled == true && playing
+                                if (live) {
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Icon(
+                                        imageVector = Icons.Default.FiberManualRecord,
+                                        contentDescription = stringResource(
+                                            R.string.dolby_live_dot
+                                        ),
+                                        tint = MaterialTheme.colorScheme.tertiary,
+                                        modifier = Modifier.size(10.dp)
+                                    )
+                                }
+                            }
                         }
                         if (pageStyle.showSubtitle) {
                             Text(
@@ -103,7 +123,27 @@ fun ModernDolbySettingsScreen(
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    IconButton(onClick = { showResetDialog = true }) {
+                    IconButton(onClick = {
+                        // Direct reset with undo — no confirm dialog.
+                        viewModel.resetAllProfiles()
+                        scope.launch {
+                            val res = snackbarHost.showSnackbar(
+                                message = context.getString(R.string.dolby_reset_all),
+                                actionLabel = context.getString(R.string.undo),
+                                withDismissed = true
+                            )
+                            if (res == SnackbarResult.ActionPerformed) {
+                                viewModel.undoProfilesReset { ok ->
+                                    if (ok) {
+                                        ToastHelper.showToast(
+                                            context,
+                                            context.getString(R.string.reset_undone)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }) {
                         Icon(
                             Icons.Default.RestartAlt, 
                             contentDescription = "Reset",
@@ -117,7 +157,8 @@ fun ModernDolbySettingsScreen(
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        contentColor = MaterialTheme.colorScheme.onSurface
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        snackbarHost = { SnackbarHost(snackbarHost) }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
         FloatingParticles(modifier = Modifier.padding(paddingValues))
@@ -149,6 +190,7 @@ fun ModernDolbySettingsScreen(
                     navController = navController,
                     scenes = scenes,
                     sleepState = sleepState,
+                    dirtyProfiles = dirtyProfiles,
                     onOutputCardClick = {
                         viewModel.refreshOutputDevices()
                         showOutputDialog = true
@@ -161,7 +203,21 @@ fun ModernDolbySettingsScreen(
                         sceneName = ""
                         showSaveSceneDialog = true
                     },
-                    onDeleteSceneClick = { sceneToDelete = it },
+                    onDeleteSceneClick = { scene ->
+                        if (!scene.isBuiltIn) {
+                            viewModel.deleteScene(scene.id)
+                            scope.launch {
+                                val res = snackbarHost.showSnackbar(
+                                    message = context.getString(R.string.scene_deleted),
+                                    actionLabel = context.getString(R.string.undo),
+                                    withDismissed = true
+                                )
+                                if (res == SnackbarResult.ActionPerformed) {
+                                    viewModel.restoreScene(scene)
+                                }
+                            }
+                        }
+                    },
                     onResetScenesClick = { showResetScenesDialog = true },
                     onExportSceneClick = { scene ->
                         viewModel.exportSceneJson(scene.id)?.let { json ->
@@ -217,19 +273,6 @@ fun ModernDolbySettingsScreen(
         }
 
     }
-    if (showResetDialog) {
-        ModernConfirmDialog(
-            title = stringResource(R.string.dolby_reset_all),
-            message = stringResource(R.string.dolby_reset_all_message),
-            icon = Icons.Default.RestartAlt,
-            onConfirm = {
-                viewModel.resetAllProfiles()
-                showResetDialog = false
-            },
-            onDismiss = { showResetDialog = false }
-        )
-    }
-    
     if (showSaveSceneDialog) {
         SaveSceneDialog(
             name = sceneName,
@@ -239,19 +282,6 @@ fun ModernDolbySettingsScreen(
                 showSaveSceneDialog = false
             },
             onDismiss = { showSaveSceneDialog = false }
-        )
-    }
-
-    sceneToDelete?.let { scene ->
-        ModernConfirmDialog(
-            title = stringResource(R.string.scene_delete_title),
-            message = stringResource(R.string.scene_delete_message, scene.name),
-            icon = Icons.Default.Delete,
-            onConfirm = {
-                viewModel.deleteScene(scene.id)
-                sceneToDelete = null
-            },
-            onDismiss = { sceneToDelete = null }
         )
     }
 
@@ -287,6 +317,7 @@ private fun ModernDolbySettingsContent(
     navController: NavController,
     scenes: List<Scene>,
     sleepState: SleepTimerState,
+    dirtyProfiles: Set<Int>,
     onOutputCardClick: () -> Unit,
     onApplyScene: (Scene) -> Unit,
     onSaveSceneClick: () -> Unit,
@@ -336,7 +367,28 @@ private fun ModernDolbySettingsContent(
             ) {
                 ModernProfileSelector(
                     currentProfile = state.settings.currentProfile,
-                    onProfileChange = { viewModel.setProfile(it) }
+                    onProfileChange = { viewModel.setProfile(it) },
+                    dirtyProfiles = dirtyProfiles,
+                    onResetProfile = { profile ->
+                        viewModel.resetProfile(profile)
+                        scope.launch {
+                            val res = snackbarHost.showSnackbar(
+                                message = context.getString(R.string.profile_reset_done),
+                                actionLabel = context.getString(R.string.undo),
+                                withDismissed = true
+                            )
+                            if (res == SnackbarResult.ActionPerformed) {
+                                viewModel.undoProfilesReset { ok ->
+                                    if (ok) {
+                                        ToastHelper.showToast(
+                                            context,
+                                            context.getString(R.string.reset_undone)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 )
             }
         }
