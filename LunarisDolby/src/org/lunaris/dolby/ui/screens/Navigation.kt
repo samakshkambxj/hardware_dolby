@@ -8,6 +8,7 @@ package org.lunaris.dolby.ui.screens
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import android.os.SystemClock
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -20,12 +21,17 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -87,9 +93,38 @@ fun MainPagerScreen(
     } catch (_: Exception) {
         0
     }
-    val navBlurKey = "${pagerState.currentPage}:$offsetBucket"
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    // Vertical list scrolls never touch Android Views (LazyColumn scrolls by
+    // recomposing), so the blur view cannot hear them via ViewTreeObserver.
+    // Instead the root observes every nested scroll delta from the pages
+    // below and bumps a tick — throttled here, throttled again (~100ms) in
+    // the blur view, so scrolls refresh at ~8fps and never per frame.
+    // The tick state is read only inside BottomNavOverlay (via blurKey),
+    // so scroll ticks recompose just the pill — never the pager pages.
+    val scrollTickState = remember { mutableIntStateOf(0) }
+    val blurScrollConnection = remember {
+        var lastTickMs = 0L
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                val now = SystemClock.uptimeMillis()
+                if (now - lastTickMs > 90L) {
+                    lastTickMs = now
+                    scrollTickState.intValue++
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(blurScrollConnection)
+    ) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
@@ -113,6 +148,39 @@ fun MainPagerScreen(
 
         // Soft translucent fade only: the nav pill carries live blur, so this
         // must stay translucent — an opaque scrim would flatten the blur.
+        BottomNavOverlay(
+            currentRoute = currentFakeRoute,
+            blurKey = {
+                "${pagerState.currentPage}:$offsetBucket:${scrollTickState.intValue}"
+            },
+            onNavigate = { route ->
+                coroutineScope.launch {
+                    when (route) {
+                        "settings" -> pagerState.animateScrollToPage(0)
+                        "equalizer" -> pagerState.animateScrollToPage(1)
+                        "advanced" -> pagerState.animateScrollToPage(2)
+                        "volume" -> pagerState.animateScrollToPage(3)
+                    }
+                }
+            },
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
+    }
+}
+
+/**
+ * Fade + floating pill. Separate restart scope so blur ticks (scrolls,
+ * swipes) recompose only this overlay — the pager pages above never pay
+ * for a blur refresh.
+ */
+@Composable
+private fun BottomNavOverlay(
+    currentRoute: String,
+    blurKey: () -> Any,
+    onNavigate: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -127,7 +195,6 @@ fun MainPagerScreen(
                     )
                 )
         )
-
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -136,18 +203,9 @@ fun MainPagerScreen(
             contentAlignment = Alignment.Center
         ) {
             FloatingNavToolbar(
-                currentRoute = currentFakeRoute,
-                blurKey = navBlurKey,
-                onNavigate = { route ->
-                    coroutineScope.launch {
-                        when (route) {
-                            "settings" -> pagerState.animateScrollToPage(0)
-                            "equalizer" -> pagerState.animateScrollToPage(1)
-                            "advanced" -> pagerState.animateScrollToPage(2)
-                            "volume" -> pagerState.animateScrollToPage(3)
-                        }
-                    }
-                }
+                currentRoute = currentRoute,
+                blurKey = blurKey(),
+                onNavigate = onNavigate
             )
         }
     }

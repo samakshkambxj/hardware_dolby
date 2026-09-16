@@ -15,6 +15,7 @@ import android.os.Build
 import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.View
+import android.view.ViewTreeObserver
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,9 +39,10 @@ import kotlin.math.max
  * Lag fixes vs the earlier dual-bar version:
  * - No infinite ticker loop (that re-drew the whole root every 240ms even
  *   when idle and kept the UI thread hot).
- * - Re-snapshot is on-demand only (attach / size change / [updateKey]) and
- *   throttled to ~100ms with coalescing, so pager swipes refresh often
- *   enough to avoid a stale "delay" but never spam root.draw() per frame.
+ * - Re-snapshot is on-demand only (attach / size change / [updateKey] /
+ *   any scroll in the window via ViewTreeObserver) and throttled to ~100ms
+ *   with coalescing, so pager swipes and list scrolls refresh often enough
+ *   to avoid a stale "delay" but never spam root.draw() per frame.
  * - Capture is posted to the message queue, never run synchronously inside
  *   Compose layout/draw, which was a major jank source.
  * - Heavier downsample (8 = 1/64 px) and smaller radius (20f): cheaper
@@ -112,6 +114,13 @@ class BackdropBlurView @JvmOverloads constructor(
     private var attached = false
     private var lastCaptureMs = 0L
     private var pending = false
+    private var scrollObserver: ViewTreeObserver? = null
+    private val scrollListener = ViewTreeObserver.OnScrollChangedListener {
+        // Scroll of any list in the window moves the pixels behind the
+        // pill — refresh (throttled + coalesced in requestRefresh, so
+        // flings collapse to ~10fps captures, never one per frame).
+        requestRefresh()
+    }
 
     companion object {
         private const val MIN_INTERVAL_MS = 100L
@@ -127,12 +136,29 @@ class BackdropBlurView @JvmOverloads constructor(
         super.onAttachedToWindow()
         attached = true
         applyRenderEffect()
+        try {
+            rootView?.viewTreeObserver
+                ?.takeIf { it.isAlive }
+                ?.let {
+                    it.addOnScrollChangedListener(scrollListener)
+                    scrollObserver = it
+                }
+        } catch (_: Exception) {
+            // Best-effort: blur still refreshes via updateKey/size changes.
+        }
         requestRefresh()
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         attached = false
+        try {
+            val vto = scrollObserver?.takeIf { it.isAlive }
+                ?: rootView?.viewTreeObserver?.takeIf { it.isAlive }
+            vto?.removeOnScrollChangedListener(scrollListener)
+        } catch (_: Exception) {
+        }
+        scrollObserver = null
         removeCallbacks(null)
         pending = false
         snapshot?.recycle()
