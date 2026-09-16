@@ -51,6 +51,10 @@ fun ModernDolbySettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                // M3 actions only inset 4.dp at the end, which leaves the
+                // reset icon flush with (and on some devices clipped by)
+                // the screen edge — see z.png.
+                modifier = Modifier.padding(end = 8.dp),
                 title = {
                     Column {
                         Text(

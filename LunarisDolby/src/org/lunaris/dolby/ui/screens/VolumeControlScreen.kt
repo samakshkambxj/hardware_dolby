@@ -125,6 +125,8 @@ fun VolumeControlScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
+                // Keep action icons off the screen edge (M3 only insets 4.dp).
+                modifier = Modifier.padding(end = 8.dp),
                 title = {
                     Text(
                         stringResource(R.string.volume),
