@@ -69,7 +69,8 @@ fun AppProfileScreen(
                 actions = {
                     if (uiState is AppProfileUiState.Success) {
                         val state = uiState as AppProfileUiState.Success
-                        if (state.appsWithProfiles.isNotEmpty()) {
+                        if (state.appsWithProfiles.isNotEmpty() ||
+                            state.appsWithScenes.isNotEmpty()) {
                             IconButton(onClick = { showClearAllDialog = true }) {
                                 Icon(
                                     Icons.Default.ClearAll, 
@@ -210,8 +211,12 @@ fun AppProfileScreen(
                             items(filteredApps, key = { it.packageName }) { app ->
                                 AppProfileItem(
                                     app = app,
+                                    scenes = state.scenes,
                                     onProfileSelected = { profile ->
                                         viewModel.setAppProfile(app.packageName, profile)
+                                    },
+                                    onSceneSelected = { sceneId ->
+                                        viewModel.setAppScene(app.packageName, sceneId)
                                     }
                                 )
                             }
@@ -273,13 +278,18 @@ fun AppProfileScreen(
 @Composable
 private fun AppProfileItem(
     app: AppInfo,
-    onProfileSelected: (Int) -> Unit
+    scenes: List<org.lunaris.dolby.domain.models.Scene>,
+    onProfileSelected: (Int) -> Unit,
+    onSceneSelected: (String?) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val profiles = stringArrayResource(R.array.dolby_profile_entries)
     val profileValues = stringArrayResource(R.array.dolby_profile_values)
 
-    val isAssigned = app.assignedProfile >= 0
+    val sceneName = app.assignedSceneId?.let { id ->
+        scenes.find { it.id == id }?.name
+    }
+    val isAssigned = app.assignedProfile >= 0 || app.assignedSceneId != null
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -329,11 +339,13 @@ private fun AppProfileItem(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
 
-                val currentProfileName = if (app.assignedProfile >= 0) {
-                    val index = profileValues.indexOfFirst { it.toInt() == app.assignedProfile }
-                    if (index >= 0) profiles[index] else "Default"
-                } else {
-                    "Default"
+                val currentProfileName = when {
+                    sceneName != null -> sceneName
+                    app.assignedProfile >= 0 -> {
+                        val index = profileValues.indexOfFirst { it.toInt() == app.assignedProfile }
+                        if (index >= 0) profiles[index] else "Default"
+                    }
+                    else -> "Default"
                 }
                 
                 Text(
@@ -437,6 +449,50 @@ private fun AppProfileItem(
                                 expanded = false
                             }
                         )
+                    }
+                    if (scenes.isNotEmpty()) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    stringResource(R.string.app_profiles_scene_header),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                            enabled = false,
+                            onClick = {}
+                        )
+                        scenes.forEach { scene ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            scene.name,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        if (app.assignedSceneId == scene.id) {
+                                            Icon(
+                                                Icons.Default.Check,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp),
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    // Scene assignment overwrites any profile
+                                    // on the same key; Default clears both.
+                                    onSceneSelected(scene.id)
+                                    expanded = false
+                                }
+                            )
+                        }
                     }
                 }
             }

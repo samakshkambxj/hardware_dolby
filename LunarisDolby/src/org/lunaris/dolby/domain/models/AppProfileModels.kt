@@ -11,7 +11,9 @@ sealed class AppProfileUiState {
     object Loading : AppProfileUiState()
     data class Success(
         val apps: List<AppInfo>,
-        val appsWithProfiles: Map<String, Int>
+        val appsWithProfiles: Map<String, Int>,
+        val appsWithScenes: Map<String, String> = emptyMap(),
+        val scenes: List<Scene> = emptyList()
     ) : AppProfileUiState()
     data class Error(val message: String) : AppProfileUiState()
 }
