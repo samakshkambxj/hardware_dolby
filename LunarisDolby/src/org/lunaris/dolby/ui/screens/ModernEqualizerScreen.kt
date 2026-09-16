@@ -125,7 +125,7 @@ fun ModernEqualizerScreen(
                                     val res = snackbarHost.showSnackbar(
                                         message = context.getString(R.string.preset_deleted),
                                         actionLabel = context.getString(R.string.undo),
-                                        withDismissed = true
+                                        withDismissAction = true
                                     )
                                     if (res == SnackbarResult.ActionPerformed) {
                                         viewModel.restorePreset(deleted)
