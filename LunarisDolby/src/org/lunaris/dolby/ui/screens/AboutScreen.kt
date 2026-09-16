@@ -191,6 +191,13 @@ fun AboutScreen(
                         subtitle = "Everyone who made this possible",
                         onClick = { showCreditsDialog = true }
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AboutLinkRow(
+                        icon = Icons.Default.School,
+                        title = stringResource(R.string.onboarding_replay_title),
+                        subtitle = stringResource(R.string.onboarding_replay_subtitle),
+                        onClick = { navController.navigate(Screen.Onboarding.route) }
+                    )
                 }
 
                 // Legal.
