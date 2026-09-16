@@ -46,11 +46,12 @@ private data class Particle(
  * below cards and lists.
  *
  * Place as the FIRST child of the Scaffold content [Box] so scrolling content
- * draws over it:
+ * draws over it, and pass the Scaffold [paddingValues] so particles stay
+ * below the transparent top bar instead of drifting behind the title:
  *
  * ```
  * Box(Modifier.fillMaxSize()) {
- *     FloatingParticles()
+ *     FloatingParticles(modifier = Modifier.padding(paddingValues))
  *     LazyColumn(...) { ... }
  * }
  * ```

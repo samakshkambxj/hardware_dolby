@@ -143,7 +143,7 @@ fun VolumeControlScreen() {
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
-        FloatingParticles()
+        FloatingParticles(modifier = Modifier.padding(paddingValues))
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()

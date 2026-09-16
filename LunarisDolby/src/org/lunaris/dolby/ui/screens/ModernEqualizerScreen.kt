@@ -137,7 +137,7 @@ fun ModernEqualizerScreen(
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
-        FloatingParticles()
+        FloatingParticles(modifier = Modifier.padding(paddingValues))
         when (val state = uiState) {
             is EqualizerUiState.Loading -> {
                 Box(

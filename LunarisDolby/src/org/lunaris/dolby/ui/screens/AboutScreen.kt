@@ -94,7 +94,7 @@ fun AboutScreen(
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
-            FloatingParticles()
+            FloatingParticles(modifier = Modifier.padding(paddingValues))
             Column(
                 modifier = Modifier
                     .fillMaxSize()
