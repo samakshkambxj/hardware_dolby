@@ -294,35 +294,6 @@ private fun ModernDolbySettingsContent(
             }
         }
 
-        item(key = "stage_width") {
-            AnimatedVisibility(
-                visible = state.settings.enabled,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                ModernSettingsCard(
-                    title = stringResource(R.string.dolby_stage_width),
-                    icon = Icons.Default.SurroundSound
-                ) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.dolby_stage_width_summary),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        ModernSettingSlider(
-                            title = stringResource(R.string.dolby_hp_virtualizer_dolby_strength),
-                            value = state.profileSettings.stereoWideningAmount,
-                            onValueChange = { viewModel.setStereoWidening(it.toInt()) },
-                            valueRange = 4f..64f,
-                            steps = 59
-                        )
-                    }
-                }
-            }
-        }
-
         item(key = "scene_section") {
             AnimatedVisibility(
                 visible = state.settings.enabled,
