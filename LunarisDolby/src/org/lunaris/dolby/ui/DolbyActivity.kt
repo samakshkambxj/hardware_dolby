@@ -22,6 +22,7 @@ import org.lunaris.dolby.utils.ToastHelper
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
@@ -136,6 +137,10 @@ class DolbyActivity : ComponentActivity() {
                 }
                 Scaffold(
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+                    // Each screen owns its own Scaffold + TopAppBar insets, so the
+                    // app-wide host must not add system padding or the top bar
+                    // ends up pushed down twice (see z.png).
+                    contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     contentColor = MaterialTheme.colorScheme.onSurface
                 ) { paddingValues ->

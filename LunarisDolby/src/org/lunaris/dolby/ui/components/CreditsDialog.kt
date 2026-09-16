@@ -589,26 +589,10 @@ private fun ContributorCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = MaterialTheme.shapes.medium,
-                color = if (contributor.isHighlighted)
-                    MaterialTheme.colorScheme.tertiary
-                else
-                    MaterialTheme.colorScheme.primary
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        tint = if (contributor.isHighlighted)
-                            MaterialTheme.colorScheme.onTertiary
-                        else
-                            MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            }
+            GithubAvatar(
+                githubUsername = contributor.githubUsername,
+                size = 48.dp
+            )
             
             Spacer(modifier = Modifier.width(16.dp))
             
