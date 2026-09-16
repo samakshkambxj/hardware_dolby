@@ -54,20 +54,25 @@ private sealed interface ProbeResult {
     data class Error(val msg: String) : ProbeResult
 }
 
-/** Candidate IDs: gaps around the known 101-116 params, plus known-good
- * references (113/116) to sanity-check the read path. */
-private val PROBE_TARGETS = listOf(
-    106 to "gap (bass boost?)",
-    107 to "gap",
-    109 to "gap",
-    112 to "gap (bass cutoff/width?)",
+/** Known IDs as references plus every gap 100-130 as a candidate sweep.
+ * Read-only: green value = HAL answered (still needs a listening test —
+ * some HALs answer 0 for unknown IDs); red = unsupported. */
+private val KNOWN_HINTS = mapOf(
+    101 to "headphone virtualizer — reference",
+    102 to "speaker virtualizer — reference",
+    103 to "volume leveler — reference",
+    104 to "IEQ preset — reference",
+    105 to "dialogue enable — reference",
+    108 to "dialogue amount — reference",
+    110 to "GEQ gains — reference (shows first band only)",
+    111 to "bass enhancer — reference",
     113 to "widening — reference, must read",
-    114 to "gap",
-    115 to "gap",
-    116 to "leveler amount — reference, must read",
-    117 to "gap",
-    118 to "gap"
+    116 to "leveler amount — reference, must read"
 )
+
+private val PROBE_TARGETS: List<Pair<Int, String>> = (100..130).map { id ->
+    id to (KNOWN_HINTS[id] ?: "gap — candidate (reverb/height/bass-width?)")
+}
 
 /**
  * Hidden debug screen (5 taps on the Advanced title opens it).
@@ -132,9 +137,9 @@ fun DapProbeScreen(
         ) {
             item(key = "intro") {
                 Text(
-                    text = "Reads raw DAP IDs on profile $profile. Green value = HAL answered " +
+                    text = "Reads raw DAP IDs 100–130 on profile $profile. Green value = HAL answered " +
                         "(still needs a listening test); red = unsupported. " +
-                        "113/116 are references that must read.",
+                        "Known IDs are references that must read.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
