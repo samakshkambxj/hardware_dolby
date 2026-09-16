@@ -7,6 +7,7 @@ package org.lunaris.dolby.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -39,7 +40,11 @@ fun FloatingNavToolbar(
     onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier,
     /** Bump to re-snapshot the navbar blur (e.g. bucketed pager offset). */
-    blurKey: Any = Unit
+    blurKey: Any = Unit,
+    /** Dot on Advanced when a Tuning Lab value was customized. */
+    advancedBadge: Boolean = false,
+    /** Dot on Equalizer when a custom/user preset is active. */
+    equalizerBadge: Boolean = false
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
@@ -116,6 +121,7 @@ fun FloatingNavToolbar(
                 label = stringResource(R.string.equalizer),
                 selected = isEqualizerSelected,
                 isEqualizer = true,
+                badge = equalizerBadge,
                 primaryColor = primaryColor,
                 onPrimaryColor = onPrimaryColor,
                 containerColor = Color.Transparent,
@@ -132,6 +138,7 @@ fun FloatingNavToolbar(
                 icon = Icons.Default.Settings,
                 label = stringResource(R.string.advanced),
                 selected = isAdvancedSelected,
+                badge = advancedBadge,
                 motion = NavIconMotion.Spin,
                 primaryColor = primaryColor,
                 onPrimaryColor = onPrimaryColor,
@@ -181,6 +188,7 @@ private fun NavToolbarItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isEqualizer: Boolean = false,
+    badge: Boolean = false,
     motion: NavIconMotion = NavIconMotion.Bob
 ) {
     val currentSelectionKey = remember(selected) { selected }
@@ -209,34 +217,46 @@ private fun NavToolbarItem(
             )
         ) {
             key(currentSelectionKey) {
-                Crossfade(
-                    targetState = isEqualizer,
-                    animationSpec = MaterialTheme.motionScheme.slowEffectsSpec(),
-                    label = "icon_transition_$label"
-                ) { isEq ->
-                    if (isEq) {
-                        AnimatedEqualizerIconDynamic(
-                            modifier = if (selected) Modifier
-                                .graphicsLayer {
-                                    scaleX = iconBounce
-                                    scaleY = iconBounce
-                                } else Modifier.semantics {
-                                contentDescription = label
-                            },
-                            color = if (selected) onPrimaryColor else onContainerColor,
-                            size = 24.dp
-                        )
-                    } else {
-                        AnimatedNavIcon(
-                            icon = icon,
-                            contentDescription = label,
-                            motion = motion,
+                Box(contentAlignment = Alignment.Center) {
+                    Crossfade(
+                        targetState = isEqualizer,
+                        animationSpec = MaterialTheme.motionScheme.slowEffectsSpec(),
+                        label = "icon_transition_$label"
+                    ) { isEq ->
+                        if (isEq) {
+                            AnimatedEqualizerIconDynamic(
+                                modifier = if (selected) Modifier
+                                    .graphicsLayer {
+                                        scaleX = iconBounce
+                                        scaleY = iconBounce
+                                    } else Modifier.semantics {
+                                    contentDescription = label
+                                },
+                                color = if (selected) onPrimaryColor else onContainerColor,
+                                size = 24.dp
+                            )
+                        } else {
+                            AnimatedNavIcon(
+                                icon = icon,
+                                contentDescription = label,
+                                motion = motion,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .graphicsLayer {
+                                        scaleX = iconBounce
+                                        scaleY = iconBounce
+                                    }
+                            )
+                        }
+                    }
+                    if (badge) {
+                        Box(
                             modifier = Modifier
-                                .size(24.dp)
-                                .graphicsLayer {
-                                    scaleX = iconBounce
-                                    scaleY = iconBounce
-                                }
+                                .align(Alignment.TopEnd)
+                                .offset(x = 4.dp, y = (-4).dp)
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.tertiary)
                         )
                     }
                 }
@@ -293,6 +313,15 @@ private fun AnimatedNavIcon(
     motion: NavIconMotion,
     modifier: Modifier = Modifier
 ) {
+    // Reduced motion: static icon, no looping transitions.
+    if (rememberReducedMotion()) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = modifier
+        )
+        return
+    }
     when (motion) {
         NavIconMotion.Spin -> {
             val spin = rememberInfiniteTransition(label = "nav_icon_spin")

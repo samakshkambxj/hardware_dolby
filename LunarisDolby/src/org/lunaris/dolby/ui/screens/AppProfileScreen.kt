@@ -32,6 +32,7 @@ import org.lunaris.dolby.R
 import org.lunaris.dolby.data.AppInfo
 import org.lunaris.dolby.domain.models.AppProfileUiState
 import org.lunaris.dolby.ui.components.ModernConfirmDialog
+import org.lunaris.dolby.ui.components.SkeletonRows
 import org.lunaris.dolby.ui.viewmodel.AppProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -97,23 +98,20 @@ fun AppProfileScreen(
     ) { paddingValues ->
         when (val state = uiState) {
             is AppProfileUiState.Loading -> {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                        Text(
-                            text = stringResource(R.string.app_profiles_loading),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    SkeletonRows(rows = 5)
+                    Text(
+                        text = stringResource(R.string.app_profiles_loading),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
             is AppProfileUiState.Success -> {

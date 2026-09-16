@@ -21,6 +21,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -70,6 +72,18 @@ fun MainPagerScreen(
         pageCount = { 4 }
     )
     val coroutineScope = rememberCoroutineScope()
+
+    // Nav dots: Advanced when a Tuning Lab value was customized on the
+    // current profile (a persisted lab pref exists — plain HAL reads no
+    // longer write prefs), Equalizer when a custom/user preset is active.
+    val dolbyState by dolbyViewModel.uiState.collectAsState()
+    val eqState by equalizerViewModel.uiState.collectAsState()
+    val advancedBadge =
+        (dolbyState as? org.lunaris.dolby.domain.models.DolbyUiState.Success)
+            ?.profileSettings?.labParams?.isNotEmpty() == true
+    val equalizerBadge =
+        (eqState as? org.lunaris.dolby.domain.models.EqualizerUiState.Success)
+            ?.currentPreset?.let { it.isUserDefined || it.isCustom } == true
 
     val currentFakeRoute = when (pagerState.currentPage) {
         0 -> "settings"
@@ -153,6 +167,8 @@ fun MainPagerScreen(
             blurKey = {
                 "${pagerState.currentPage}:$offsetBucket:${scrollTickState.intValue}"
             },
+            advancedBadge = advancedBadge,
+            equalizerBadge = equalizerBadge,
             onNavigate = { route ->
                 coroutineScope.launch {
                     when (route) {
@@ -178,7 +194,9 @@ private fun BottomNavOverlay(
     currentRoute: String,
     blurKey: () -> Any,
     onNavigate: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    advancedBadge: Boolean = false,
+    equalizerBadge: Boolean = false
 ) {
     Box(modifier = modifier.fillMaxWidth()) {
         Box(
@@ -205,6 +223,8 @@ private fun BottomNavOverlay(
             FloatingNavToolbar(
                 currentRoute = currentRoute,
                 blurKey = blurKey(),
+                advancedBadge = advancedBadge,
+                equalizerBadge = equalizerBadge,
                 onNavigate = onNavigate
             )
         }

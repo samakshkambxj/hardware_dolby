@@ -145,8 +145,10 @@ fun AnimatedWaveformBanner(
     }
 
     // 1 = full-energy playback, 0.25 = idle drift. Animated off = static.
+    // Reduced motion forces the static path: same look as animated=false.
+    val animating = animated && !rememberReducedMotion()
     val energyTarget = when {
-        !animated -> 0f
+        !animating -> 0f
         musicActive -> 1f
         else -> 0.25f
     }
@@ -159,7 +161,7 @@ fun AnimatedWaveformBanner(
     // Phase is advanced manually per frame so speed can follow energy
     // smoothly (an infiniteTransition can't retime mid-flight).
     val speedRef = rememberUpdatedState(
-        (0.9f + 2.3f * energy) * if (animated) 1f else 0f
+        (0.9f + 2.3f * energy) * if (animating) 1f else 0f
     )
     var phase by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(Unit) {
@@ -204,7 +206,7 @@ fun AnimatedWaveformBanner(
         // Idle: tall, shallow ripple. Playing: deeper troughs + volume scale.
         val rippleBase = 0.9f - 0.22f * energy
         val rippleDepth = 0.1f + 0.22f * energy
-        val levelScale = if (!animated) {
+        val levelScale = if (!animating) {
             0.9f
         } else {
             0.55f + 0.45f * energy * (0.4f + 0.6f * volumeFraction)
@@ -222,12 +224,12 @@ fun AnimatedWaveformBanner(
                 gaussian(position, 0.14f, 0.10f) * 0.26f
             ).coerceIn(0f, 1f)
 
-            val ripple = if (animated) {
+            val ripple = if (animating) {
                 rippleBase + rippleDepth * sin(phase + position * 14f)
             } else {
                 0.85f
             }
-            val level = envelope * ripple * if (animated) swell * levelScale / 0.9f else 0.9f
+            val level = envelope * ripple * if (animating) swell * levelScale / 0.9f else 0.9f
             val halfHeight = maxHalfHeight * level
 
             val alpha = (0.28f + envelope * 0.72f).coerceIn(0f, 1f)
