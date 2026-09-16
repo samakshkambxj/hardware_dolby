@@ -280,6 +280,24 @@
     <string name="codecs_channels">Up to %1$d ch</string>
     <string name="codecs_loading">Checking decoders…</string>
 
+    <!-- Reverb & height (experimental candidates) -->
+    <string name="reverb_height_title">Reverb &amp; height (experimental)</string>
+    <string name="reverb_height_summary">Candidate raw DAP controls — shown only if your HAL answers</string>
+    <string name="reverb_height_footer">Candidate IDs (see DAP probe): change one at a time and listen. If a slider does nothing, your HAL ignores that ID — remap in DolbyConstants.</string>
+    <string name="reverb_candidate">Reverb candidate (DAP %1$d)</string>
+    <string name="height_candidate">Height candidate (DAP %1$d)</string>
+
+    <!-- Per-app scenes -->
+    <string name="app_profiles_scene_header">Scenes</string>
+    <string name="app_profiles_scene_set">Scene set to: %1$s</string>
+
+    <!-- Scene import/export -->
+    <string name="scene_export">Copy scene</string>
+    <string name="scene_export_copied">Scene copied to clipboard</string>
+    <string name="scene_import">Import from clipboard</string>
+    <string name="scene_import_done">Imported %1$d scene(s)</string>
+    <string name="scene_import_failed">Couldn\'t import scenes from clipboard</string>
+
     <!-- Automation -->
     <string name="automation">Automation</string>
     <string name="automation_summary">Control Dolby from Tasker, MacroDroid or scripts via broadcast</string>
@@ -330,6 +348,8 @@
     <string name="onboarding_eq_body">10 to 20 bands, AutoEQ headphone correction, plus dynamics processing with a live spectrum.</string>
     <string name="onboarding_pro_title">Pro tools included</string>
     <string name="onboarding_pro_body">Spatial audio, channel balance, sleep timer, per-app profiles and Quick Settings tiles.</string>
+    <string name="onboarding_replay_title">Replay tutorial</string>
+    <string name="onboarding_replay_subtitle">See the first-run tour again</string>
 
     <!-- Easter eggs -->
     <string name="egg_lounge_title">Lunar Lounge</string>
