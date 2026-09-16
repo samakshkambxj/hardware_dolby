@@ -44,7 +44,11 @@ import kotlin.math.absoluteValue
 fun ProfileCarousel(
     currentProfile: Int,
     onProfileChange: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Profiles holding non-default settings get a dirty dot. */
+    dirtyProfiles: Set<Int> = emptySet(),
+    /** When non-null, a reset button shows under a dirty current profile. */
+    onResetProfile: ((Int) -> Unit)? = null
 ) {
     val profiles = stringArrayResource(R.array.dolby_profile_entries)
     val profileValues = stringArrayResource(R.array.dolby_profile_values)
@@ -139,6 +143,7 @@ fun ProfileCarousel(
             ) {
                 repeat(profiles.size) { index ->
                     val isSelected = pagerState.currentPage == index
+                    val isDirty = profileValues[index].toIntOrNull() in dirtyProfiles
 
                     Box(
                         modifier = Modifier
@@ -151,10 +156,31 @@ fun ProfileCarousel(
                             .background(
                                 if (isSelected)
                                     profilePalettes.getOrElse(index) { profilePalettes[0] }.start
+                                else if (isDirty)
+                                    MaterialTheme.colorScheme.tertiary
                                 else
                                     MaterialTheme.colorScheme.outlineVariant
                             )
                     )
+                }
+            }
+
+            val currentValue = profileValues
+                .getOrNull(pagerState.currentPage)?.toIntOrNull()
+            if (onResetProfile != null && currentValue != null &&
+                currentValue in dirtyProfiles
+            ) {
+                TextButton(
+                    onClick = { onResetProfile(currentValue) },
+                    shape = MaterialTheme.shapes.large
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.RestartAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.profile_reset))
                 }
             }
         }
@@ -264,10 +290,12 @@ private fun ProfileCard(
                 )
 
                 // Idle 3D motion — only the selected icon animates to save work.
+                // Skipped entirely under reduced motion.
+                val reducedMotion = rememberReducedMotion()
                 var bobY = 0f
                 var swayY = 0f
                 var sheenAlpha = 0.45f
-                if (isSelected) {
+                if (isSelected && !reducedMotion) {
                     val idle = rememberInfiniteTransition(label = "icon_idle")
                     bobY = idle.animateFloat(
                         initialValue = 0f,

@@ -995,9 +995,6 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
                 continue
             }
             result[paramId] = value
-            // Sync the persisted copy so boot-restore has the HAL truth.
-            getProfilePrefs(profile).edit()
-                .putInt(DolbyConstants.labParamPref(paramId), value).apply()
         }
         return result
     }
@@ -1247,12 +1244,112 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
         
         try {
             checkEffect()
-            context.resources.getStringArray(R.array.dolby_profile_values)
-                .map { it.toInt() }
-                .forEach { resetProfile(it) }
+            val ids = getProfileIds()
+            backupProfiles(ids)
+            ids.forEach { resetProfile(it) }
             setCurrentProfile(0)
         } catch (e: Exception) {
             DolbyConstants.dlog(TAG, "Error resetting all profiles: ${e.message}")
+        }
+    }
+
+    /** Profile ids from resources, falling back to 0..6. */
+    fun getProfileIds(): List<Int> {
+        return try {
+            context.resources.getStringArray(R.array.dolby_profile_values)
+                .map { it.toInt() }
+        } catch (e: Exception) {
+            (0..6).toList()
+        }
+    }
+
+    /**
+     * True when a profile holds any non-default setting (enhancer levels,
+     * toggles, IEQ, leveler amount, lab prefs). GEQ gains are covered
+     * indirectly — every enhancer writes levels alongside its deltas.
+     * Prefs-only: safe to call anywhere.
+     */
+    fun isProfileCustomized(profile: Int): Boolean {
+        return try {
+            val prefs = getProfilePrefs(profile)
+            if (prefs.all.isEmpty()) return false
+            prefs.getString(DolbyConstants.PREF_IEQ, "0") != "0" ||
+                prefs.getBoolean(DolbyConstants.PREF_HP_VIRTUALIZER, false) ||
+                prefs.getBoolean(DolbyConstants.PREF_SPK_VIRTUALIZER, false) ||
+                prefs.getBoolean(DolbyConstants.PREF_DIALOGUE, false) ||
+                prefs.getBoolean(DolbyConstants.PREF_BASS, false) ||
+                prefs.getBoolean(DolbyConstants.PREF_MID, false) ||
+                prefs.getBoolean(DolbyConstants.PREF_TREBLE, false) ||
+                prefs.getBoolean(DolbyConstants.PREF_VOLUME, false) ||
+                prefs.getInt(DolbyConstants.PREF_BASS_LEVEL, 0) != 0 ||
+                prefs.getInt(DolbyConstants.PREF_BASS_CURVE, 0) != 0 ||
+                prefs.getInt(DolbyConstants.PREF_SUB_BASS_LEVEL, 0) != 0 ||
+                prefs.getInt(DolbyConstants.PREF_MID_BASS_LEVEL, 0) != 0 ||
+                prefs.getInt(DolbyConstants.PREF_UPPER_BASS_LEVEL, 0) != 0 ||
+                prefs.getInt(DolbyConstants.PREF_MID_LEVEL, 0) != 0 ||
+                prefs.getInt(DolbyConstants.PREF_TREBLE_LEVEL, 0) != 0 ||
+                prefs.getInt(DolbyConstants.PREF_VOLUME_AMOUNT, LEVELER_AMOUNT_DEFAULT) !=
+                    LEVELER_AMOUNT_DEFAULT ||
+                prefs.all.keys.any { it.startsWith("dolby_lab_") }
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error checking profile dirt: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Undo support for profile resets. Snapshots raw prefs maps (HAL GEQ
+     * gains are re-derived: PREF_PRESET plus the enhancer levels restore
+     * deterministically through [restoreProfilePreset]/[applyProfileSettings]).
+     */
+    private var profilesBackup: Map<Int, Map<String, Any?>>? = null
+
+    fun backupProfiles(ids: List<Int>) {
+        profilesBackup = try {
+            ids.associateWith { id ->
+                HashMap(
+                    context.getSharedPreferences(
+                        "profile_$id", Context.MODE_PRIVATE
+                    ).all
+                )
+            }
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error backing up profiles: ${e.message}")
+            null
+        }
+    }
+
+    fun restoreProfilesBackup(): Boolean {
+        val backup = profilesBackup ?: return false
+        if (isReleased) return false
+        return try {
+            checkEffect()
+            backup.forEach { (id, values) ->
+                val prefs = getProfilePrefs(id)
+                prefs.edit().clear().apply()
+                val ed = prefs.edit()
+                values.forEach { (k, v) ->
+                    when (v) {
+                        is Boolean -> ed.putBoolean(k, v)
+                        is Int -> ed.putInt(k, v)
+                        is Long -> ed.putLong(k, v)
+                        is Float -> ed.putFloat(k, v)
+                        is String -> ed.putString(k, v)
+                        is Set<*> -> {
+                            @Suppress("UNCHECKED_CAST")
+                            ed.putStringSet(k, v as Set<String>)
+                        }
+                    }
+                }
+                ed.apply()
+                restoreProfilePreset(id)
+                applyProfileSettings(id)
+            }
+            profilesBackup = null
+            true
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error restoring profiles backup: ${e.message}")
+            false
         }
     }
 

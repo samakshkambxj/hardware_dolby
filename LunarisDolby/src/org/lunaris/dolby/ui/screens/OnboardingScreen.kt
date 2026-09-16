@@ -24,12 +24,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Interests
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.SurroundSound
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -55,6 +58,7 @@ import org.lunaris.dolby.ui.components.BouncyPopIn
 import org.lunaris.dolby.ui.components.DolbyLogo
 import org.lunaris.dolby.ui.components.ModernSettingSwitch
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
+import org.lunaris.dolby.utils.ToastHelper
 
 private data class OnboardingPage(
     val icon: ImageVector,
@@ -195,6 +199,27 @@ fun OnboardingScreen(
                                         icon = Icons.Default.Tune
                                     )
                                 }
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            // Starter nudge: hear a difference in 10 seconds.
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.applySceneById("builtin_movie_night")
+                                    ToastHelper.showToast(
+                                        context,
+                                        context.getString(R.string.scene_applied)
+                                    )
+                                },
+                                shape = MaterialTheme.shapes.large,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Movie,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(R.string.onboarding_try_scene))
                             }
                         }
                     }

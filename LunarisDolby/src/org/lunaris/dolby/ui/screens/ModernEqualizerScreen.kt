@@ -70,9 +70,9 @@ fun ModernEqualizerScreen(
     val scope = rememberCoroutineScope()
     var showAutoEqDialog by remember { mutableStateOf(false) }
     var showSaveDialog by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
     var viewMode by remember { mutableStateOf(EqualizerViewMode.CURVE) }
+    val snackbarHost = remember { SnackbarHostState() }
 
     Scaffold(
         topBar = {
@@ -119,7 +119,20 @@ fun ModernEqualizerScreen(
                     if (uiState is EqualizerUiState.Success) {
                         val state = uiState as EqualizerUiState.Success
                         if (state.currentPreset.isUserDefined) {
-                            IconButton(onClick = { showDeleteDialog = true }) {
+                            IconButton(onClick = {
+                                val deleted = state.currentPreset
+                                viewModel.deletePreset(deleted)
+                                scope.launch {
+                                    val res = snackbarHost.showSnackbar(
+                                        message = context.getString(R.string.preset_deleted),
+                                        actionLabel = context.getString(R.string.undo),
+                                        withDismissed = true
+                                    )
+                                    if (res == SnackbarResult.ActionPerformed) {
+                                        viewModel.restorePreset(deleted)
+                                    }
+                                }
+                            }) {
                                 Icon(
                                     Icons.Default.Delete, 
                                     contentDescription = "Delete",
@@ -134,7 +147,8 @@ fun ModernEqualizerScreen(
                 )
             )
         },
-        containerColor = MaterialTheme.colorScheme.surfaceContainer
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        snackbarHost = { SnackbarHost(snackbarHost) }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
         FloatingParticles(modifier = Modifier.padding(paddingValues))
@@ -208,20 +222,6 @@ fun ModernEqualizerScreen(
                 error
             },
             onDismiss = { showSaveDialog = false }
-        )
-    }
-
-    if (showDeleteDialog && uiState is EqualizerUiState.Success) {
-        val state = uiState as EqualizerUiState.Success
-        ModernConfirmDialog(
-            title = stringResource(R.string.dolby_geq_delete_preset),
-            message = stringResource(R.string.dolby_geq_delete_preset_prompt),
-            icon = Icons.Default.Delete,
-            onConfirm = {
-                viewModel.deletePreset(state.currentPreset)
-                showDeleteDialog = false
-            },
-            onDismiss = { showDeleteDialog = false }
         )
     }
 
@@ -1625,9 +1625,7 @@ private fun AutoEqSelectionDialog(
                 }
 
                 if (isLoading && filteredList.isEmpty()) {
-                    Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) { 
-                        CircularProgressIndicator() 
-                    }
+                    SkeletonRows(rows = 4)
                 } else {
                     LazyColumn(
                         state = listState,

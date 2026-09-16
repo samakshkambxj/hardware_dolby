@@ -309,12 +309,16 @@ fun DolbyMainCard(
 fun ModernProfileSelector(
     currentProfile: Int,
     onProfileChange: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    dirtyProfiles: Set<Int> = emptySet(),
+    onResetProfile: ((Int) -> Unit)? = null
 ) {
     ProfileCarousel(
         currentProfile = currentProfile,
         onProfileChange = onProfileChange,
-        modifier = modifier
+        modifier = modifier,
+        dirtyProfiles = dirtyProfiles,
+        onResetProfile = onResetProfile
     )
 }
 
