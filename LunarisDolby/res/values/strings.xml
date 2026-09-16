@@ -264,6 +264,22 @@
     <string name="balance_center">Center</string>
     <string name="balance_unsupported">Balance control not supported on this device</string>
 
+    <!-- Tuning Lab (experimental raw DAP params) -->
+    <string name="tuning_lab">Tuning Lab</string>
+    <string name="tuning_lab_summary">Experimental raw DAP controls — only params your HAL answers to are shown</string>
+    <string name="tuning_lab_param">DAP param %1$d</string>
+    <string name="tuning_lab_footer">These IDs have no public meaning — change one at a time and listen. Values persist per profile and are included in scenes. Reset restores HAL defaults.</string>
+    <string name="tuning_lab_reset">Reset Lab values</string>
+    <string name="tuning_lab_empty">No experimental params answered on this HAL</string>
+
+    <!-- Dolby codecs -->
+    <string name="codecs_title">Dolby decoders</string>
+    <string name="codecs_summary">Wired through media_codecs_dolby_audio.xml — live from MediaCodecList</string>
+    <string name="codecs_supported">Supported</string>
+    <string name="codecs_missing">Missing</string>
+    <string name="codecs_channels">Up to %1$d ch</string>
+    <string name="codecs_loading">Checking decoders…</string>
+
     <!-- Automation -->
     <string name="automation">Automation</string>
     <string name="automation_summary">Control Dolby from Tasker, MacroDroid or scripts via broadcast</string>

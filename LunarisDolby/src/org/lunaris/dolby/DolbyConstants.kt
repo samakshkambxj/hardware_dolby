@@ -57,6 +57,19 @@ object DolbyConstants {
         override fun toString(): String = "${name}(${id})"
     }
 
+    /**
+     * Gap IDs around the known 101-116 params with no public semantics.
+     * The OEM daxService and all community DAP trees only use the [DsParam]
+     * set above; these IDs are exposed generically in the Tuning Lab,
+     * gated per-device by a live HAL probe (unsupported IDs are hidden).
+     * Values are kept in a conservative 0-16 range since the HAL-side
+     * scaling of unknown IDs is unverified — listen after changing.
+     */
+    val LAB_DAP_PARAM_IDS = listOf(106, 107, 109, 112, 114, 115, 117, 118)
+    const val LAB_PARAM_MIN = 0
+    const val LAB_PARAM_MAX = 16
+    fun labParamPref(paramId: Int) = "dolby_lab_$paramId"
+
     fun dlog(tag: String, msg: String) {
         if (Log.isLoggable(TAG, Log.DEBUG) || Log.isLoggable(tag, Log.DEBUG)) {
             Log.d("$TAG-$tag", msg)

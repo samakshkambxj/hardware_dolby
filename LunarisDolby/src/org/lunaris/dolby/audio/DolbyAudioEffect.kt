@@ -96,6 +96,22 @@ class DolbyAudioEffect(priority: Int, audioSession: Int) : AudioEffect(
         return byteArrayToInt32Array(buf, 1)[0]
     }
 
+    /**
+     * Write path for arbitrary DAP parameter IDs (Tuning Lab). Same wire
+     * format as [setDapParameter]. Throws when the HAL rejects the ID —
+     * callers must catch and treat failure as "unsupported".
+     */
+    fun setRawDapParameter(paramId: Int, value: Int, profile: Int = this.profile) {
+        DolbyConstants.dlog(TAG, "setRawDapParameter: profile=$profile paramId=$paramId value=$value")
+        val buf = ByteArray((1 + 4) * 4)
+        int32ToByteArray(EFFECT_PARAM_SET_PROFILE_PARAMETER, buf, 0)
+        int32ToByteArray(2, buf, 4)
+        int32ToByteArray(profile, buf, 8)
+        int32ToByteArray(paramId, buf, 12)
+        int32ToByteArray(value, buf, 16)
+        checkStatus(setParameter(EFFECT_PARAM_CPDP_VALUES, buf))
+    }
+
     companion object {
         private const val TAG = "DolbyAudioEffect"
         private val EFFECT_TYPE_DAP = UUID.fromString("9d4921da-8225-4f29-aefa-39537a04bcaa")

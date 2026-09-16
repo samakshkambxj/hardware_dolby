@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.lunaris.dolby.R
+import org.lunaris.dolby.data.DolbyCodecSupport
 import org.lunaris.dolby.domain.models.DolbyUiState
 import org.lunaris.dolby.ui.components.*
 import org.lunaris.dolby.ui.components.FloatingParticles
@@ -47,6 +48,7 @@ fun ModernAdvancedSettingsScreen(
     val headTrackingAvailable by viewModel.headTrackingAvailable.collectAsState()
     val headTrackingEnabled by viewModel.headTrackingEnabled.collectAsState()
     val spatialError by viewModel.spatialError.collectAsState()
+    val codecs by viewModel.codecInfo.collectAsState()
     val context = LocalContext.current
     // Hidden entry to the DAP probe debug screen: 5 taps on the title.
     var probeTaps by remember { mutableIntStateOf(0) }
@@ -119,6 +121,7 @@ fun ModernAdvancedSettingsScreen(
                     spatialEnabled = spatialEnabled,
                     headTrackingAvailable = headTrackingAvailable,
                     headTrackingEnabled = headTrackingEnabled,
+                    codecs = codecs,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -166,6 +169,7 @@ private fun ModernAdvancedSettingsContent(
     spatialEnabled: Boolean,
     headTrackingAvailable: Boolean,
     headTrackingEnabled: Boolean,
+    codecs: List<DolbyCodecSupport>?,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -406,6 +410,16 @@ private fun ModernAdvancedSettingsContent(
                     }
                 }
             }
+
+            item(key = "tuning_lab") {
+                TuningLabCard(
+                    labParams = state.profileSettings.labParams,
+                    onParamChange = { paramId, value ->
+                        viewModel.setLabParam(paramId, value)
+                    },
+                    onReset = { viewModel.resetLabParams() }
+                )
+            }
         } else {
             item(key = "disabled_notice") {
                 Surface(
@@ -452,6 +466,10 @@ private fun ModernAdvancedSettingsContent(
                 balance = balance,
                 onBalanceChange = onBalanceChange
             )
+        }
+
+        item(key = "codecs") {
+            CodecInfoCard(codecs = codecs)
         }
 
         item(key = "automation") {

@@ -84,6 +84,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         refreshBalance()
         refreshSpatializer()
         refreshOutputDevices()
+        refreshCodecInfo()
         observeAudioOutputState()
         observeProfileChanges()
     }
@@ -233,7 +234,8 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
                     bassCurve = repository.getBassCurve(profile),
                     subBassLevel = repository.getSubBassLevel(profile),
                     midBassLevel = repository.getMidBassLevel(profile),
-                    upperBassLevel = repository.getUpperBassLevel(profile)
+                    upperBassLevel = repository.getUpperBassLevel(profile),
+                    labParams = repository.getLabParams(profile)
                 )
                 
                 if (!isCleared) {
@@ -502,6 +504,51 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
                 loadSettings()
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error setting dialogue enhancer amount: ${e.message}")
+            }
+        }
+    }
+
+    fun setLabParam(paramId: Int, value: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val profile = repository.getCurrentProfile()
+                repository.setLabParam(profile, paramId, value)
+                loadSettings()
+            } catch (e: IllegalArgumentException) {
+                DolbyConstants.dlog(TAG, "Invalid lab param: ${e.message}")
+                _uiState.value = DolbyUiState.Error("Invalid tuning value: ${e.message}")
+            } catch (e: Exception) {
+                // HAL rejected the write: drop it from the supported set and
+                // reload so the slider disappears instead of sticking.
+                DolbyConstants.dlog(TAG, "Error setting lab param: ${e.message}")
+                loadSettings()
+            }
+        }
+    }
+
+    fun resetLabParams() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val profile = repository.getCurrentProfile()
+                repository.resetLabParams(profile)
+                loadSettings()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error resetting lab params: ${e.message}")
+            }
+        }
+    }
+
+    private val _codecInfo =
+        MutableStateFlow<List<org.lunaris.dolby.data.DolbyCodecSupport>?>(null)
+    val codecInfo: StateFlow<List<org.lunaris.dolby.data.DolbyCodecSupport>?> =
+        _codecInfo.asStateFlow()
+
+    fun refreshCodecInfo() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _codecInfo.value = org.lunaris.dolby.data.DolbyCodecInfo.query()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error querying codec info: ${e.message}")
             }
         }
     }

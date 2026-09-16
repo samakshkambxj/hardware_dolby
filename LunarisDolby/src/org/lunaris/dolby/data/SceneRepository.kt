@@ -66,7 +66,8 @@ class SceneRepository(private val context: Context) {
             dialogueAmount = dolby.getDialogueEnhancerAmount(profile),
             hpVirtualizer = dolby.getHeadphoneVirtualizerEnabled(profile),
             spkVirtualizer = dolby.getSpeakerVirtualizerEnabled(profile),
-            stereoWidening = dolby.getStereoWideningAmount(profile)
+            stereoWidening = dolby.getStereoWideningAmount(profile),
+            labParams = dolby.getLabParams(profile)
         )
         prefs.edit().putString(scene.id, serialize(scene)).apply()
         return scene
@@ -118,6 +119,21 @@ class SceneRepository(private val context: Context) {
         dolby.setStereoWideningAmount(
             scene.profile, scene.stereoWidening.coerceIn(MIN_WIDENING, MAX_WIDENING)
         )
+        scene.labParams.forEach { (paramId, value) ->
+            // Isolated: scenes from another HAL may carry IDs rejected here.
+            runCatching {
+                dolby.setLabParam(
+                    scene.profile,
+                    paramId,
+                    value.coerceIn(
+                        DolbyConstants.LAB_PARAM_MIN,
+                        DolbyConstants.LAB_PARAM_MAX
+                    )
+                )
+            }.onFailure {
+                DolbyConstants.dlog(TAG, "Scene lab param $paramId skipped: ${it.message}")
+            }
+        }
     }
 
     private fun builtInScenes(): List<Scene> = listOf(
@@ -268,8 +284,12 @@ class SceneRepository(private val context: Context) {
     )
 
     private fun serialize(scene: Scene): String {
+        val labJson = JSONObject()
+        scene.labParams.forEach { (paramId, value) ->
+            labJson.put(paramId.toString(), value)
+        }
         return JSONObject()
-            .put(KEY_VERSION, 1)
+            .put(KEY_VERSION, 2)
             .put("name", scene.name)
             .put("enabled", scene.enabled)
             .put("profile", scene.profile)
@@ -287,11 +307,21 @@ class SceneRepository(private val context: Context) {
             .put("hpVirt", scene.hpVirtualizer)
             .put("spkVirt", scene.spkVirtualizer)
             .put("widening", scene.stereoWidening)
+            .put("lab", labJson)
             .toString()
     }
 
     private fun deserialize(id: String, json: String): Scene {
         val o = JSONObject(json)
+        val labParams = mutableMapOf<Int, Int>()
+        // v1 scenes have no "lab" object — optJSONObject keeps them readable.
+        o.optJSONObject("lab")?.let { lab ->
+            lab.keys().forEach { key ->
+                key.toIntOrNull()?.let { paramId ->
+                    labParams[paramId] = lab.optInt(key, 0)
+                }
+            }
+        }
         return Scene(
             id = id,
             name = o.getString("name"),
@@ -311,7 +341,8 @@ class SceneRepository(private val context: Context) {
             dialogueAmount = o.optInt("dialogueAmount", 6),
             hpVirtualizer = o.optBoolean("hpVirt", false),
             spkVirtualizer = o.optBoolean("spkVirt", false),
-            stereoWidening = o.optInt("widening", 32)
+            stereoWidening = o.optInt("widening", 32),
+            labParams = labParams
         )
     }
 
