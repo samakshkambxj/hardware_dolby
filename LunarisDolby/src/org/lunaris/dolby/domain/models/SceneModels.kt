@@ -8,7 +8,8 @@ package org.lunaris.dolby.domain.models
 /**
  * A Scene is a named snapshot of the most relevant Dolby settings that can be
  * applied in one tap. Scenes intentionally capture enhancer-level settings
- * (profile, IEQ, bass/mid/treble, sub/mid/upper bass trims, leveler, dialogue, virtualizers) and not raw
+ * (profile, IEQ, bass/mid/treble, sub/mid/upper bass trims, leveler, dialogue, virtualizers,
+ * Tuning Lab params) and not raw
  * GEQ band gains, because the bass/mid/treble/trim setters deterministically derive
  * GEQ deltas from the stored levels.
  */
@@ -31,5 +32,7 @@ data class Scene(
     val dialogueAmount: Int = 6,
     val hpVirtualizer: Boolean = false,
     val spkVirtualizer: Boolean = false,
-    val stereoWidening: Int = 32
+    val stereoWidening: Int = 32,
+    /** Tuning Lab values keyed by raw DAP param ID. */
+    val labParams: Map<Int, Int> = emptyMap()
 )

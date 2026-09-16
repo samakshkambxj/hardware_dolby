@@ -62,8 +62,9 @@ fun tileSelectionBorder(selected: Boolean): BorderStroke {
 @Composable
 fun DolbyLogo(
     modifier: Modifier = Modifier,
-    leftColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
-    rightColor: Color = MaterialTheme.colorScheme.primary
+    color: Color = MaterialTheme.colorScheme.primary,
+    leftColor: Color = color,
+    rightColor: Color = color
 ) {
     Box(
         modifier = modifier.aspectRatio(1f),
@@ -240,9 +241,7 @@ fun DolbyMainCard(
                                     )
                                 }
                             }
-                        },
-                    leftColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    rightColor = MaterialTheme.colorScheme.primary
+                        }
                 )
             }
 

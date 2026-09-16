@@ -119,9 +119,7 @@ fun AboutScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         DolbyLogo(
-                            modifier = Modifier.height(72.dp),
-                            leftColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            rightColor = MaterialTheme.colorScheme.primary
+                            modifier = Modifier.height(72.dp)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(

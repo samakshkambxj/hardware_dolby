@@ -126,6 +126,8 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
                     DolbyConstants.dlog(TAG, "Leveler amount (116) unsupported: ${it.message}")
                 }
             }
+
+            restoreLabParams(profile)
             
             DolbyConstants.dlog(TAG, "Successfully restored all settings for profile $profile")
         } catch (e: Exception) {
@@ -949,6 +951,114 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
             getProfilePrefs(profile).edit().putInt(DolbyConstants.PREF_DIALOGUE_AMOUNT, amount).apply()
         } catch (e: Exception) {
             DolbyConstants.dlog(TAG, "Error setting dialogue enhancer amount: ${e.message}")
+        }
+    }
+
+    /**
+     * Tuning Lab: generic read/write for gap DAP IDs with no public
+     * semantics. Support is probed live against the HAL — IDs the HAL
+     * rejects are omitted from the result and hidden in the UI.
+     * Must be called off the main thread (touches the audio effect).
+     */
+    private val labSupportCache = mutableMapOf<Int, Boolean>()
+    private val labSupportLock = Any()
+
+    private fun isLabSupported(paramId: Int, profile: Int): Boolean {
+        synchronized(labSupportLock) {
+            labSupportCache[paramId]?.let { return it }
+        }
+        val supported = runCatching {
+            checkEffect()
+            dolbyEffect.getRawDapParameter(paramId, profile)
+        }.isSuccess
+        synchronized(labSupportLock) {
+            labSupportCache[paramId] = supported
+        }
+        if (!supported) {
+            DolbyConstants.dlog(TAG, "Lab param $paramId unsupported on this HAL")
+        }
+        return supported
+    }
+
+    fun getLabParams(profile: Int): Map<Int, Int> {
+        val result = mutableMapOf<Int, Int>()
+        for (paramId in DolbyConstants.LAB_DAP_PARAM_IDS) {
+            if (!isLabSupported(paramId, profile)) continue
+            val value = try {
+                checkEffect()
+                dolbyEffect.getRawDapParameter(paramId, profile)
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error reading lab param $paramId: ${e.message}")
+                synchronized(labSupportLock) {
+                    labSupportCache[paramId] = false
+                }
+                continue
+            }
+            result[paramId] = value
+            // Sync the persisted copy so boot-restore has the HAL truth.
+            getProfilePrefs(profile).edit()
+                .putInt(DolbyConstants.labParamPref(paramId), value).apply()
+        }
+        return result
+    }
+
+    fun setLabParam(profile: Int, paramId: Int, value: Int) {
+        if (isReleased) return
+        if (paramId !in DolbyConstants.LAB_DAP_PARAM_IDS) {
+            throw IllegalArgumentException("Unknown lab param $paramId")
+        }
+        if (value !in DolbyConstants.LAB_PARAM_MIN..DolbyConstants.LAB_PARAM_MAX) {
+            throw IllegalArgumentException(
+                "Lab param must be between ${DolbyConstants.LAB_PARAM_MIN} " +
+                    "and ${DolbyConstants.LAB_PARAM_MAX}"
+            )
+        }
+        try {
+            checkEffect()
+            dolbyEffect.setRawDapParameter(paramId, value, profile)
+            getProfilePrefs(profile).edit()
+                .putInt(DolbyConstants.labParamPref(paramId), value).apply()
+        } catch (e: IllegalArgumentException) {
+            throw e
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error setting lab param $paramId: ${e.message}")
+            synchronized(labSupportLock) {
+                labSupportCache[paramId] = false
+            }
+            throw e
+        }
+    }
+
+    fun resetLabParams(profile: Int) {
+        if (isReleased) return
+        try {
+            val prefs = getProfilePrefs(profile)
+            prefs.edit().apply {
+                DolbyConstants.LAB_DAP_PARAM_IDS.forEach {
+                    remove(DolbyConstants.labParamPref(it))
+                }
+                apply()
+            }
+            synchronized(labSupportLock) {
+                labSupportCache.clear()
+            }
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error resetting lab params: ${e.message}")
+        }
+    }
+
+    private fun restoreLabParams(profile: Int) {
+        val prefs = getProfilePrefs(profile)
+        for (paramId in DolbyConstants.LAB_DAP_PARAM_IDS) {
+            if (!prefs.contains(DolbyConstants.labParamPref(paramId))) continue
+            val value = prefs.getInt(DolbyConstants.labParamPref(paramId), 0)
+            // Isolated: one rejected ID must not break the whole restore.
+            runCatching {
+                checkEffect()
+                dolbyEffect.setRawDapParameter(paramId, value, profile)
+            }.onFailure {
+                DolbyConstants.dlog(TAG, "Lab param $paramId restore failed: ${it.message}")
+            }
         }
     }
 
