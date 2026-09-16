@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import org.lunaris.dolby.DolbyConstants
 import org.lunaris.dolby.R
 import org.lunaris.dolby.data.AppProfileManager
+import org.lunaris.dolby.data.SceneRepository
 import org.lunaris.dolby.domain.models.AppProfileUiState
 import org.lunaris.dolby.utils.ToastHelper
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +22,7 @@ import kotlinx.coroutines.cancelChildren
 class AppProfileViewModel(application: Application) : AndroidViewModel(application) {
 
     private val appProfileManager = AppProfileManager(application)
+    private val sceneRepository = SceneRepository(application)
     private val context = application
 
     private val _uiState = MutableStateFlow<AppProfileUiState>(AppProfileUiState.Loading)
@@ -44,11 +46,15 @@ class AppProfileViewModel(application: Application) : AndroidViewModel(applicati
                 _uiState.value = AppProfileUiState.Loading
                 val apps = appProfileManager.getInstalledApps()
                 val appsWithProfiles = appProfileManager.getAppsWithProfiles()
-                
+                val appsWithScenes = appProfileManager.getAppsWithScenes()
+                val scenes = sceneRepository.getScenes()
+
                 if (!isCleared) {
                     _uiState.value = AppProfileUiState.Success(
                         apps = apps,
-                        appsWithProfiles = appsWithProfiles
+                        appsWithProfiles = appsWithProfiles,
+                        appsWithScenes = appsWithScenes,
+                        scenes = scenes
                     )
                 }
             } catch (e: Exception) {
@@ -76,6 +82,31 @@ class AppProfileViewModel(application: Application) : AndroidViewModel(applicati
                 DolbyConstants.dlog(TAG, "Error setting app profile: ${e.message}")
             }
         }
+    }
+
+    fun setAppScene(packageName: String, sceneId: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (sceneId == null) {
+                    appProfileManager.removeAppProfile(packageName)
+                    ToastHelper.showToast(context, "Profile reset to default")
+                } else {
+                    appProfileManager.setAppScene(packageName, sceneId)
+                    val name = sceneRepository.getScene(sceneId)?.name ?: sceneId
+                    ToastHelper.showToast(
+                        context,
+                        context.getString(R.string.app_profiles_scene_set, name)
+                    )
+                }
+                loadApps()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error setting app scene: ${e.message}")
+            }
+        }
+    }
+
+    fun sceneName(sceneId: String): String {
+        return sceneRepository.getScene(sceneId)?.name ?: sceneId
     }
 
     fun removeAppProfile(packageName: String) {
