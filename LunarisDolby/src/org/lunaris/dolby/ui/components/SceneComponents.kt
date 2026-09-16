@@ -11,6 +11,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.*
@@ -31,6 +33,8 @@ fun SceneSection(
     onSaveClick: () -> Unit,
     onDeleteClick: (Scene) -> Unit,
     onResetClick: () -> Unit,
+    onExportClick: (Scene) -> Unit,
+    onImportClick: () -> Unit,
     hasCustomScenes: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -44,7 +48,8 @@ fun SceneSection(
                 SceneRow(
                     scene = scene,
                     onApply = { onApply(scene) },
-                    onDeleteClick = if (scene.isBuiltIn) null else ({ onDeleteClick(scene) })
+                    onDeleteClick = if (scene.isBuiltIn) null else ({ onDeleteClick(scene) }),
+                    onExportClick = { onExportClick(scene) }
                 )
             }
             Spacer(modifier = Modifier.height(4.dp))
@@ -60,6 +65,19 @@ fun SceneSection(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.scene_save_current))
+            }
+            TextButton(
+                onClick = onImportClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ContentPaste,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.scene_import))
             }
             if (hasCustomScenes) {
                 TextButton(
@@ -84,7 +102,8 @@ fun SceneSection(
 private fun SceneRow(
     scene: Scene,
     onApply: () -> Unit,
-    onDeleteClick: (() -> Unit)?
+    onDeleteClick: (() -> Unit)?,
+    onExportClick: () -> Unit
 ) {
     Surface(
         modifier = Modifier
@@ -131,6 +150,14 @@ private fun SceneRow(
                         modifier = Modifier.size(20.dp)
                     )
                 }
+            }
+            IconButton(onClick = onExportClick) {
+                Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = stringResource(R.string.scene_export),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }

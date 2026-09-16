@@ -17,8 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -50,6 +52,7 @@ fun ModernDolbySettingsScreen(
     val outputError by viewModel.outputError.collectAsState()
     val pageStyle by rememberPageStyle()
     val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
 
     LaunchedEffect(outputError) {
         outputError?.let {
@@ -160,6 +163,28 @@ fun ModernDolbySettingsScreen(
                     },
                     onDeleteSceneClick = { sceneToDelete = it },
                     onResetScenesClick = { showResetScenesDialog = true },
+                    onExportSceneClick = { scene ->
+                        viewModel.exportSceneJson(scene.id)?.let { json ->
+                            clipboard.setText(AnnotatedString(json))
+                            ToastHelper.showToast(
+                                context,
+                                context.getString(R.string.scene_export_copied)
+                            )
+                        }
+                    },
+                    onImportSceneClick = {
+                        val text = clipboard.getText()?.text.orEmpty()
+                        viewModel.importScenes(text) { count ->
+                            ToastHelper.showToast(
+                                context,
+                                if (count > 0) {
+                                    context.getString(R.string.scene_import_done, count)
+                                } else {
+                                    context.getString(R.string.scene_import_failed)
+                                }
+                            )
+                        }
+                    },
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -267,6 +292,8 @@ private fun ModernDolbySettingsContent(
     onSaveSceneClick: () -> Unit,
     onDeleteSceneClick: (Scene) -> Unit,
     onResetScenesClick: () -> Unit,
+    onExportSceneClick: (Scene) -> Unit,
+    onImportSceneClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -344,6 +371,8 @@ private fun ModernDolbySettingsContent(
                     onSaveClick = onSaveSceneClick,
                     onDeleteClick = onDeleteSceneClick,
                     onResetClick = onResetScenesClick,
+                    onExportClick = onExportSceneClick,
+                    onImportClick = onImportSceneClick,
                     hasCustomScenes = scenes.any { !it.isBuiltIn }
                 )
             }

@@ -613,6 +613,37 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Synchronous prefs read — safe to call for clipboard export. */
+    fun exportSceneJson(id: String): String? {
+        return try {
+            sceneRepository.exportSceneJson(id)
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error exporting scene: ${e.message}")
+            null
+        }
+    }
+
+    fun importScenes(jsonText: String, onDone: (Int) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val count = try {
+                sceneRepository.importScenesJson(jsonText)
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error importing scenes: ${e.message}")
+                0
+            }
+            if (count > 0) {
+                try {
+                    _scenes.value = sceneRepository.getScenes()
+                } catch (e: Exception) {
+                    DolbyConstants.dlog(TAG, "Error reloading scenes: ${e.message}")
+                }
+            }
+            kotlinx.coroutines.withContext(Dispatchers.Main) {
+                onDone(count)
+            }
+        }
+    }
+
     fun resetScenes() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
