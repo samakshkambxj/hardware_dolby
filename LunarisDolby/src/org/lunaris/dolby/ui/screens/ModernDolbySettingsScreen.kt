@@ -145,7 +145,7 @@ fun ModernDolbySettingsScreen(
                             val res = snackbarHost.showSnackbar(
                                 message = context.getString(R.string.dolby_reset_all),
                                 actionLabel = context.getString(R.string.undo),
-                                withDismissed = true
+                                withDismissAction = true
                             )
                             if (res == SnackbarResult.ActionPerformed) {
                                 viewModel.undoProfilesReset { ok ->
@@ -206,6 +206,7 @@ fun ModernDolbySettingsScreen(
                     scenes = scenes,
                     sleepState = sleepState,
                     dirtyProfiles = dirtyProfiles,
+                    snackbarHost = snackbarHost,
                     onOutputCardClick = {
                         viewModel.refreshOutputDevices()
                         showOutputDialog = true
@@ -225,7 +226,7 @@ fun ModernDolbySettingsScreen(
                                 val res = snackbarHost.showSnackbar(
                                     message = context.getString(R.string.scene_deleted),
                                     actionLabel = context.getString(R.string.undo),
-                                    withDismissed = true
+                                    withDismissAction = true
                                 )
                                 if (res == SnackbarResult.ActionPerformed) {
                                     viewModel.restoreScene(scene)
@@ -333,6 +334,7 @@ private fun ModernDolbySettingsContent(
     scenes: List<Scene>,
     sleepState: SleepTimerState,
     dirtyProfiles: Set<Int>,
+    snackbarHost: SnackbarHostState,
     onOutputCardClick: () -> Unit,
     onApplyScene: (Scene) -> Unit,
     onSaveSceneClick: () -> Unit,
@@ -342,6 +344,8 @@ private fun ModernDolbySettingsContent(
     onImportSceneClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -390,7 +394,7 @@ private fun ModernDolbySettingsContent(
                             val res = snackbarHost.showSnackbar(
                                 message = context.getString(R.string.profile_reset_done),
                                 actionLabel = context.getString(R.string.undo),
-                                withDismissed = true
+                                withDismissAction = true
                             )
                             if (res == SnackbarResult.ActionPerformed) {
                                 viewModel.undoProfilesReset { ok ->
