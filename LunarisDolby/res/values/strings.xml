@@ -264,6 +264,10 @@
     <string name="balance_center">Center</string>
     <string name="balance_unsupported">Balance control not supported on this device</string>
 
+    <!-- Experimental holder (Tuning Lab + Reverb & height) -->
+    <string name="experimental_title">Experimental</string>
+    <string name="experimental_summary">Raw DAP controls — collapsed by default</string>
+
     <!-- Tuning Lab (experimental raw DAP params) -->
     <string name="tuning_lab">Tuning Lab</string>
     <string name="tuning_lab_summary">Experimental raw DAP controls — only params your HAL answers to are shown</string>
@@ -278,7 +282,6 @@
     <string name="codecs_supported">Supported</string>
     <string name="codecs_missing">Missing</string>
     <string name="codecs_channels">Up to %1$d ch</string>
-    <string name="codecs_loading">Checking decoders…</string>
 
     <!-- Reverb & height (experimental candidates) -->
     <string name="reverb_height_title">Reverb &amp; height (experimental)</string>

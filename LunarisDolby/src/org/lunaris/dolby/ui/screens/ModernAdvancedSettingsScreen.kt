@@ -474,28 +474,6 @@ private fun ModernAdvancedSettingsContent(
                 }
             }
 
-            if (match("lab", "tuning", "dap", "experimental", "param")) {
-            item(key = "tuning_lab") {
-                TuningLabCard(
-                    labParams = state.profileSettings.labParams,
-                    onParamChange = { paramId, value ->
-                        viewModel.setLabParam(paramId, value)
-                    },
-                    onReset = { viewModel.resetLabParams() }
-                )
-            }
-            }
-
-            if (match("reverb", "height", "experimental", "dap")) {
-            item(key = "reverb_height") {
-                ReverbHeightCard(
-                    labParams = state.profileSettings.labParams,
-                    onParamChange = { paramId, value ->
-                        viewModel.setLabParam(paramId, value)
-                    }
-                )
-            }
-            }
         } else {
             if (match("dolby", "profile", "advanced")) {
             item(key = "disabled_notice") {
@@ -575,6 +553,21 @@ private fun ModernAdvancedSettingsContent(
                 onAssign = { viewModel.assignDeviceScene(it) },
                 onClear = { viewModel.clearDeviceScene(it) }
             )
+        }
+        }
+
+        if (state.settings.enabled) {
+        if (match("lab", "tuning", "dap", "experimental", "param", "reverb", "height")) {
+        item(key = "experimental") {
+            ExperimentalCard(
+                labParams = state.profileSettings.labParams,
+                onParamChange = { paramId, value ->
+                    viewModel.setLabParam(paramId, value)
+                },
+                onReset = { viewModel.resetLabParams() },
+                forceExpand = query.isNotEmpty()
+            )
+        }
         }
         }
 
