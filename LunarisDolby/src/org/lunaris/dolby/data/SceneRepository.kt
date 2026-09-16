@@ -80,6 +80,69 @@ class SceneRepository(private val context: Context) {
     }
 
     /**
+     * Clipboard export of one scene (built-in or custom) as a single JSON
+     * object. Pairs with [importScenesJson]; the stored copy is untouched.
+     */
+    fun exportSceneJson(id: String): String? {
+        val scene = getScene(id) ?: return null
+        return try {
+            JSONObject(serialize(scene)).put("id", scene.id).toString()
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Export failed for $id: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * Imports scenes from clipboard JSON: either a single object from
+     * [exportSceneJson] or {"scenes":[...]}. Entries are validated through
+     * [deserialize] and stored under fresh ids so imports never overwrite
+     * existing scenes. Returns the number imported.
+     */
+    fun importScenesJson(jsonText: String): Int {
+        val objects = mutableListOf<JSONObject>()
+        val trimmed = jsonText.trim()
+        if (trimmed.isEmpty()) return 0
+        try {
+            val root = JSONObject(trimmed)
+            val arr = root.optJSONArray("scenes")
+            if (arr != null) {
+                for (i in 0 until arr.length()) {
+                    arr.optJSONObject(i)?.let { objects.add(it) }
+                }
+            } else {
+                objects.add(root)
+            }
+        } catch (e: Exception) {
+            try {
+                val arr = org.json.JSONArray(trimmed)
+                for (i in 0 until arr.length()) {
+                    arr.optJSONObject(i)?.let { objects.add(it) }
+                }
+            } catch (e2: Exception) {
+                DolbyConstants.dlog(TAG, "Import parse failed: ${e2.message}")
+                return 0
+            }
+        }
+        var count = 0
+        val base = System.currentTimeMillis()
+        objects.forEachIndexed { index, o ->
+            try {
+                if (o.optString("name").isBlank()) return@forEachIndexed
+                val id = CUSTOM_ID_PREFIX + "import_" + base + "_" + index
+                // Validation pass: drops entries the current schema
+                // cannot read instead of storing corrupt scenes.
+                deserialize(id, o.toString())
+                prefs.edit().putString(id, o.toString()).apply()
+                count++
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Dropping bad import entry: ${e.message}")
+            }
+        }
+        return count
+    }
+
+    /**
      * Deletes all user-created scenes. Built-ins are hardcoded and unaffected.
      * Returns the number of scenes removed.
      */
