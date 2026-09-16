@@ -501,13 +501,21 @@ fun ModernSettingSlider(
     val scope = rememberCoroutineScope()
     var sliderValue by remember { mutableFloatStateOf(value.toFloat()) }
     var lastHapticValue by remember { mutableIntStateOf(value) }
-    // While the thumb is being dragged the ViewModel round-trip
-    // (onValueChange -> HAL -> loadSettings -> new value) must not move the
-    // thumb under the finger, otherwise it visibly stutters/fights the drag.
+    // Drag-local thumb: ViewModel writes (HAL + loadSettings on IO, or
+    // Dynamics engine + disk persist) return asynchronously and would
+    // otherwise keep arriving after release, dragging the thumb after lift.
+    // So the thumb only follows the finger while dragging; the confirmed
+    // value is committed once on release and re-synced afterwards.
     var isDragging by remember { mutableStateOf(false) }
 
     LaunchedEffect(value) {
         if (!isDragging) {
+            sliderValue = value.toFloat()
+            lastHapticValue = value
+        } else if (kotlin.math.abs(value - sliderValue.toInt()) > (valueRange.endInclusive - valueRange.start) * 0.25f) {
+            // Large external jump under an active drag (preset load, band-mode
+            // switch): drop the lock and snap instead of fighting it.
+            isDragging = false
             sliderValue = value.toFloat()
             lastHapticValue = value
         }
@@ -556,12 +564,16 @@ fun ModernSettingSlider(
                     lastHapticValue = intValue
                 }
                 sliderValue = newValue
-                onValueChange(newValue)
             },
             onValueChangeFinished = {
                 isDragging = false
-                // Re-sync to the confirmed ViewModel value on the next emission;
-                // if the HAL clamped it, LaunchedEffect(value) will snap back.
+                // Single commit on release: avoids queuing one HAL/IO write per
+                // drag tick, whose late loadSettings emissions kept moving the
+                // thumb after lift. The label already tracked the finger via
+                // sliderValue, so this stays responsive.
+                onValueChange(sliderValue)
+                // Re-sync to the confirmed ViewModel value on the next
+                // emission; if the HAL clamped it, LaunchedEffect snaps back.
             },
             valueRange = valueRange,
             steps = steps,

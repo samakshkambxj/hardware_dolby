@@ -1819,8 +1819,8 @@ private fun DynamicsProcessingSection(
                         checked = state.mbcEnabled,
                         onCheckedChange = { dynamicsVm.setMbcEnabled(it) }
                     )
-                    state.mbcBands.forEachIndexed { index, band ->
-                        if (state.mbcEnabled) {
+                    if (state.mbcEnabled) {
+                        state.mbcBands.forEachIndexed { index, band ->
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "${band.label} band",
@@ -1862,12 +1862,14 @@ private fun DynamicsProcessingSection(
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedButton(
-                        onClick = { dynamicsVm.resetMbc() },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Reset MBC")
+                    if (state.mbcEnabled) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedButton(
+                            onClick = { dynamicsVm.resetMbc() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Reset MBC")
+                        }
                     }
                 }
                 else -> {
@@ -1912,12 +1914,14 @@ private fun DynamicsProcessingSection(
                             valueLabel = { "$it dB" }
                         )
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedButton(
-                        onClick = { dynamicsVm.resetLimiter() },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Reset limiter")
+                    if (state.limiterEnabled) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedButton(
+                            onClick = { dynamicsVm.resetLimiter() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Reset limiter")
+                        }
                     }
                 }
             }
