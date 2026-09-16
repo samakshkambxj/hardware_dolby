@@ -189,20 +189,10 @@ fun CodecInfoCard(
         )
         Spacer(modifier = Modifier.height(12.dp))
         if (codecs == null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp),
-                    strokeWidth = 2.dp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.codecs_loading),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            SkeletonRows(
+                rows = 4,
+                modifier = Modifier.fillMaxWidth()
+            )
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 codecs.forEach { codec ->
