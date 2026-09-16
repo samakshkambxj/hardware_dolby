@@ -7,13 +7,16 @@ package org.lunaris.dolby.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -34,7 +37,9 @@ import org.lunaris.dolby.utils.*
 fun FloatingNavToolbar(
     currentRoute: String,
     onNavigate: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Bump to re-snapshot the navbar blur (e.g. bucketed pager offset). */
+    blurKey: Any = Unit
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
@@ -44,7 +49,11 @@ fun FloatingNavToolbar(
     val isEqualizerSelected = currentRoute == "equalizer"
     val isAdvancedSelected = currentRoute == "advanced"
     
-    val containerColor = MaterialTheme.colorScheme.primaryContainer
+    // Navbar-only real blur: the list behind the pill is snapshotted and
+    // GPU-blurred (see RealBlurBackdrop). Neutral veil + hairline, no glow,
+    // so it reads as frosted glass like the dialogs.
+    val barTint = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f)
+    val barEdge = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
     val onContainerColor = MaterialTheme.colorScheme.onPrimaryContainer
     val primaryColor = MaterialTheme.colorScheme.primary
     val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
@@ -53,31 +62,46 @@ fun FloatingNavToolbar(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
-        HorizontalFloatingToolbar(
-            expanded = true,
-            colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(
-                toolbarContainerColor = containerColor,
-                toolbarContentColor = onContainerColor
-            ),
+        Box(
             modifier = Modifier
                 .padding(
                     top = FloatingToolbarDefaults.ScreenOffset,
                     bottom = FloatingToolbarDefaults.ScreenOffset
                 )
                 .shadow(
-                    elevation = 16.dp,
-                    shape = MaterialTheme.shapes.extraLarge,
-                    ambientColor = Color.Black.copy(alpha = 0.4f),
-                    spotColor = Color.Black.copy(alpha = 0.5f)
+                    elevation = 8.dp,
+                    shape = CircleShape,
+                    ambientColor = Color.Black.copy(alpha = 0.20f),
+                    spotColor = Color.Black.copy(alpha = 0.20f)
                 )
+                .clip(CircleShape)
         ) {
+            RealBlurBackdrop(
+                tint = barTint,
+                blurRadiusPx = 20f,
+                updateKey = blurKey,
+                modifier = Modifier.matchParentSize()
+            )
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .border(width = 1.dp, color = barEdge, shape = CircleShape)
+            )
+            HorizontalFloatingToolbar(
+                expanded = true,
+                colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(
+                    toolbarContainerColor = Color.Transparent,
+                    toolbarContentColor = onContainerColor
+                ),
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp)
+            ) {
             NavToolbarItem(
                 icon = Icons.Default.Home,
                 label = stringResource(R.string.home),
                 selected = isHomeSelected,
                 primaryColor = primaryColor,
                 onPrimaryColor = onPrimaryColor,
-                containerColor = containerColor,
+                containerColor = Color.Transparent,
                 onContainerColor = onContainerColor,
                 onClick = {
                     scope.launch {
@@ -94,7 +118,7 @@ fun FloatingNavToolbar(
                 isEqualizer = true,
                 primaryColor = primaryColor,
                 onPrimaryColor = onPrimaryColor,
-                containerColor = containerColor,
+                containerColor = Color.Transparent,
                 onContainerColor = onContainerColor,
                 onClick = {
                     scope.launch {
@@ -111,7 +135,7 @@ fun FloatingNavToolbar(
                 motion = NavIconMotion.Spin,
                 primaryColor = primaryColor,
                 onPrimaryColor = onPrimaryColor,
-                containerColor = containerColor,
+                containerColor = Color.Transparent,
                 onContainerColor = onContainerColor,
                 onClick = {
                     scope.launch {
@@ -128,7 +152,7 @@ fun FloatingNavToolbar(
                 motion = NavIconMotion.Pulse,
                 primaryColor = primaryColor,
                 onPrimaryColor = onPrimaryColor,
-                containerColor = containerColor,
+                containerColor = Color.Transparent,
                 onContainerColor = onContainerColor,
                 onClick = {
                     scope.launch {
@@ -139,6 +163,7 @@ fun FloatingNavToolbar(
                     onNavigate("volume")
                 }
             )
+            }
         }
     }
 }
