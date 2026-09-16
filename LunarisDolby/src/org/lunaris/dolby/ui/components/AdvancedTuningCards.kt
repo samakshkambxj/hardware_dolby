@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.Waves
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -89,6 +90,77 @@ fun TuningLabCard(
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = stringResource(R.string.tuning_lab_footer),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Experimental Reverb & Height card. Binds the candidate IDs from
+ * [DolbyConstants.REVERB_PARAM_ID] / [DolbyConstants.HEIGHT_PARAM_ID] out
+ * of the already-probed lab map — an ID the HAL rejects is simply absent
+ * and its slider hidden. Renders nothing when neither candidate is live.
+ */
+@Composable
+fun ReverbHeightCard(
+    labParams: Map<Int, Int>,
+    onParamChange: (paramId: Int, value: Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val reverb = labParams[DolbyConstants.REVERB_PARAM_ID]
+    val height = labParams[DolbyConstants.HEIGHT_PARAM_ID]
+    if (reverb == null && height == null) return
+    ModernSettingsCard(
+        title = stringResource(R.string.reverb_height_title),
+        icon = Icons.Default.Waves,
+        modifier = modifier
+    ) {
+        Text(
+            text = stringResource(R.string.reverb_height_summary),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (reverb != null) {
+                ModernSettingSlider(
+                    title = stringResource(
+                        R.string.reverb_candidate,
+                        DolbyConstants.REVERB_PARAM_ID
+                    ),
+                    value = reverb,
+                    onValueChange = {
+                        onParamChange(DolbyConstants.REVERB_PARAM_ID, it.toInt())
+                    },
+                    valueRange = DolbyConstants.LAB_PARAM_MIN.toFloat()..
+                        DolbyConstants.LAB_PARAM_MAX.toFloat(),
+                    steps = DolbyConstants.LAB_PARAM_MAX -
+                        DolbyConstants.LAB_PARAM_MIN - 1,
+                    valueLabel = { "$it" }
+                )
+            }
+            if (height != null) {
+                ModernSettingSlider(
+                    title = stringResource(
+                        R.string.height_candidate,
+                        DolbyConstants.HEIGHT_PARAM_ID
+                    ),
+                    value = height,
+                    onValueChange = {
+                        onParamChange(DolbyConstants.HEIGHT_PARAM_ID, it.toInt())
+                    },
+                    valueRange = DolbyConstants.LAB_PARAM_MIN.toFloat()..
+                        DolbyConstants.LAB_PARAM_MAX.toFloat(),
+                    steps = DolbyConstants.LAB_PARAM_MAX -
+                        DolbyConstants.LAB_PARAM_MIN - 1,
+                    valueLabel = { "$it" }
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.reverb_height_footer),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

@@ -70,6 +70,15 @@ object DolbyConstants {
     const val LAB_PARAM_MAX = 16
     fun labParamPref(paramId: Int) = "dolby_lab_$paramId"
 
+    /**
+     * Tuning Lab IDs promoted to the experimental Reverb & Height card.
+     * Candidates only — no public semantics exist for gap IDs, so if the
+     * DAP probe names a different live ID on your HAL, remap here and the
+     * card follows. IDs the HAL rejects are hidden automatically.
+     */
+    const val REVERB_PARAM_ID = 114
+    const val HEIGHT_PARAM_ID = 115
+
     fun dlog(tag: String, msg: String) {
         if (Log.isLoggable(TAG, Log.DEBUG) || Log.isLoggable(tag, Log.DEBUG)) {
             Log.d("$TAG-$tag", msg)

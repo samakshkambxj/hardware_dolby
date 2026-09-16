@@ -420,6 +420,15 @@ private fun ModernAdvancedSettingsContent(
                     onReset = { viewModel.resetLabParams() }
                 )
             }
+
+            item(key = "reverb_height") {
+                ReverbHeightCard(
+                    labParams = state.profileSettings.labParams,
+                    onParamChange = { paramId, value ->
+                        viewModel.setLabParam(paramId, value)
+                    }
+                )
+            }
         } else {
             item(key = "disabled_notice") {
                 Surface(
