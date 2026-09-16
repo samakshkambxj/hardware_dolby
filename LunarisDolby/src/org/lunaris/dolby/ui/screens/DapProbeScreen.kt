@@ -112,7 +112,7 @@ fun DapProbeScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -128,7 +128,7 @@ fun DapProbeScreen(
                 .fillMaxSize()
                 .padding(paddingValues),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item(key = "intro") {
                 Text(

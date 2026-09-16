@@ -115,7 +115,7 @@ fun AboutScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(24.dp),
+                            .padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         DolbyLogo(
