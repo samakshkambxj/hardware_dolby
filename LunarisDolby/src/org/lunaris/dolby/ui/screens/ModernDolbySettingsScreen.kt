@@ -41,7 +41,6 @@ fun ModernDolbySettingsScreen(
     val scenes by viewModel.scenes.collectAsState()
     val sleepState by viewModel.sleepState.collectAsState()
     var showResetDialog by remember { mutableStateOf(false) }
-    var showCreditsDialog by remember { mutableStateOf(false) }
     var showSaveSceneDialog by remember { mutableStateOf(false) }
     var showResetScenesDialog by remember { mutableStateOf(false) }
     var sceneName by remember { mutableStateOf("") }
@@ -72,10 +71,10 @@ fun ModernDolbySettingsScreen(
                 },
                 expandedHeight = 92.dp,
                 actions = {
-                    IconButton(onClick = { showCreditsDialog = true }) {
+                    IconButton(onClick = { navController.navigate(Screen.About.route) }) {
                         Icon(
                             Icons.Default.Info, 
-                            contentDescription = "Credits",
+                            contentDescription = "About",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -180,12 +179,6 @@ fun ModernDolbySettingsScreen(
         )
     }
     
-    if (showCreditsDialog) {
-        CreditsDialog(
-            onDismiss = { showCreditsDialog = false }
-        )
-    }
-
     if (showSaveSceneDialog) {
         SaveSceneDialog(
             name = sceneName,
