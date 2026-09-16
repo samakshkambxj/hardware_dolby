@@ -22,12 +22,17 @@ import org.lunaris.dolby.utils.ToastHelper
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import org.lunaris.dolby.DolbyConstants
+import org.lunaris.dolby.ui.components.PageStyleRepository
 import org.lunaris.dolby.ui.screens.DolbyNavHost
 import org.lunaris.dolby.ui.theme.DolbyTheme
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
@@ -116,7 +121,14 @@ class DolbyActivity : ComponentActivity() {
         lifecycle.addObserver(lifecycleObserver)
         
         setContent {
-            DolbyTheme {
+            val styleRepo = remember { PageStyleRepository.get(applicationContext) }
+            val pageStyle by styleRepo.style.collectAsState()
+            DolbyTheme(
+                darkTheme = isSystemInDarkTheme(),
+                dynamicColor = pageStyle.dynamicColor,
+                accent = pageStyle.accent,
+                amoled = pageStyle.amoledDark
+            ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.surfaceContainer,

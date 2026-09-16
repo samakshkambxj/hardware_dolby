@@ -42,6 +42,26 @@ import org.lunaris.dolby.utils.*
 // Press-bounce lives in Bouncy.kt (single source of truth).
 // squishable() there is gesture-safe + scroll-aware; do not duplicate it here.
 
+/** Page Style > Cards: container/border/elevation for all settings cards. */
+@Composable
+fun PageStyle.cardContainer(): Color = when (cardStyle) {
+    PageCardStyle.FILLED -> MaterialTheme.colorScheme.surfaceContainerLow
+    PageCardStyle.OUTLINED -> MaterialTheme.colorScheme.surface
+    PageCardStyle.ELEVATED -> MaterialTheme.colorScheme.surfaceContainerLow
+}
+
+@Composable
+fun PageStyle.cardBorder(): BorderStroke? = when (cardStyle) {
+    PageCardStyle.OUTLINED ->
+        BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    else -> null
+}
+
+@Composable
+fun PageStyle.cardElevation(): CardElevation = CardDefaults.cardElevation(
+    defaultElevation = if (cardStyle == PageCardStyle.ELEVATED) 4.dp else 0.dp
+)
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun tileSelectionBorder(selected: Boolean): BorderStroke {
@@ -112,7 +132,8 @@ fun ActiveAudioDeviceCard(
             // this card, and any alpha lets particles bleed through it.
             containerColor = MaterialTheme.colorScheme.secondaryContainer
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        border = pageStyle.cardBorder(),
+        elevation = pageStyle.cardElevation()
     ) {
         Row(
             modifier = Modifier
@@ -177,35 +198,46 @@ fun DolbyMainCard(
         modifier = modifier.fillMaxWidth(),
         shape = pageStyle.cardShape,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = pageStyle.cardContainer()
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        border = pageStyle.cardBorder(),
+        elevation = pageStyle.cardElevation()
     ) {
         Column {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer,
-                                MaterialTheme.colorScheme.secondaryContainer,
-                                MaterialTheme.colorScheme.surfaceContainerLow
+            // Gradient banner vs flat primaryContainer (Page Style > Header).
+            val bannerModifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp)
+                .then(
+                    if (pageStyle.bannerGradient) {
+                        Modifier.background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    MaterialTheme.colorScheme.secondaryContainer,
+                                    pageStyle.cardContainer()
+                                )
                             )
                         )
-                    ),
+                    } else {
+                        Modifier.background(MaterialTheme.colorScheme.primaryContainer)
+                    }
+                )
+            Box(
+                modifier = bannerModifier,
                 contentAlignment = Alignment.Center
             ) {
-                AnimatedWaveformBanner(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(112.dp),
-                    barColor = MaterialTheme.colorScheme.primary,
-                    accentColor = MaterialTheme.colorScheme.tertiary,
-                    barCount = 56,
-                    animated = enabled
-                )
+                if (pageStyle.showBannerWaveform) {
+                    AnimatedWaveformBanner(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(112.dp),
+                        barColor = MaterialTheme.colorScheme.primary,
+                        accentColor = MaterialTheme.colorScheme.tertiary,
+                        barCount = 56,
+                        animated = enabled
+                    )
+                }
 
                 DolbyLogo(
                     modifier = Modifier
@@ -350,9 +382,10 @@ fun ModernSettingsCard(
         modifier = modifier.fillMaxWidth(),
         shape = pageStyle.cardShape,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = pageStyle.cardContainer()
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        border = pageStyle.cardBorder(),
+        elevation = pageStyle.cardElevation()
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(
@@ -360,8 +393,8 @@ fun ModernSettingsCard(
                 modifier = Modifier.padding(bottom = 16.dp)
             ) {
                 Surface(
-                    modifier = Modifier.size(40.dp),
-                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.size(pageStyle.iconSize.box),
+                    shape = pageStyle.iconShape.shape(),
                     color = iconBg
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -369,7 +402,7 @@ fun ModernSettingsCard(
                             imageVector = icon,
                             contentDescription = null,
                             tint = iconTint,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(pageStyle.iconSize.icon)
                         )
                     }
                 }

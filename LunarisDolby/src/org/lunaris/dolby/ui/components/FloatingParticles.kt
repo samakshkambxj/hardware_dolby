@@ -42,6 +42,23 @@ private data class Particle(
 )
 
 /**
+ * Page-Style-aware entry point. Reads [ParticleDensity] from the style repo
+ * and delegates to [FloatingParticles]; OFF renders nothing.
+ *
+ * Prefer this in screens so the Background FX setting applies everywhere.
+ */
+@Composable
+fun StyledParticles(
+    modifier: Modifier = Modifier
+) {
+    val style by rememberPageStyle()
+    FloatingParticles(
+        modifier = modifier,
+        particleCount = style.particleDensity.count
+    )
+}
+
+/**
  * Dense floating dust / bokeh rendered above the Scaffold background but
  * below cards and lists.
  *

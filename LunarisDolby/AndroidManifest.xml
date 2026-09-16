@@ -75,15 +75,66 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.CATEGORY_CONTENT_MUSIC" />
             </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
             <meta-data android:name="com.android.settings.category"
                        android:value="com.android.settings.category.ia.sound" />
             <meta-data android:name="com.android.settings.summary_uri"
                        android:value="content://org.lunaris.dolby.summary/dolby" />
         </activity>
+
+        <!-- Alternate launcher icons (Page Style > App icon). The LAUNCHER
+             filter lives only on these aliases so exactly one icon is ever
+             visible; AppIconManager toggles them via PackageManager. -->
+        <activity-alias
+            android:name=".ui.DolbyActivityIconDynamic"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.DolbyActivityIconIndigo"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_indigo"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.DolbyActivityIconMidnight"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_midnight"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.DolbyActivityIconGold"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_gold"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
 
         <provider
             android:name="androidx.core.content.FileProvider"

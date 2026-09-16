@@ -5,9 +5,11 @@
 
 package org.lunaris.dolby.ui.theme
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import org.lunaris.dolby.ui.components.AccentChoice
 
 private val Indigo10 = Color(0xFF0A0A5C)
 private val Indigo20 = Color(0xFF212490)
@@ -155,3 +157,123 @@ internal val DolbyDarkColorScheme = darkColorScheme(
     outlineVariant = DarkOutlineVariant,
     scrim = NeutralBlack
 )
+
+/**
+ * Fixed per-accent primary ramp. Tertiary/error/surfaces stay on the Dolby
+ * baseline so one picker cannot blow up contrast elsewhere.
+ */
+private data class AccentRamp(
+    val lightPrimary: Color,
+    val lightContainer: Color,
+    val lightOnContainer: Color,
+    val lightInverse: Color,
+    val darkPrimary: Color,
+    val darkOnPrimary: Color,
+    val darkContainer: Color,
+    val darkOnContainer: Color,
+    val darkInverse: Color,
+    /** Representative dot for the Page Style swatch picker. */
+    val preview: Color
+)
+
+private val AccentRamps: Map<AccentChoice, AccentRamp> = mapOf(
+    AccentChoice.AZURE to AccentRamp(
+        lightPrimary = Color(0xFF0061A4), lightContainer = Color(0xFFD1E4FF),
+        lightOnContainer = Color(0xFF001D35), lightInverse = Color(0xFF9ECAFF),
+        darkPrimary = Color(0xFF9ECAFF), darkOnPrimary = Color(0xFF003258),
+        darkContainer = Color(0xFF00497D), darkOnContainer = Color(0xFFD1E4FF),
+        darkInverse = Color(0xFF0061A4), preview = Color(0xFF0061A4)
+    ),
+    AccentChoice.VIOLET to AccentRamp(
+        lightPrimary = Color(0xFF6750A4), lightContainer = Color(0xFFEADDFF),
+        lightOnContainer = Color(0xFF21005D), lightInverse = Color(0xFFD0BCFF),
+        darkPrimary = Color(0xFFD0BCFF), darkOnPrimary = Color(0xFF381E72),
+        darkContainer = Color(0xFF4F378B), darkOnContainer = Color(0xFFEADDFF),
+        darkInverse = Color(0xFF6750A4), preview = Color(0xFF6750A4)
+    ),
+    AccentChoice.TEAL to AccentRamp(
+        lightPrimary = Color(0xFF006A60), lightContainer = Color(0xFF70F7EC),
+        lightOnContainer = Color(0xFF00201D), lightInverse = Color(0xFF4EDAD2),
+        darkPrimary = Color(0xFF4EDAD2), darkOnPrimary = Color(0xFF003731),
+        darkContainer = Color(0xFF005049), darkOnContainer = Color(0xFF70F7EC),
+        darkInverse = Color(0xFF006A60), preview = Color(0xFF006A60)
+    ),
+    AccentChoice.JADE to AccentRamp(
+        lightPrimary = Color(0xFF4C662B), lightContainer = Color(0xFFCDEDA3),
+        lightOnContainer = Color(0xFF102000), lightInverse = Color(0xFFB1D18A),
+        darkPrimary = Color(0xFFB1D18A), darkOnPrimary = Color(0xFF1F3700),
+        darkContainer = Color(0xFF354E16), darkOnContainer = Color(0xFFCDEDA3),
+        darkInverse = Color(0xFF4C662B), preview = Color(0xFF4C662B)
+    ),
+    AccentChoice.GOLD to AccentRamp(
+        lightPrimary = Amber40, lightContainer = Amber90,
+        lightOnContainer = Amber10, lightInverse = Amber80,
+        darkPrimary = Amber80, darkOnPrimary = Amber20,
+        darkContainer = Amber30, darkOnContainer = Amber90,
+        darkInverse = Amber40, preview = Amber40
+    ),
+    AccentChoice.ROSE to AccentRamp(
+        lightPrimary = Color(0xFF984061), lightContainer = Color(0xFFFFD9E3),
+        lightOnContainer = Color(0xFF3E001D), lightInverse = Color(0xFFFFB0C8),
+        darkPrimary = Color(0xFFFFB0C8), darkOnPrimary = Color(0xFF5D1135),
+        darkContainer = Color(0xFF7A2949), darkOnContainer = Color(0xFFFFD9E3),
+        darkInverse = Color(0xFF984061), preview = Color(0xFF984061)
+    ),
+    AccentChoice.RUBY to AccentRamp(
+        lightPrimary = Red40, lightContainer = Red90,
+        lightOnContainer = Red10, lightInverse = Red80,
+        darkPrimary = Red80, darkOnPrimary = Red20,
+        darkContainer = Red30, darkOnContainer = Red90,
+        darkInverse = Red40, preview = Red40
+    )
+)
+
+val AccentChoice.previewColor: Color
+    get() = AccentRamps[this]?.preview ?: Indigo40
+
+/**
+ * Resolves the app [ColorScheme] from Page Style choices. Dynamic color is
+ * handled by the caller ([DolbyTheme]) — this only covers the static path.
+ */
+fun dolbyColorScheme(
+    accent: AccentChoice,
+    darkTheme: Boolean,
+    amoled: Boolean
+): ColorScheme {
+    val base = if (darkTheme) DolbyDarkColorScheme else DolbyLightColorScheme
+    val ramp = AccentRamps[accent]
+    val accented = if (ramp == null) {
+        base
+    } else if (darkTheme) {
+        base.copy(
+            primary = ramp.darkPrimary,
+            onPrimary = ramp.darkOnPrimary,
+            primaryContainer = ramp.darkContainer,
+            onPrimaryContainer = ramp.darkOnContainer,
+            inversePrimary = ramp.darkInverse,
+            surfaceTint = ramp.darkPrimary
+        )
+    } else {
+        base.copy(
+            primary = ramp.lightPrimary,
+            onPrimary = NeutralWhite,
+            primaryContainer = ramp.lightContainer,
+            onPrimaryContainer = ramp.lightOnContainer,
+            inversePrimary = ramp.lightInverse,
+            surfaceTint = ramp.lightPrimary
+        )
+    }
+    if (!darkTheme || !amoled) return accented
+    // True-black surfaces for OLED; content colors stay readable on black.
+    return accented.copy(
+        background = NeutralBlack,
+        surface = NeutralBlack,
+        surfaceDim = NeutralBlack,
+        surfaceContainerLowest = NeutralBlack,
+        surfaceContainerLow = NeutralBlack,
+        surfaceContainer = Color(0xFF101014),
+        surfaceContainerHigh = Color(0xFF17171C),
+        surfaceContainerHighest = Color(0xFF1F1F25),
+        surfaceVariant = Color(0xFF17171C)
+    )
+}

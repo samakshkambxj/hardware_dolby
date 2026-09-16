@@ -27,7 +27,6 @@ import org.lunaris.dolby.R
 import org.lunaris.dolby.data.DolbyCodecSupport
 import org.lunaris.dolby.domain.models.DolbyUiState
 import org.lunaris.dolby.ui.components.*
-import org.lunaris.dolby.ui.components.FloatingParticles
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
 import org.lunaris.dolby.utils.ToastHelper
 
@@ -95,7 +94,7 @@ fun ModernAdvancedSettingsScreen(
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
-        FloatingParticles(modifier = Modifier.padding(paddingValues))
+        StyledParticles(modifier = Modifier.padding(paddingValues))
         when (val state = uiState) {
             is DolbyUiState.Loading -> {
                 Box(

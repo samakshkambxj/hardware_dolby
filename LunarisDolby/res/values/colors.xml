@@ -5,4 +5,8 @@
 -->
 <resources>
     <color name="ic_launcher_background">@android:color/system_accent1_400</color>
+    <!-- Alternate launcher backgrounds (Page Style > App icon). -->
+    <color name="icon_bg_indigo">#3639B4</color>
+    <color name="icon_bg_midnight">#131318</color>
+    <color name="icon_bg_gold">#7A5900</color>
 </resources>
