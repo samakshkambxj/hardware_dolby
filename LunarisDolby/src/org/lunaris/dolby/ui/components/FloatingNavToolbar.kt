@@ -56,8 +56,11 @@ fun FloatingNavToolbar(
     
     // Navbar-only real blur: the list behind the pill is snapshotted and
     // GPU-blurred (see RealBlurBackdrop). Neutral veil + hairline, no glow,
-    // so it reads as frosted glass like the dialogs.
+    // so it reads as frosted glass like the dialogs. Disable via Page Style
+    // > Background FX for a cheap opaque bar on low-end devices.
+    val pageStyle by rememberPageStyle()
     val barTint = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f)
+    val barSolid = MaterialTheme.colorScheme.surfaceContainerHigh
     val barEdge = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
     val onContainerColor = MaterialTheme.colorScheme.onPrimaryContainer
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -81,12 +84,22 @@ fun FloatingNavToolbar(
                 )
                 .clip(CircleShape)
         ) {
-            RealBlurBackdrop(
-                tint = barTint,
-                blurRadiusPx = 20f,
-                updateKey = blurKey,
-                modifier = Modifier.matchParentSize()
-            )
+            if (pageStyle.navBlur) {
+                RealBlurBackdrop(
+                    tint = barTint,
+                    blurRadiusPx = 20f,
+                    updateKey = blurKey,
+                    modifier = Modifier.matchParentSize()
+                )
+            } else {
+                // Cheap opaque bar: skips the snapshot/RenderEffect path
+                // entirely for low-end devices or reduced motion.
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(barSolid)
+                )
+            }
             Box(
                 modifier = Modifier
                     .matchParentSize()

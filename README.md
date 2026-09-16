@@ -52,6 +52,9 @@ first-run onboarding tutorial, and an About page with version, links, and credit
 ### Personalization & polish
 
 - Page Style customization, dense floating-particles background, bouncy edge-stretch + spring animations
+- Page Style extras: card style (Filled/Outlined/Elevated), icon shape + size, header banner toggles,
+  centered header, particle density, navbar blur toggle, dynamic color / AMOLED black / 8 accents,
+  and 4 switchable launcher icons (Dynamic, Indigo, Midnight, Gold)
 - Navbar-only live blur, blurred dialogs, themed toasts, contributor avatars
 - Hidden easter eggs
 

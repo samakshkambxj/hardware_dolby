@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+      Copyright (C) 2026 samakshkambxj
+      SPDX-License-Identifier: Apache-2.0
+-->
+<adaptive-icon
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/icon_bg_gold" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/ic_launcher_mono" />
+</adaptive-icon>

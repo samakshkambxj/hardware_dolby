@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
@@ -30,7 +31,6 @@ import org.lunaris.dolby.data.SleepTimerState
 import org.lunaris.dolby.domain.models.DolbyUiState
 import org.lunaris.dolby.domain.models.Scene
 import org.lunaris.dolby.ui.components.*
-import org.lunaris.dolby.ui.components.FloatingParticles
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
 import org.lunaris.dolby.utils.ToastHelper
 
@@ -71,14 +71,25 @@ fun ModernDolbySettingsScreen(
                 // the screen edge — see z.png.
                 modifier = Modifier.padding(end = 8.dp),
                 title = {
-                    Column {
+                    Column(
+                        modifier = if (pageStyle.headerCentered) Modifier.fillMaxWidth()
+                        else Modifier
+                    ) {
                         if (pageStyle.showTitle) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                modifier = if (pageStyle.headerCentered) Modifier.fillMaxWidth()
+                                else Modifier,
+                                horizontalArrangement = if (pageStyle.headerCentered) Arrangement.Center
+                                else Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
                                     pageStyle.headerTitle,
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    textAlign = if (pageStyle.headerCentered) TextAlign.Center
+                                    else TextAlign.Start
                                 )
                                 // Live dot: Dolby on AND audio actually
                                 // playing — not just the master switch.
@@ -102,7 +113,11 @@ fun ModernDolbySettingsScreen(
                             Text(
                                 pageStyle.subtitleText,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = if (pageStyle.headerCentered) TextAlign.Center
+                                else TextAlign.Start,
+                                modifier = if (pageStyle.headerCentered) Modifier.fillMaxWidth()
+                                else Modifier
                             )
                         }
                     }
@@ -161,7 +176,7 @@ fun ModernDolbySettingsScreen(
         snackbarHost = { SnackbarHost(snackbarHost) }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
-        FloatingParticles(modifier = Modifier.padding(paddingValues))
+        StyledParticles(modifier = Modifier.padding(paddingValues))
         when (val state = uiState) {
             is DolbyUiState.Loading -> {
                 Box(

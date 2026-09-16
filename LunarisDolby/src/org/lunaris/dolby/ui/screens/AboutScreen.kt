@@ -30,7 +30,7 @@ import androidx.navigation.NavController
 import org.lunaris.dolby.R
 import org.lunaris.dolby.ui.components.CreditsDialog
 import org.lunaris.dolby.ui.components.DolbyLogo
-import org.lunaris.dolby.ui.components.FloatingParticles
+import org.lunaris.dolby.ui.components.StyledParticles
 import org.lunaris.dolby.ui.components.verticalBouncyEdge
 
 private const val REPO_URL = "https://github.com/samakshkambxj/hardware_dolby"
@@ -94,7 +94,7 @@ fun AboutScreen(
         containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
-            FloatingParticles(modifier = Modifier.padding(paddingValues))
+            StyledParticles(modifier = Modifier.padding(paddingValues))
             Column(
                 modifier = Modifier
                     .fillMaxSize()

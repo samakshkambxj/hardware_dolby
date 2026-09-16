@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import org.lunaris.dolby.ui.components.AccentChoice
 
 private val ExpressiveShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
@@ -125,6 +126,8 @@ private val DolbyTypography = Typography(
 fun DolbyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
+    accent: AccentChoice = AccentChoice.DEFAULT,
+    amoled: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -132,8 +135,7 @@ fun DolbyTheme(
         dynamicColor -> {
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> DolbyDarkColorScheme
-        else -> DolbyLightColorScheme
+        else -> dolbyColorScheme(accent, darkTheme, amoled)
     }
 
     val view = LocalView.current
