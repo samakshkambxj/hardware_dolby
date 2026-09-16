@@ -75,6 +75,16 @@ fun MainPagerScreen(
         }
     }
 
+    // Bucketed swipe offset drives navbar blur re-snapshots: coarse enough
+    // (~6 steps per swipe) to avoid recomposing per frame, fresh enough that
+    // the blur never looks stale/delayed. Throttled to ~100ms in the view.
+    val offsetBucket = try {
+        (pagerState.currentPageOffsetFraction * 6).toInt()
+    } catch (_: Exception) {
+        0
+    }
+    val navBlurKey = "${pagerState.currentPage}:$offsetBucket"
+
     Box(modifier = Modifier.fillMaxSize()) {
         HorizontalPager(
             state = pagerState,
@@ -97,6 +107,8 @@ fun MainPagerScreen(
             }
         }
 
+        // Soft translucent fade only: the nav pill carries live blur, so this
+        // must stay translucent — an opaque scrim would flatten the blur.
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -106,7 +118,7 @@ fun MainPagerScreen(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            MaterialTheme.colorScheme.surfaceContainer
+                            MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.45f)
                         )
                     )
                 )
@@ -121,6 +133,7 @@ fun MainPagerScreen(
         ) {
             FloatingNavToolbar(
                 currentRoute = currentFakeRoute,
+                blurKey = navBlurKey,
                 onNavigate = { route ->
                     coroutineScope.launch {
                         when (route) {
