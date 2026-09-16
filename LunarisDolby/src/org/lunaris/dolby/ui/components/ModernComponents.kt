@@ -99,12 +99,13 @@ fun ActiveAudioDeviceCard(
         AudioDeviceCategory.USB -> stringResource(R.string.audio_output_usb)
         AudioDeviceCategory.OTHER -> stringResource(R.string.audio_output_unknown)
     }
+    val pageStyle by rememberPageStyle()
 
     Card(
         onClick = { onClick?.invoke() },
         enabled = onClick != null,
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
+        shape = pageStyle.cardShape,
         colors = CardDefaults.cardColors(
             // Opaque on purpose: the floating particle layer renders behind
             // this card, and any alpha lets particles bleed through it.
@@ -169,10 +170,11 @@ fun DolbyMainCard(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var logoTaps by remember { mutableStateOf(0) }
+    val pageStyle by rememberPageStyle()
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
+        shape = pageStyle.cardShape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
@@ -324,9 +326,26 @@ fun ModernSettingsCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val pageStyle by rememberPageStyle()
+    val iconBg: Color
+    val iconTint: Color
+    when (pageStyle.iconStyle) {
+        PageIconStyle.ACCENT -> {
+            iconBg = MaterialTheme.colorScheme.primaryContainer
+            iconTint = MaterialTheme.colorScheme.onPrimaryContainer
+        }
+        PageIconStyle.PLAIN -> {
+            iconBg = MaterialTheme.colorScheme.surfaceContainerHighest
+            iconTint = MaterialTheme.colorScheme.onSurfaceVariant
+        }
+        PageIconStyle.FILLED -> {
+            iconBg = MaterialTheme.colorScheme.primary
+            iconTint = MaterialTheme.colorScheme.onPrimary
+        }
+    }
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
+        shape = pageStyle.cardShape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
@@ -340,13 +359,13 @@ fun ModernSettingsCard(
                 Surface(
                     modifier = Modifier.size(40.dp),
                     shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.primaryContainer
+                    color = iconBg
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            tint = iconTint,
                             modifier = Modifier.size(24.dp)
                         )
                     }

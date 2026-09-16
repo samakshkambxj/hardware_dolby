@@ -48,6 +48,7 @@ fun ModernDolbySettingsScreen(
     var showOutputDialog by remember { mutableStateOf(false) }
     val outputDevices by viewModel.outputDevices.collectAsState()
     val outputError by viewModel.outputError.collectAsState()
+    val pageStyle by rememberPageStyle()
     val context = LocalContext.current
 
     LaunchedEffect(outputError) {
@@ -66,21 +67,32 @@ fun ModernDolbySettingsScreen(
                 modifier = Modifier.padding(end = 8.dp),
                 title = {
                     Column {
-                        Text(
-                            stringResource(R.string.dolby_title),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            stringResource(R.string.dolby_summary),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        if (pageStyle.showTitle) {
+                            Text(
+                                pageStyle.headerTitle,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        if (pageStyle.showSubtitle) {
+                            Text(
+                                pageStyle.subtitleText,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 },
                 expandedHeight = 92.dp,
                 actions = {
+                    IconButton(onClick = { navController.navigate(Screen.PageStyle.route) }) {
+                        Icon(
+                            Icons.Default.Palette,
+                            contentDescription = "Page style",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                     IconButton(onClick = { navController.navigate(Screen.About.route) }) {
                         Icon(
                             Icons.Default.Info, 
