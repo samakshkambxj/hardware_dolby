@@ -45,22 +45,27 @@ fun SpatialAudioCard(
             return@ModernSettingsCard
         }
         Column {
+            // Grey out exactly like head tracking when the spatializer
+            // isn't available on the current output: the switch shows the
+            // live state (preference AND availability) and can't be flipped
+            // until a supported output connects.
+            val spatialActive = isEnabled && isAvailable
             ModernSettingSwitch(
                 title = stringResource(R.string.spatial_enable),
                 subtitle = when {
-                    isEnabled && isAvailable -> stringResource(R.string.spatial_enable_summary)
-                    isEnabled && !isAvailable -> stringResource(R.string.spatial_enabled_no_output)
+                    spatialActive -> stringResource(R.string.spatial_enable_summary)
+                    isEnabled -> stringResource(R.string.spatial_unavailable)
                     else -> stringResource(R.string.spatial_enable_summary)
                 },
-                checked = isEnabled,
+                checked = spatialActive,
                 onCheckedChange = onEnabledChange,
                 icon = Icons.Default.SurroundSound,
-                enabled = true
+                enabled = isAvailable
             )
             Spacer(modifier = Modifier.height(12.dp))
             // Dim when head tracking isn't available on this device/output,
-            // or when spatial audio itself is off (tracker needs it).
-            val headTrackingEnabledState = headTrackingAvailable && isEnabled
+            // or when spatial audio itself isn't live (tracker needs it).
+            val headTrackingEnabledState = headTrackingAvailable && spatialActive
             ModernSettingSwitch(
                 title = stringResource(R.string.spatial_headtracking),
                 subtitle = if (headTrackingAvailable) {
@@ -68,7 +73,7 @@ fun SpatialAudioCard(
                 } else {
                     stringResource(R.string.spatial_unsupported)
                 },
-                checked = headTrackingEnabled && isEnabled,
+                checked = headTrackingEnabled && spatialActive,
                 onCheckedChange = onHeadTrackingChange,
                 icon = Icons.Default.Headphones,
                 enabled = headTrackingEnabledState

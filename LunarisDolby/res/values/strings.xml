@@ -323,7 +323,6 @@
     <string name="spatial_unsupported">Not available on this device or output</string>
     <string name="spatial_unavailable">Spatializer unavailable on current output</string>
     <string name="spatial_change_failed">System rejected the spatial audio change</string>
-    <string name="spatial_enabled_no_output">Enabled — connect headphones or supported output for spatial audio</string>
 
     <!-- Per-device scenes -->
     <string name="device_scene_title">Per-device scenes</string>
