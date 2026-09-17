@@ -29,6 +29,8 @@ first-run onboarding tutorial, and an About page with version, links, and credit
 - Bass / mid / treble enhancement plus sub / mid / upper bass trims on top of master bass
 - Surround virtualizer + standalone stage-width slider with auto-virtualizer
 - Dialogue enhancer, volume leveler (+ leveler-strength slider), multiband dynamics EQ with per-band resets
+- Collapsible per-band rows in dynamics processing (EQ bands + MBC, collapsed by default)
+- Framework FX tab: bass boost, virtualizer, preset reverb and loudness enhancer on the output mix
 - AutoEQ headphone correction profiles with search, download cache, and one-tap apply
 - Live landing waveform + dynamics visualizer that follows real playback
 - Audio output picker (speaker / wired / BT / etc.) with 3D animated device icons
@@ -51,11 +53,13 @@ first-run onboarding tutorial, and an About page with version, links, and credit
 
 ### Personalization & polish
 
-- Page Style customization, dense floating-particles background, bouncy edge-stretch + spring animations
-- Page Style extras: card style (Filled/Outlined/Elevated), icon shape + size, header banner toggles,
-  centered header, particle density, navbar blur toggle, dynamic color / AMOLED black / 8 accents,
+- Customization section (formerly Page Style), dense floating-particles background, bouncy edge-stretch + spring animations
+- Customization extras: card style (Filled/Outlined/Elevated, honored on every page including Equalizer),
+  icon shape + size, header banner toggles, centered header, particle density,
+  transparent/frosted navbar style with retained live blur, dynamic color / AMOLED black / 8 accents,
   and 4 switchable launcher icons (Dynamic, Indigo, Midnight, Gold)
-- Navbar-only live blur, blurred dialogs, themed toasts, contributor avatars
+- Pill-shaped UI throughout (PILL corners by default, stadium rows/tiles/chips), spinning Dolby logo
+  loader in the decoders section, blurred dialogs, themed toasts, contributor avatars
 - Hidden easter eggs
 
 ## Getting Started
@@ -121,6 +125,17 @@ adb shell am broadcast -n org.lunaris.dolby/.service.DolbyCommandReceiver \
 ```
 
 ## Changelog
+
+### 2026-09-17
+
+- Add framework FX tab (bass boost, virtualizer, reverb, loudness) to dynamics processing
+- Add transparent navbar style with retained live blur, rename Page Style to Customization
+- Fix navbar blur stutter/delay with vsync-aligned captures and faster throttles
+- Fix output switcher to reflect the live media route on the home card and picker
+- Fix swipe-back to match the fade transitions (predictive-back system animation opt-out)
+- Collapse dynamics bands into per-band expandable rows, equalizer page honors card settings
+- Whole-app pill styling with PILL corners by default, spinning Dolby logo in decoders section
+- Align home header padding with body content, drop reset toasts for profile resets
 
 ### 2026-09-16
 
