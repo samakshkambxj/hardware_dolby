@@ -456,7 +456,7 @@ private fun CurveViewContent(
                           else MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Surface(
-                    shape = CircleShape,
+                    shape = MaterialTheme.shapes.small,
                     color = if (canEdit) MaterialTheme.colorScheme.secondaryContainer
                            else MaterialTheme.colorScheme.errorContainer
                 ) {
@@ -520,7 +520,7 @@ private fun SlidersViewContent(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Surface(
-                        shape = CircleShape,
+                        shape = MaterialTheme.shapes.small,
                         color = MaterialTheme.colorScheme.secondaryContainer
                     ) {
                         Text(
@@ -566,7 +566,7 @@ private fun SlidersViewContent(
                     
                     if (!canEdit) {
                         Surface(
-                            shape = CircleShape,
+                            shape = MaterialTheme.shapes.small,
                             color = MaterialTheme.colorScheme.errorContainer
                         ) {
                             Row(
@@ -737,7 +737,7 @@ private fun BandTunerCard(
                 )
 
                 Surface(
-                    shape = CircleShape,
+                    shape = MaterialTheme.shapes.small,
                     color = if (enabled) MaterialTheme.colorScheme.primaryContainer
                            else MaterialTheme.colorScheme.surfaceContainerHighest
                 ) {
@@ -846,7 +846,7 @@ private fun BandStepButton(
         modifier = Modifier
             .size(width = 64.dp, height = 40.dp)
             .squishable(enabled = enabled, scaleDown = 0.9f),
-        shape = CircleShape,
+        shape = MaterialTheme.shapes.extraLarge,
         color = if (enabled) MaterialTheme.colorScheme.secondaryContainer
                else MaterialTheme.colorScheme.surfaceContainerHighest
     ) {
@@ -883,7 +883,7 @@ private fun BandAdjustButton(
         modifier = modifier
             .height(48.dp)
             .squishable(enabled = enabled, scaleDown = 0.93f),
-        shape = CircleShape,
+        shape = MaterialTheme.shapes.extraLarge,
         color = if (enabled) MaterialTheme.colorScheme.secondaryContainer
                else MaterialTheme.colorScheme.surfaceContainerHighest
     ) {
@@ -942,7 +942,10 @@ private fun ViewModeTile(
             MaterialTheme.colorScheme.onPrimaryContainer
         else
             MaterialTheme.colorScheme.onSurface,
-        shape = CircleShape,
+        shape = if (isSelected)
+            MaterialTheme.shapes.extraLarge
+        else
+            MaterialTheme.shapes.large,
         border = tileSelectionBorder(isSelected)
     ) {
         Row(
@@ -954,7 +957,10 @@ private fun ViewModeTile(
         ) {
             Surface(
                 modifier = Modifier.size(40.dp),
-                shape = CircleShape,
+                shape = if (isSelected)
+                    MaterialTheme.shapes.extraLarge
+                else
+                    MaterialTheme.shapes.medium,
                 color = if (isSelected)
                     MaterialTheme.colorScheme.primary
                 else
@@ -1064,7 +1070,10 @@ private fun BandModeTile(
             MaterialTheme.colorScheme.onPrimaryContainer
         else
             MaterialTheme.colorScheme.onSurface,
-        shape = CircleShape,
+        shape = if (isSelected)
+            MaterialTheme.shapes.extraLarge
+        else
+            MaterialTheme.shapes.large,
         border = tileSelectionBorder(isSelected)
     ) {
         Column(
@@ -1076,7 +1085,10 @@ private fun BandModeTile(
         ) {
             Surface(
                 modifier = Modifier.size(32.dp),
-                shape = CircleShape,
+                shape = if (isSelected)
+                    MaterialTheme.shapes.extraLarge
+                else
+                    MaterialTheme.shapes.small,
                 color = if (isSelected)
                     MaterialTheme.colorScheme.primary
                 else
@@ -2166,7 +2178,7 @@ private fun DynamicsProcessingSection(
 }
 
 /**
- * Stage-A controller UI for the VeynFx DSP chain (AxionFx-native
+ * Stage-A controller UI for the VeynFx DSP chain (VeynFx-native
  * effects: convolver, crossfeed, exciter, tube, AGC, compressor,
  * widener, surround, spatial, multiband compressor). Each block is
  * enable-gated and collapsed by default, reusing
@@ -2174,9 +2186,72 @@ private fun DynamicsProcessingSection(
  *
  * Blocks already covered by Dolby/Dynamics/framework FX (EQ, bass,
  * limiter, MBC, FIR, reverb) are intentionally not duplicated here.
- * Until libveynfxaidl lands in the device tree the section reports
- * the engine missing instead of failing.
+ * Until libveynfxaidl lands in the device tree the section shows a
+ * driver-missing state with a recheck action instead of failing.
  */
+
+/**
+ * Empty state for [VeynFxSection] when the native driver is absent:
+ * status badge, what is missing, and a recheck action for after the
+ * driver is flashed — instead of a bare paragraph of text.
+ */
+@Composable
+private fun VeynFxMissingDriver(
+    onRecheck: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Surface(
+            modifier = Modifier.size(64.dp),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.errorContainer
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Default.Memory,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "VeynFx driver not found",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "This section needs the VeynFx native effect (libveynfxaidl) " +
+                "registered in audio_effects.xml. Flash a build that includes " +
+                "it, then check again.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        OutlinedButton(
+            onClick = onRecheck,
+            shape = MaterialTheme.shapes.large
+        ) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Check again")
+        }
+    }
+}
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun VeynFxSection(
@@ -2203,12 +2278,7 @@ private fun VeynFxSection(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
             if (!s.available) {
-                Text(
-                    text = "VeynFx engine not found on this build — port libveynfxaidl " +
-                        "and register it in audio_effects.xml to enable this section.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                VeynFxMissingDriver(onRecheck = { veynVm.recheckAvailability() })
             } else {
             ModernSettingSwitch(
                 title = "Enable VeynFx",

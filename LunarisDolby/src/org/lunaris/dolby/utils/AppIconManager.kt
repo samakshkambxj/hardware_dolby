@@ -8,6 +8,7 @@ package org.lunaris.dolby.utils
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import org.lunaris.dolby.R
 
 /**
  * Alternate launcher icons declared as activity-aliases in the manifest.
@@ -18,18 +19,32 @@ import android.content.pm.PackageManager
  */
 object AppIconManager {
 
-    data class IconOption(val id: String, val label: String, val alias: String)
+    data class IconOption(
+        val id: String,
+        val label: String,
+        val alias: String,
+        /** Mipmap adaptive-icon used for the in-app preview. */
+        val iconRes: Int
+    )
 
     const val ID_DYNAMIC = "dynamic"
     const val ID_INDIGO = "indigo"
     const val ID_MIDNIGHT = "midnight"
     const val ID_GOLD = "gold"
+    const val ID_CRIMSON = "crimson"
+    const val ID_TEAL = "teal"
+    const val ID_VIOLET = "violet"
+    const val ID_OCEAN = "ocean"
 
     val OPTIONS = listOf(
-        IconOption(ID_DYNAMIC, "Dynamic", ".ui.DolbyActivityIconDynamic"),
-        IconOption(ID_INDIGO, "Indigo", ".ui.DolbyActivityIconIndigo"),
-        IconOption(ID_MIDNIGHT, "Midnight", ".ui.DolbyActivityIconMidnight"),
-        IconOption(ID_GOLD, "Gold", ".ui.DolbyActivityIconGold")
+        IconOption(ID_DYNAMIC, "Dynamic", ".ui.DolbyActivityIconDynamic", R.mipmap.ic_launcher),
+        IconOption(ID_INDIGO, "Indigo", ".ui.DolbyActivityIconIndigo", R.mipmap.ic_launcher_indigo),
+        IconOption(ID_MIDNIGHT, "Midnight", ".ui.DolbyActivityIconMidnight", R.mipmap.ic_launcher_midnight),
+        IconOption(ID_GOLD, "Gold", ".ui.DolbyActivityIconGold", R.mipmap.ic_launcher_gold),
+        IconOption(ID_CRIMSON, "Crimson", ".ui.DolbyActivityIconCrimson", R.mipmap.ic_launcher_crimson),
+        IconOption(ID_TEAL, "Teal", ".ui.DolbyActivityIconTeal", R.mipmap.ic_launcher_teal),
+        IconOption(ID_VIOLET, "Violet", ".ui.DolbyActivityIconViolet", R.mipmap.ic_launcher_violet),
+        IconOption(ID_OCEAN, "Ocean", ".ui.DolbyActivityIconOcean", R.mipmap.ic_launcher_ocean)
     )
 
     /** Id of the currently enabled alias; falls back to dynamic. */

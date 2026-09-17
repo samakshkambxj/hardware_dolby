@@ -55,88 +55,124 @@ fun FloatingNavToolbar(
     val isAdvancedSelected = currentRoute == "advanced"
     
     // Navbar-only real blur: the list behind the pill is snapshotted and
-    // GPU-blurred (see RealBlurBackdrop). Neutral veil + hairline, no glow,
-    // so it reads as frosted glass like the dialogs. Disable via
-    // Customization > Navbar for a cheap opaque bar on low-end devices.
-    // Customization > Navbar > Transparent drops the pill chrome (veil,
-    // border, shadow) but keeps the live blur behind the floating items
-    // unless blur is also turned off.
+    // GPU-blurred (see RealBlurBackdrop). Which chrome is drawn depends on
+    // Customization > Navbar > Style:
+    // - Transparent: live blur only + hairline border, no veil/shadow.
+    // - Frosted: tinted veil (Background tint) + blur + border + shadow.
+    // - Filled: the pre-blur opaque primaryContainer pill + shadow.
+    // - Tonal: opaque surface pill + border + shadow, never blurred.
+    // - Outlined: transparent fill + hairline border only.
     val pageStyle by rememberPageStyle()
-    val isTransparentNav = pageStyle.navbarStyle == PageNavbarStyle.TRANSPARENT
-    val barTint = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f)
+    val navbarStyle = pageStyle.navbarStyle
+    val veilAlpha = pageStyle.navTint.coerceIn(0f, 1f)
+    val barTint = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = veilAlpha)
     val barSolid = MaterialTheme.colorScheme.surfaceContainerHigh
+    val filledContainer = MaterialTheme.colorScheme.primaryContainer
     val barEdge = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
     val onContainerColor = MaterialTheme.colorScheme.onPrimaryContainer
     val primaryColor = MaterialTheme.colorScheme.primary
     val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
 
+    // Opaque pill chrome (shadow + stadium clip). Outlined/Transparent
+    // stay flat; Transparent only clips when blur needs clean edges
+    // (the border ring draws itself).
+    val pillChrome = navbarStyle == PageNavbarStyle.FROSTED ||
+        navbarStyle == PageNavbarStyle.FILLED ||
+        navbarStyle == PageNavbarStyle.TONAL
+    val clipStadium = pillChrome ||
+        (navbarStyle == PageNavbarStyle.TRANSPARENT && pageStyle.navBlur)
+    var barModifier = Modifier.padding(
+        top = FloatingToolbarDefaults.ScreenOffset,
+        bottom = FloatingToolbarDefaults.ScreenOffset
+    )
+    if (pillChrome) {
+        barModifier = barModifier
+            .shadow(
+                elevation = 8.dp,
+                shape = CircleShape,
+                ambientColor = Color.Black.copy(alpha = 0.20f),
+                spotColor = Color.Black.copy(alpha = 0.20f)
+            )
+            .clip(CircleShape)
+    } else if (clipStadium) {
+        barModifier = barModifier.clip(CircleShape)
+    }
+
     Box(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = if (isTransparentNav) {
-                // Transparent nav: floating items with no pill chrome
-                // (veil, border, shadow). The live blur below is kept when
-                // enabled, clipped to a stadium so its edges stay clean.
-                var transparentModifier = Modifier.padding(
-                    top = FloatingToolbarDefaults.ScreenOffset,
-                    bottom = FloatingToolbarDefaults.ScreenOffset
-                )
-                if (pageStyle.navBlur) {
-                    transparentModifier = transparentModifier.clip(CircleShape)
+        Box(modifier = barModifier) {
+            when (navbarStyle) {
+                PageNavbarStyle.TRANSPARENT -> {
+                    if (pageStyle.navBlur) {
+                        // Transparent glass: live blur only, no tint veil.
+                        RealBlurBackdrop(
+                            tint = Color.Transparent,
+                            blurRadiusPx = pageStyle.navBlurRadius,
+                            updateKey = blurKey,
+                            modifier = Modifier.matchParentSize()
+                        )
+                    }
+                    // Hairline border so the floating bar keeps definition.
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .border(width = 1.dp, color = barEdge, shape = CircleShape)
+                    )
                 }
-                transparentModifier
-            } else {
-                Modifier
-                    .padding(
-                        top = FloatingToolbarDefaults.ScreenOffset,
-                        bottom = FloatingToolbarDefaults.ScreenOffset
+                PageNavbarStyle.FROSTED -> {
+                    if (pageStyle.navBlur) {
+                        RealBlurBackdrop(
+                            tint = barTint,
+                            blurRadiusPx = pageStyle.navBlurRadius,
+                            updateKey = blurKey,
+                            modifier = Modifier.matchParentSize()
+                        )
+                    } else {
+                        // Cheap opaque bar: skips the snapshot/RenderEffect
+                        // path entirely for low-end devices or reduced motion.
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(barSolid)
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .border(width = 1.dp, color = barEdge, shape = CircleShape)
                     )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = CircleShape,
-                        ambientColor = Color.Black.copy(alpha = 0.20f),
-                        spotColor = Color.Black.copy(alpha = 0.20f)
-                    )
-                    .clip(CircleShape)
-            }
-        ) {
-            if (!isTransparentNav) {
-                if (pageStyle.navBlur) {
-                    RealBlurBackdrop(
-                        tint = barTint,
-                        blurRadiusPx = 20f,
-                        updateKey = blurKey,
-                        modifier = Modifier.matchParentSize()
-                    )
-                } else {
-                    // Cheap opaque bar: skips the snapshot/RenderEffect path
-                    // entirely for low-end devices or reduced motion.
+                }
+                PageNavbarStyle.FILLED -> {
+                    // Pre-blur replica: the opaque container comes from the
+                    // toolbar colors below, so nothing is drawn behind it.
+                }
+                PageNavbarStyle.TONAL -> {
                     Box(
                         modifier = Modifier
                             .matchParentSize()
                             .background(barSolid)
                     )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .border(width = 1.dp, color = barEdge, shape = CircleShape)
+                    )
                 }
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .border(width = 1.dp, color = barEdge, shape = CircleShape)
-                )
-            } else if (pageStyle.navBlur) {
-                // Transparent glass: live blur only, no tint veil.
-                RealBlurBackdrop(
-                    tint = Color.Transparent,
-                    blurRadiusPx = 20f,
-                    updateKey = blurKey,
-                    modifier = Modifier.matchParentSize()
-                )
+                PageNavbarStyle.OUTLINED -> {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .border(width = 1.dp, color = barEdge, shape = CircleShape)
+                    )
+                }
             }
             HorizontalFloatingToolbar(
                 expanded = true,
                 colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(
-                    toolbarContainerColor = Color.Transparent,
+                    toolbarContainerColor = if (navbarStyle == PageNavbarStyle.FILLED)
+                        filledContainer else Color.Transparent,
                     toolbarContentColor = onContainerColor
                 ),
                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp)

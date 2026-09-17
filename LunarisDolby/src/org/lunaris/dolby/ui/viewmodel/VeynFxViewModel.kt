@@ -94,6 +94,18 @@ class VeynFxViewModel(application: Application) : AndroidViewModel(application) 
         persistState()
     }
 
+    /**
+     * Re-probes the native effect, e.g. after flashing a build that
+     * includes the driver. No-op when already available ([init] is
+     * idempotent); on a fresh open the current UI state is pushed into
+     * the effect so it matches what the screen shows.
+     */
+    fun recheckAvailability() {
+        val available = controller.init()
+        _uiState.value = _uiState.value.copy(available = available)
+        if (available) pushAll(_uiState.value)
+    }
+
     private fun persistState() {
         val s = _uiState.value
         stateStore.save(

@@ -536,7 +536,7 @@ private fun ModernAdvancedSettingsContent(
 
         if (match("codec", "decoder", "atmos", "ac-3", "ac-4", "eac3")) {
         item(key = "codecs") {
-            CodecInfoCard(codecs = codecs)
+            CodecInfoCard(codecs = codecs, forceExpand = query.isNotEmpty())
         }
         }
 
@@ -548,7 +548,7 @@ private fun ModernAdvancedSettingsContent(
 
         if (match("automation", "tasker", "broadcast", "macrodroid")) {
         item(key = "automation") {
-            AutomationCard()
+            AutomationCard(forceExpand = query.isNotEmpty())
         }
         }
 

@@ -11,8 +11,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
@@ -241,13 +239,14 @@ fun DolbyMainCard(
         elevation = pageStyle.cardElevation()
     ) {
         Column {
-            // Gradient banner vs flat primaryContainer (Page Style > Header).
+            // Banner wash behind the logo (Customization > Header banner).
+            // The waveform overlay below is independent of the style.
             val bannerModifier = Modifier
                 .fillMaxWidth()
                 .height(150.dp)
                 .then(
-                    if (pageStyle.bannerGradient) {
-                        Modifier.background(
+                    when (pageStyle.bannerStyle) {
+                        PageBannerStyle.GRADIENT -> Modifier.background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
                                     MaterialTheme.colorScheme.primaryContainer,
@@ -256,8 +255,29 @@ fun DolbyMainCard(
                                 )
                             )
                         )
-                    } else {
-                        Modifier.background(MaterialTheme.colorScheme.primaryContainer)
+                        PageBannerStyle.FLAT -> Modifier.background(
+                            MaterialTheme.colorScheme.primaryContainer
+                        )
+                        PageBannerStyle.VIBRANT -> Modifier.background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    MaterialTheme.colorScheme.tertiaryContainer,
+                                    MaterialTheme.colorScheme.secondaryContainer
+                                )
+                            )
+                        )
+                        PageBannerStyle.FADE -> Modifier.background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    pageStyle.cardContainer()
+                                )
+                            )
+                        )
+                        PageBannerStyle.MINIMAL -> Modifier.background(
+                            pageStyle.cardContainer()
+                        )
                     }
                 )
             Box(
@@ -513,7 +533,7 @@ fun ModernSettingSwitch(
         modifier = modifier
             .fillMaxWidth()
             .alpha(if (enabled) 1f else 0.6f)
-            .clip(CircleShape),
+            .clip(if (checked) MaterialTheme.shapes.extraLarge else MaterialTheme.shapes.large),
         color = containerColor
     ) {
         Row(

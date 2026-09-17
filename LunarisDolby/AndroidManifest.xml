@@ -147,6 +147,58 @@
             </intent-filter>
         </activity-alias>
 
+        <activity-alias
+            android:name=".ui.DolbyActivityIconCrimson"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_crimson"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.DolbyActivityIconTeal"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_teal"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.DolbyActivityIconViolet"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_violet"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.DolbyActivityIconOcean"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_ocean"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="org.lunaris.dolby.fileprovider"

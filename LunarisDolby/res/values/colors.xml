@@ -9,4 +9,8 @@
     <color name="icon_bg_indigo">#3639B4</color>
     <color name="icon_bg_midnight">#131318</color>
     <color name="icon_bg_gold">#7A5900</color>
+    <color name="icon_bg_crimson">#9C2227</color>
+    <color name="icon_bg_teal">#006B5D</color>
+    <color name="icon_bg_violet">#5B3FA8</color>
+    <color name="icon_bg_ocean">#005FA3</color>
 </resources>

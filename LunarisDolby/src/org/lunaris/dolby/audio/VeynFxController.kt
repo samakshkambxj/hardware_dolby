@@ -12,18 +12,18 @@ import java.nio.ByteOrder
 import java.util.UUID
 
 /**
- * Controller for the VeynFx DSP chain, driven by the AxionFx native
+ * Controller for the VeynFx DSP chain, driven by the VeynFx native
  * effect (AxionOS, Apache-2.0).
  *
- * This is Stage A of the AxionFx integration: app-side control only.
+ * This is Stage A of the VeynFx integration: app-side control only.
  * The native side (libveynfxaidl + audio_effects.xml registration)
  * lives in the device tree. Until it lands, [init] fails gracefully,
  * [available] stays false and the UI shows an "engine missing"
  * placeholder instead of crashing.
  *
- * Protocol mirrors native/AxionFxParams.h: effect_param_t blobs carrying
+ * Protocol mirrors native/VeynFxParams.h: effect_param_t blobs carrying
  * one int32 paramId plus one int32 value (or a raw IR wav blob for the
- * convolver). Value scaling mirrors AxionFxEngine.cpp: parameters the
+ * convolver). Value scaling mirrors VeynFxEngine.cpp: parameters the
  * engine divides by 100 take percent-style ints here, raw parameters
  * take device units (dB, ms, Hz) as documented per setter.
  */
@@ -41,7 +41,7 @@ class VeynFxController(
                 it.enabled = true
             }
         } catch (e: Exception) {
-            Log.w(TAG, "AxionFx effect not present: ${e.message}")
+            Log.w(TAG, "VeynFx effect not present: ${e.message}")
             null
         }
         return effect != null
