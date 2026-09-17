@@ -64,11 +64,15 @@ first-run onboarding tutorial, and an About page with version, links, and credit
 
 ## Getting Started
 
+### 1. Dolby media codecs
+
 For dolby media codecs to work add this line in your media codecs config (should be in vendor partition) and make sure your device supports c2 codecs. :-
 
 ```bash
 <Include href="media_codecs_dolby_audio.xml" />
 ```
+
+### 2. Inherit the Dolby config
 
 To build, add the dolby effects in your device's audio effects config then inherit the dolby config by adding this in your device's makefile :-
 
@@ -85,6 +89,34 @@ TARGET_INCLUDES_OEM_App := true
 # Include Dolby Vision HAL + C2 components
 TARGET_INCLUDES_DolbyVision := true
 ```
+
+### 3. Enable the Lunaris Dolby app
+
+Add the control app to your device makefile so it gets built and installed :-
+
+```bash
+# LunarisDolby
+PRODUCT_PACKAGES += \
+    LunarisDolby
+```
+
+### 4. Enable spatial audio
+
+Spatial audio needs the spatializer effect, a spatial output mix port, and the feature flag in your
+device tree (example: Galaxian):
+
+- [Galaxian: Enable Dolby Spatial Audio](https://github.com/samakshkambxj/device_nothing_Galaxian/commit/902cdede1dd542ef7b5d5b7384af7a29b64ba009) —
+  adds the spatializer effect (`libswspatializer`, uuid `ccd4cf09-…`) to `audio_effects.xml`,
+  adds a `spatial output` mix port (PCM_16_BIT / 48000 / stereo, `AUDIO_OUTPUT_FLAG_SPATIALIZER`)
+  routed to Speaker, Wired Headset/Headphones and USB, and advertises the
+  `android.hardware.audio.spatializer` feature.
+- [Galaxian: Route spatial output to BT A2DP](https://github.com/samakshkambxj/device_nothing_Galaxian/commit/47cacfab32c6ca731ca98ad2c76ce1197271fe00) —
+  adds the same spatial mix port inside the **Bluetooth** HAL module via a local
+  `bluetooth_audio_policy_configuration.xml` and routes it to the BT A2DP sinks.
+  Do NOT declare BT A2DP devices inside primary on MTK — APM will open A2DP via the
+  wrong HAL and break all BT audio.
+
+### 5. Don't override the VINTF manifest
 
 Now, moving hidl definitions in manifest to device trees is completely absurd so stop overriding manifest in your device trees an example for such would be :-
 
@@ -110,7 +142,7 @@ And
 DEVICE_MANIFEST_FILE +=
 ```
 
-The only change done above is changing := symbol to += so that manifest can't be overriden from device tree in BoardConfig makefile.
+The only change done above is changing := symbol to += so that manifest can't be overriden from device tree in BoardConfig makefile (this is also what lets the `dolby.mk` VINTF fragments merge instead of being dropped).
 
 At the end an example commit to properly implement it in your device tree could be :-
 
