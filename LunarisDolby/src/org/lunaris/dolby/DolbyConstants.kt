@@ -64,11 +64,24 @@ object DolbyConstants {
      * gated per-device by a live HAL probe (unsupported IDs are hidden).
      * Values are kept in a conservative 0-16 range since the HAL-side
      * scaling of unknown IDs is unverified — listen after changing.
+     *
+     * When none of these answers, the repository falls back to sweeping
+     * [LAB_SWEEP_RANGE] (minus known IDs) so DAP revisions that keep
+     * their extras elsewhere still surface sliders.
      */
     val LAB_DAP_PARAM_IDS = listOf(106, 107, 109, 112, 114, 115, 117, 118)
     const val LAB_PARAM_MIN = 0
     const val LAB_PARAM_MAX = 16
     fun labParamPref(paramId: Int) = "dolby_lab_$paramId"
+
+    /**
+     * Fallback sweep range when none of [LAB_DAP_PARAM_IDS] answers (some
+     * DAP revisions put their extras at other IDs). Same 100–130 window
+     * the DAP probe debug screen sweeps. Known [DsParam] IDs are excluded
+     * — they have real UI elsewhere and must never show up as raw sliders.
+     */
+    val LAB_SWEEP_RANGE = 100..130
+    val LAB_SWEEP_EXCLUDE: Set<Int> by lazy { DsParam.entries.map { it.id }.toSet() }
 
     /**
      * Tuning Lab IDs promoted to the experimental Reverb & Height card.
