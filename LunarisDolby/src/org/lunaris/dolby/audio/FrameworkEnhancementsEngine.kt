@@ -42,6 +42,8 @@ class FrameworkEnhancementsEngine(
         private set
     var virtualizerStrengthPercent: Int = 0
         private set
+    var virtualizerMode: Int = Virtualizer.VIRTUALIZATION_MODE_AUTO
+        private set
     var reverbEnabled: Boolean = false
         private set
     var reverbPreset: Int = PRESET_NONE
@@ -109,6 +111,18 @@ class FrameworkEnhancementsEngine(
         runCatching {
             virtualizer?.setStrength((virtualizerStrengthPercent * 10).toShort())
         }
+    }
+
+    /**
+     * Force mode: AUTO, BINAURAL or TRANSAURAL (OFF is covered by the
+     * enable switch). Applied live; ignored where unsupported.
+     */
+    fun setVirtualizerMode(mode: Int) {
+        virtualizerMode = mode.coerceIn(
+            Virtualizer.VIRTUALIZATION_MODE_AUTO,
+            Virtualizer.VIRTUALIZATION_MODE_TRANSAURAL
+        )
+        runCatching { virtualizer?.setForceVirtualizationMode(virtualizerMode) }
     }
 
     fun setReverbEnabled(enabled: Boolean) {
