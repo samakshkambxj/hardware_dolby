@@ -24,6 +24,9 @@
          (setSpeakerphoneOn / setBluetoothA2dpOn / stopBluetoothSco).
          Normal permission: auto-granted at install. -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- Bluetooth codec info card (active A2DP codec/rate). Runtime
+         permission: requested in-app, pre-granted via privapp allowlist. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
     <!-- Opt out of the predictive-back SYSTEM animation (window scale/shift).
          Without this the edge-swipe gesture plays the platform animation

@@ -528,9 +528,21 @@ private fun ModernAdvancedSettingsContent(
         }
         }
 
+        if (match("mono", "stereo", "channel", "balance", "hearing")) {
+        item(key = "mono") {
+            MonoCard()
+        }
+        }
+
         if (match("codec", "decoder", "atmos", "ac-3", "ac-4", "eac3")) {
         item(key = "codecs") {
             CodecInfoCard(codecs = codecs)
+        }
+        }
+
+        if (match("bluetooth", "codec", "ldac", "aptx", "aac", "a2dp", "sbc")) {
+        item(key = "bt_codec") {
+            BluetoothCodecCard()
         }
         }
 
