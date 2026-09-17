@@ -23,11 +23,13 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import org.lunaris.dolby.R
 import org.lunaris.dolby.ui.components.*
 import org.lunaris.dolby.ui.theme.previewColor
 import org.lunaris.dolby.utils.AppIconManager
@@ -287,6 +289,23 @@ fun PageStyleScreen(navController: NavController) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp)
                 )
+                Spacer(modifier = Modifier.height(12.dp))
+                ModernSettingSlider(
+                    title = "Border width",
+                    value = (style.navBorderWidth * 2).toInt(),
+                    onValueChange = { v ->
+                        repo.update { it.copy(navBorderWidth = (v / 2f).coerceIn(0f, 4f)) }
+                    },
+                    valueRange = 0f..8f,
+                    steps = 7,
+                    valueLabel = { "%.1f dp".format(it / 2f) }
+                )
+                Text(
+                    "Outline thickness for the Transparent, Frosted, Tonal and Outlined navbar — 0 removes the ring.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
 
             ModernSettingsCard(title = "Background FX", icon = Icons.Default.BlurOn) {
@@ -490,8 +509,9 @@ private fun AccentSwatchGrid(
 }
 
 /**
- * Launcher icon picker: 4-per-row grid rendering each alias' actual
- * adaptive icon, with a check badge on the active one.
+ * Launcher icon picker: 4-per-row grid rendering a recreated preview
+ * (solid background + foreground vector) for each alias, with a check
+ * badge on the active one.
  */
 @Composable
 private fun AppIconGrid(
@@ -530,13 +550,28 @@ private fun AppIconGrid(
                                 modifier = Modifier.size(52.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Image(
-                                    painter = painterResource(option.iconRes),
-                                    contentDescription = option.label,
+                                // Compose cannot inflate <adaptive-icon> mipmap XML
+                                // (painterResource crashes). Recreate the icon:
+                                // solid background + foreground vector.
+                                val bgRes = option.backgroundRes
+                                val previewBg = if (bgRes != null) {
+                                    colorResource(bgRes)
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                }
+                                Box(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clip(RoundedCornerShape(percent = 28))
-                                )
+                                        .background(previewBg),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Image(
+                                        painter = painterResource(R.drawable.ic_launcher_foreground),
+                                        contentDescription = option.label,
+                                        modifier = Modifier.fillMaxSize(0.72f)
+                                    )
+                                }
                                 if (isSelected) {
                                     Surface(
                                         modifier = Modifier
