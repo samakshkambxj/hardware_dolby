@@ -163,9 +163,15 @@ fun ColumnScope.TuningLabContent(
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 labParams.toSortedMap().forEach { (paramId, value) ->
+                    // Swept IDs can read back values above the conservative
+                    // 0–16 lab window — clamp for the slider (writes stay in
+                    // range) instead of crashing on an out-of-range thumb.
                     ModernSettingSlider(
                         title = stringResource(R.string.tuning_lab_param, paramId),
-                        value = value,
+                        value = value.coerceIn(
+                            DolbyConstants.LAB_PARAM_MIN,
+                            DolbyConstants.LAB_PARAM_MAX
+                        ),
                         onValueChange = { onParamChange(paramId, it.toInt()) },
                         valueRange = DolbyConstants.LAB_PARAM_MIN.toFloat()..
                             DolbyConstants.LAB_PARAM_MAX.toFloat(),
@@ -229,7 +235,10 @@ fun ReverbHeightContent(
                         R.string.reverb_candidate,
                         DolbyConstants.REVERB_PARAM_ID
                     ),
-                    value = reverb,
+                    value = reverb.coerceIn(
+                        DolbyConstants.LAB_PARAM_MIN,
+                        DolbyConstants.LAB_PARAM_MAX
+                    ),
                     onValueChange = {
                         onParamChange(DolbyConstants.REVERB_PARAM_ID, it.toInt())
                     },
@@ -246,7 +255,10 @@ fun ReverbHeightContent(
                         R.string.height_candidate,
                         DolbyConstants.HEIGHT_PARAM_ID
                     ),
-                    value = height,
+                    value = height.coerceIn(
+                        DolbyConstants.LAB_PARAM_MIN,
+                        DolbyConstants.LAB_PARAM_MAX
+                    ),
                     onValueChange = {
                         onParamChange(DolbyConstants.HEIGHT_PARAM_ID, it.toInt())
                     },

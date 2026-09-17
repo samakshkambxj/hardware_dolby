@@ -1005,6 +1005,8 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
      */
     private val labSupportCache = mutableMapOf<Int, Boolean>()
     private val labSupportLock = Any()
+    /** Extra IDs found by the sweep fallback (outside the curated list). */
+    private val labDiscoveredIds = mutableSetOf<Int>()
 
     private fun isLabSupported(paramId: Int, profile: Int): Boolean {
         synchronized(labSupportLock) {
@@ -1026,25 +1028,65 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
     fun getLabParams(profile: Int): Map<Int, Int> {
         val result = mutableMapOf<Int, Int>()
         for (paramId in DolbyConstants.LAB_DAP_PARAM_IDS) {
-            if (!isLabSupported(paramId, profile)) continue
-            val value = try {
-                checkEffect()
-                dolbyEffect.getRawDapParameter(paramId, profile)
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error reading lab param $paramId: ${e.message}")
-                synchronized(labSupportLock) {
-                    labSupportCache[paramId] = false
+            readLabParam(paramId, profile)?.let { result[paramId] = it }
+        }
+        if (result.isEmpty()) {
+            // Curated gap list answered nothing — this HAL revision keeps
+            // its extras elsewhere. Sweep 100–130 (minus known IDs) and
+            // surface whatever answers as Tuning Lab sliders.
+            for (paramId in DolbyConstants.LAB_SWEEP_RANGE) {
+                if (paramId in DolbyConstants.LAB_DAP_PARAM_IDS) continue
+                if (paramId in DolbyConstants.LAB_SWEEP_EXCLUDE) continue
+                readLabParam(paramId, profile)?.let {
+                    result[paramId] = it
+                    synchronized(labSupportLock) {
+                        labDiscoveredIds.add(paramId)
+                    }
                 }
-                continue
             }
-            result[paramId] = value
+            if (result.isNotEmpty()) {
+                DolbyConstants.dlog(
+                    TAG,
+                    "Lab sweep found params: ${result.keys.sorted()}"
+                )
+            }
         }
         return result
     }
 
+    /** Reads one raw param; null when the HAL rejects the ID. */
+    private fun readLabParam(paramId: Int, profile: Int): Int? {
+        if (!isLabSupported(paramId, profile)) return null
+        return try {
+            checkEffect()
+            dolbyEffect.getRawDapParameter(paramId, profile)
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error reading lab param $paramId: ${e.message}")
+            synchronized(labSupportLock) {
+                labSupportCache[paramId] = false
+            }
+            null
+        }
+    }
+
+    /** IDs currently writable: curated list plus sweep discoveries. */
+    private fun isLabWritable(paramId: Int): Boolean {
+        if (paramId in DolbyConstants.LAB_DAP_PARAM_IDS) return true
+        synchronized(labSupportLock) {
+            return paramId in labDiscoveredIds
+        }
+    }
+
+    /** Curated + discovered IDs, for pref restore/reset loops. */
+    private fun allLabIds(): List<Int> {
+        synchronized(labSupportLock) {
+            return DolbyConstants.LAB_DAP_PARAM_IDS + labDiscoveredIds.sorted()
+        }
+    }
+
     fun setLabParam(profile: Int, paramId: Int, value: Int) {
         if (isReleased) return
-        if (paramId !in DolbyConstants.LAB_DAP_PARAM_IDS) {
+        if (!isLabWritable(paramId)) {
             throw IllegalArgumentException("Unknown lab param $paramId")
         }
         if (value !in DolbyConstants.LAB_PARAM_MIN..DolbyConstants.LAB_PARAM_MAX) {
@@ -1074,13 +1116,14 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
         try {
             val prefs = getProfilePrefs(profile)
             prefs.edit().apply {
-                DolbyConstants.LAB_DAP_PARAM_IDS.forEach {
+                allLabIds().forEach {
                     remove(DolbyConstants.labParamPref(it))
                 }
                 apply()
             }
             synchronized(labSupportLock) {
                 labSupportCache.clear()
+                labDiscoveredIds.clear()
             }
         } catch (e: Exception) {
             DolbyConstants.dlog(TAG, "Error resetting lab params: ${e.message}")
@@ -1089,7 +1132,7 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
 
     private fun restoreLabParams(profile: Int) {
         val prefs = getProfilePrefs(profile)
-        for (paramId in DolbyConstants.LAB_DAP_PARAM_IDS) {
+        for (paramId in allLabIds()) {
             if (!prefs.contains(DolbyConstants.labParamPref(paramId))) continue
             val value = prefs.getInt(DolbyConstants.labParamPref(paramId), 0)
             // Isolated: one rejected ID must not break the whole restore.

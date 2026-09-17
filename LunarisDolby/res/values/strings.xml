@@ -274,7 +274,7 @@
     <string name="tuning_lab_param">DAP param %1$d</string>
     <string name="tuning_lab_footer">These IDs have no public meaning — change one at a time and listen. Values persist per profile and are included in scenes. Reset restores HAL defaults.</string>
     <string name="tuning_lab_reset">Reset Lab values</string>
-    <string name="tuning_lab_empty">No experimental params answered on this HAL</string>
+    <string name="tuning_lab_empty">No experimental params answered on this HAL (IDs 100–130 swept)</string>
 
     <!-- Dolby codecs -->
     <string name="codecs_title">Dolby decoders</string>
