@@ -261,7 +261,7 @@ fun PageStyleScreen(navController: NavController) {
                 ModernSettingSlider(
                     title = "Blur strength",
                     value = style.navBlurRadius.toInt(),
-                    onValueChange = { repo.update { it.copy(navBlurRadius = it) } },
+                    onValueChange = { v -> repo.update { it.copy(navBlurRadius = v) } },
                     valueRange = 0f..60f,
                     steps = 14,
                     valueLabel = { "$it" }
@@ -276,7 +276,7 @@ fun PageStyleScreen(navController: NavController) {
                 ModernSettingSlider(
                     title = "Background tint",
                     value = (style.navTint * 100).toInt(),
-                    onValueChange = { repo.update { it.copy(navTint = it / 100f) } },
+                    onValueChange = { v -> repo.update { it.copy(navTint = v / 100f) } },
                     valueRange = 0f..100f,
                     steps = 19,
                     valueLabel = { "$it%" }
@@ -395,7 +395,7 @@ private fun StyleOptionRow(
     // Wrapping grid so long option sets (e.g. the five navbar styles)
     // flow onto multiple rows instead of squeezing into one.
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val itemWidth = (maxWidth - (itemsPerRow - 1) * 8.dp) / itemsPerRow
+        val itemWidth = (maxWidth - 8.dp * (itemsPerRow - 1)) / itemsPerRow
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
