@@ -196,7 +196,7 @@ class VeynFxViewModel(application: Application) : AndroidViewModel(application) 
                         makeupDb = stored.mcompMakeups.getOrElse(i) { 0 }
                     )
                 },
-                mcompXovers = (0 until 3).map { stored.mcompXovers.getOrElse(it) { defaults[i] } }
+                mcompXovers = (0 until 3).map { stored.mcompXovers.getOrElse(it) { defaults[it] } }
             )
         }
     }

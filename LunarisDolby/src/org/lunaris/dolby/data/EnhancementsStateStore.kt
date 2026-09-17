@@ -19,7 +19,6 @@ data class EnhancementsStateData(
     val bassStrengthPercent: Int = 0,
     val virtualizerEnabled: Boolean = false,
     val virtualizerStrengthPercent: Int = 0,
-    val virtualizerMode: Int = 1,
     val reverbEnabled: Boolean = false,
     val reverbPreset: Int = 0,
     val loudnessEnabled: Boolean = false,
@@ -40,7 +39,6 @@ class EnhancementsStateStore(context: Context) {
                 bassStrengthPercent = json.optInt("bassStrengthPercent", 0),
                 virtualizerEnabled = json.optBoolean("virtualizerEnabled", false),
                 virtualizerStrengthPercent = json.optInt("virtualizerStrengthPercent", 0),
-                virtualizerMode = json.optInt("virtualizerMode", 1),
                 reverbEnabled = json.optBoolean("reverbEnabled", false),
                 reverbPreset = json.optInt("reverbPreset", 0),
                 loudnessEnabled = json.optBoolean("loudnessEnabled", false),
@@ -57,7 +55,6 @@ class EnhancementsStateStore(context: Context) {
             put("bassStrengthPercent", state.bassStrengthPercent)
             put("virtualizerEnabled", state.virtualizerEnabled)
             put("virtualizerStrengthPercent", state.virtualizerStrengthPercent)
-            put("virtualizerMode", state.virtualizerMode)
             put("reverbEnabled", state.reverbEnabled)
             put("reverbPreset", state.reverbPreset)
             put("loudnessEnabled", state.loudnessEnabled)
