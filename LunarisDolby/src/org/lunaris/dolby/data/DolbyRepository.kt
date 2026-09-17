@@ -154,9 +154,36 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
     }
 
     /**
+     * True media-route sink for USAGE_MEDIA — the same source
+     * DolbyEffectService uses for per-device snapshots. Unlike the raw
+     * connected-device list this follows forced routing (the speaker/BT
+     * toggles in [selectOutputDevice]) where the platform honors it, so
+     * the home card and picker badges reflect the switch instead of
+     * always showing the highest-priority connected device.
+     */
+    private fun getRoutedMediaDevice(): AudioDeviceInfo? {
+        return try {
+            val routed = audioManager.getDevicesForAttributes(ATTRIBUTES_MEDIA)
+                .firstOrNull() ?: return null
+            val outputs = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            val routedAddress = routed.address.orEmpty()
+            outputs.firstOrNull { device ->
+                device.isSink &&
+                    device.type == routed.type &&
+                    (routedAddress.isEmpty() || device.address == routedAddress)
+            } ?: outputs.firstOrNull { device ->
+                device.isSink && device.type == routed.type
+            }
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Routed media device query failed: ${e.message}")
+            null
+        }
+    }
+
+    /**
      * Connected user-meaningful sinks for the output picker, priority-ordered
      * and de-duplicated (e.g. a BT headset exposing A2DP + SCO collapses to
-     * one row). Active state follows the MediaRouter live-audio route.
+     * one row). Active state follows the live USAGE_MEDIA route.
      */
     fun getOutputDevices(): List<OutputDevice> {
         return try {
@@ -230,6 +257,10 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
             }
             // Best-effort legacy hop; ignored when routes are undiscovered.
             runCatching { selectLiveRouteBestEffort(target) }
+            // Flags are synchronous: re-resolve now so the active-device
+            // flow + picker badges reflect the switch immediately instead
+            // of waiting for a plug/unplug callback that never comes.
+            updateSpeakerState()
             true
         } catch (e: SecurityException) {
             DolbyConstants.dlog(TAG, "Output switch denied: ${e.message}")
@@ -281,14 +312,25 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
     }
 
     /**
-     * Active output key. The AudioManager force flags (set by
-     * [selectOutputDevice]) are read first because they reflect reality
-     * better than MediaRouter matching, which needs route discovery we
-     * don't run. MediaRouter matching stays as a fallback.
+     * Active output key. The live media route (USAGE_MEDIA) is read first
+     * because it reflects reality — including forced routing from
+     * [selectOutputDevice] — better than the raw connected-device list.
+     * The AudioManager force flags stay as a fallback for builds where
+     * the routed query is empty, with MediaRouter matching last.
      */
     private fun resolveRoutedOutputKey(
         infos: List<AudioDeviceInfo>
     ): String? {
+        // Live media route first: follows forced routing where honored.
+        runCatching {
+            val routed = getRoutedMediaDevice()
+            if (routed != null) {
+                val routedKey = deviceStateManager.deviceKey(routed)
+                if (infos.any { deviceStateManager.deviceKey(it) == routedKey }) {
+                    return routedKey
+                }
+            }
+        }
         // Explicit speaker force always wins for the badge.
         if (runCatching { audioManager.isSpeakerphoneOn }.getOrDefault(false)) {
             infos.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
@@ -371,7 +413,8 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
     }
 
     private fun resolveActiveAudioDevice(): ActiveAudioDevice {
-        val device = getCurrentOutputDevice() ?: return ActiveAudioDevice.Unknown
+        val device = getRoutedMediaDevice() ?: getCurrentOutputDevice()
+            ?: return ActiveAudioDevice.Unknown
         return ActiveAudioDevice(
             name = deviceStateManager.deviceDisplayName(device),
             category = device.toAudioCategory()

@@ -25,6 +25,13 @@
          Normal permission: auto-granted at install. -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
+    <!-- Opt out of the predictive-back SYSTEM animation (window scale/shift).
+         Without this the edge-swipe gesture plays the platform animation
+         while the NavHost pop cuts underneath it, so neither the button nor
+         the gesture path matches. With it, swipes dispatch a plain back to
+         the NavController and the fade transitions in DolbyNavHost run for
+         both paths. OnBackPressedDispatcher (which NavController uses) is
+         unaffected by this flag. -->
     <application
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
@@ -32,7 +39,8 @@
         android:persistent="true"
         android:directBootAware="true"
         android:defaultToDeviceProtectedStorage="true"
-        android:theme="@style/Theme.Dolby">
+        android:theme="@style/Theme.Dolby"
+        android:enableOnBackInvokedCallback="false">
 
         <receiver
             android:name=".BootCompletedReceiver"

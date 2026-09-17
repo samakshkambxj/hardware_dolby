@@ -51,13 +51,15 @@ enum class ParticleDensity(val count: Int) {
 
 enum class AccentChoice { DEFAULT, AZURE, VIOLET, TEAL, JADE, GOLD, ROSE, RUBY }
 
+enum class PageNavbarStyle { TRANSPARENT, FROSTED }
+
 data class PageStyle(
     val headerTitle: String = AppBrand.NAME,
     val subtitleText: String = "Experience immersive audio",
     val showTitle: Boolean = true,
     val showSubtitle: Boolean = true,
     val iconStyle: PageIconStyle = PageIconStyle.ACCENT,
-    val cornerStyle: PageCornerStyle = PageCornerStyle.ROUNDED,
+    val cornerStyle: PageCornerStyle = PageCornerStyle.PILL,
     val cardStyle: PageCardStyle = PageCardStyle.FILLED,
     val iconShape: PageIconShape = PageIconShape.ROUNDED,
     val iconSize: PageIconSize = PageIconSize.M,
@@ -66,6 +68,7 @@ data class PageStyle(
     val headerCentered: Boolean = false,
     val particleDensity: ParticleDensity = ParticleDensity.DENSE,
     val navBlur: Boolean = true,
+    val navbarStyle: PageNavbarStyle = PageNavbarStyle.TRANSPARENT,
     val dynamicColor: Boolean = true,
     val amoledDark: Boolean = false,
     val accent: AccentChoice = AccentChoice.DEFAULT
@@ -96,6 +99,7 @@ private const val KEY_BANNER_GRADIENT = "banner_gradient"
 private const val KEY_HEADER_CENTERED = "header_centered"
 private const val KEY_PARTICLE_DENSITY = "particle_density"
 private const val KEY_NAV_BLUR = "nav_blur"
+private const val KEY_NAVBAR_STYLE = "navbar_style"
 private const val KEY_DYNAMIC_COLOR = "dynamic_color"
 private const val KEY_AMOLED_DARK = "amoled_dark"
 private const val KEY_ACCENT = "accent"
@@ -113,7 +117,7 @@ class PageStyleRepository(context: Context) {
         showTitle = prefs.getBoolean(KEY_SHOW_TITLE, true),
         showSubtitle = prefs.getBoolean(KEY_SHOW_SUBTITLE, true),
         iconStyle = readEnum(KEY_ICON_STYLE, PageIconStyle.ACCENT),
-        cornerStyle = readEnum(KEY_CORNER_STYLE, PageCornerStyle.ROUNDED),
+        cornerStyle = readEnum(KEY_CORNER_STYLE, PageCornerStyle.PILL),
         cardStyle = readEnum(KEY_CARD_STYLE, PageCardStyle.FILLED),
         iconShape = readEnum(KEY_ICON_SHAPE, PageIconShape.ROUNDED),
         iconSize = readEnum(KEY_ICON_SIZE, PageIconSize.M),
@@ -122,6 +126,7 @@ class PageStyleRepository(context: Context) {
         headerCentered = prefs.getBoolean(KEY_HEADER_CENTERED, false),
         particleDensity = readEnum(KEY_PARTICLE_DENSITY, ParticleDensity.DENSE),
         navBlur = prefs.getBoolean(KEY_NAV_BLUR, true),
+        navbarStyle = readEnum(KEY_NAVBAR_STYLE, PageNavbarStyle.TRANSPARENT),
         dynamicColor = prefs.getBoolean(KEY_DYNAMIC_COLOR, true),
         amoledDark = prefs.getBoolean(KEY_AMOLED_DARK, false),
         accent = readEnum(KEY_ACCENT, AccentChoice.DEFAULT)
@@ -148,6 +153,7 @@ class PageStyleRepository(context: Context) {
             .putBoolean(KEY_HEADER_CENTERED, next.headerCentered)
             .putString(KEY_PARTICLE_DENSITY, next.particleDensity.name)
             .putBoolean(KEY_NAV_BLUR, next.navBlur)
+            .putString(KEY_NAVBAR_STYLE, next.navbarStyle.name)
             .putBoolean(KEY_DYNAMIC_COLOR, next.dynamicColor)
             .putBoolean(KEY_AMOLED_DARK, next.amoledDark)
             .putString(KEY_ACCENT, next.accent.name)

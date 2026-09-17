@@ -14,15 +14,13 @@ import android.graphics.Shader
 import android.os.Build
 import android.os.SystemClock
 import android.util.AttributeSet
+import android.view.Choreographer
 import android.view.View
 import android.view.ViewTreeObserver
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.viewinterop.AndroidView
@@ -40,9 +38,13 @@ import kotlin.math.max
  * - No infinite ticker loop (that re-drew the whole root every 240ms even
  *   when idle and kept the UI thread hot).
  * - Re-snapshot is on-demand only (attach / size change / [updateKey] /
- *   any scroll in the window via ViewTreeObserver) and throttled to ~100ms
- *   with coalescing, so pager swipes and list scrolls refresh often enough
- *   to avoid a stale "delay" but never spam root.draw() per frame.
+ *   any scroll in the window via ViewTreeObserver) and throttled to ~50ms
+ *   with coalescing, so pager swipes and list scrolls refresh at ~20fps.
+ * - Capture runs on a Choreographer frame callback (right after the fresh
+ *   frame lands) instead of a bare post(), so the blur matches what is on
+ *   screen instead of trailing a frame behind.
+ * - No double refresh per key change (the AndroidView update block already
+ *   requests it) and no RenderEffect realloc when the radius is unchanged.
  * - Capture is posted to the message queue, never run synchronously inside
  *   Compose layout/draw, which was a major jank source.
  * - Heavier downsample (8 = 1/64 px) and smaller radius (20f): cheaper
@@ -57,14 +59,12 @@ fun RealBlurBackdrop(
     updateKey: Any = Unit,
     downsample: Int = 8
 ) {
-    val viewHolder = remember { mutableStateOf<BackdropBlurView?>(null) }
     Box(modifier = modifier) {
         AndroidView(
             factory = { context ->
                 BackdropBlurView(context).also {
                     it.blurRadiusPx = blurRadiusPx
                     it.downsample = downsample
-                    viewHolder.value = it
                 }
             },
             update = { view ->
@@ -81,9 +81,6 @@ fun RealBlurBackdrop(
                 .background(tint)
         )
     }
-    LaunchedEffect(updateKey) {
-        viewHolder.value?.requestRefresh()
-    }
 }
 
 /**
@@ -98,32 +95,49 @@ class BackdropBlurView @JvmOverloads constructor(
 
     var blurRadiusPx: Float = 20f
         set(value) {
-            field = value
-            applyRenderEffect()
+            if (field != value) {
+                field = value
+                applyRenderEffect()
+            }
         }
     var downsample: Int = 8
         set(value) {
-            field = value.coerceIn(4, 8)
-            snapshot?.recycle()
-            snapshot = null
+            val coerced = value.coerceIn(4, 8)
+            if (field != coerced) {
+                field = coerced
+                snapshot?.recycle()
+                snapshot = null
+            }
         }
 
     private var snapshot: Bitmap? = null
     private val snapshotCanvas = Canvas()
     private val bitmapPaint = Paint(Paint.FILTER_BITMAP_FLAG)
+    private val drawRect = android.graphics.Rect()
     private var attached = false
     private var lastCaptureMs = 0L
-    private var pending = false
+    private var frameScheduled = false
     private var scrollObserver: ViewTreeObserver? = null
+    private val choreographer = Choreographer.getInstance()
+    private val frameCallback = Choreographer.FrameCallback {
+        frameScheduled = false
+        // Not due yet — retry on a later frame to stay vsync-aligned
+        // instead of drifting via postDelayed.
+        if (SystemClock.uptimeMillis() - lastCaptureMs < MIN_INTERVAL_MS) {
+            scheduleFrame()
+            return@FrameCallback
+        }
+        refresh()
+    }
     private val scrollListener = ViewTreeObserver.OnScrollChangedListener {
         // Scroll of any list in the window moves the pixels behind the
         // pill — refresh (throttled + coalesced in requestRefresh, so
-        // flings collapse to ~10fps captures, never one per frame).
+        // flings collapse to ~20fps captures, never one per frame).
         requestRefresh()
     }
 
     companion object {
-        private const val MIN_INTERVAL_MS = 100L
+        private const val MIN_INTERVAL_MS = 50L
     }
 
     init {
@@ -159,8 +173,9 @@ class BackdropBlurView @JvmOverloads constructor(
         } catch (_: Exception) {
         }
         scrollObserver = null
+        choreographer.removeFrameCallback(frameCallback)
+        frameScheduled = false
         removeCallbacks(null)
-        pending = false
         snapshot?.recycle()
         snapshot = null
     }
@@ -189,32 +204,25 @@ class BackdropBlurView @JvmOverloads constructor(
     /**
      * Throttled, coalesced refresh request. Safe to call from Compose update
      * blocks or scroll-driven recompositions — rapid calls collapse into one
-     * deferred capture instead of one root.draw() per frame.
+     * deferred capture instead of one root.draw() per frame. The capture
+     * itself runs on the next vsync via Choreographer, right after the fresh
+     * frame lands, so the blur tracks content instead of trailing it.
      */
     fun requestRefresh() {
         if (!attached || width <= 0 || height <= 0 || !isAttachedToWindow) return
-        val now = SystemClock.uptimeMillis()
-        val elapsed = now - lastCaptureMs
-        if (elapsed < MIN_INTERVAL_MS) {
-            if (!pending) {
-                pending = true
-                postDelayed(
-                    {
-                        pending = false
-                        refresh()
-                    },
-                    MIN_INTERVAL_MS - elapsed
-                )
-            }
-            return
+        scheduleFrame()
+    }
+
+    private fun scheduleFrame() {
+        if (!frameScheduled && attached && isAttachedToWindow) {
+            frameScheduled = true
+            choreographer.postFrameCallback(frameCallback)
         }
-        // Defer off the calling pass (composition/layout/draw) to avoid jank.
-        post { refresh() }
     }
 
     /**
-     * Re-capture the pixels behind this view. Runs on the UI thread via
-     * post(), never synchronously inside draw.
+     * Re-capture the pixels behind this view. Runs on the UI thread from a
+     * Choreographer frame callback, never synchronously inside draw.
      */
     fun refresh() {
         if (!attached || width <= 0 || height <= 0 || !isAttachedToWindow) return
@@ -267,10 +275,11 @@ class BackdropBlurView @JvmOverloads constructor(
         super.onDraw(canvas)
         val bitmap = snapshot
         if (bitmap != null && !bitmap.isRecycled) {
+            drawRect.set(0, 0, width, height)
             canvas.drawBitmap(
                 bitmap,
                 null,
-                android.graphics.Rect(0, 0, width, height),
+                drawRect,
                 bitmapPaint
             )
         }
