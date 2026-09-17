@@ -225,7 +225,6 @@ private fun readBtAudioInfo(a2dp: BluetoothA2dp): BtAudioInfo? {
             codecLabel = btCodecLabel(codecType),
             isHd = codecType == BluetoothCodecConfig.SOURCE_CODEC_TYPE_APTX_HD ||
                 codecType == BluetoothCodecConfig.SOURCE_CODEC_TYPE_LDAC ||
-                codecType == BluetoothCodecConfig.SOURCE_CODEC_TYPE_APTX_ADAPTIVE ||
                 codecType == BluetoothCodecConfig.SOURCE_CODEC_TYPE_LC3,
             sampleRateHz = runCatching { config.sampleRate }.getOrDefault(-1),
             bitsPerSample = runCatching { config.bitsPerSample }.getOrDefault(-1),
@@ -242,7 +241,6 @@ private fun btCodecLabel(codecType: Int): String {
         BluetoothCodecConfig.SOURCE_CODEC_TYPE_APTX_HD -> "aptX HD"
         BluetoothCodecConfig.SOURCE_CODEC_TYPE_LDAC -> "LDAC"
         BluetoothCodecConfig.SOURCE_CODEC_TYPE_LC3 -> "LC3"
-        BluetoothCodecConfig.SOURCE_CODEC_TYPE_APTX_ADAPTIVE -> "aptX Adaptive"
         else -> "Codec $codecType"
     }
 }

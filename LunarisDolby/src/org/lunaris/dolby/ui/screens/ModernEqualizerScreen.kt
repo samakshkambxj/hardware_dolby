@@ -5,7 +5,6 @@
 
 package org.lunaris.dolby.ui.screens
 
-import android.media.audiofx.Virtualizer
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -2063,42 +2062,6 @@ private fun DynamicsProcessingSection(
                                 onValueChange = { enhVm.setVirtualizerStrength(it) },
                                 valueLabel = { "$it%" }
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Mode",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                            LazyRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                items(
-                                    listOf(
-                                        "Auto" to Virtualizer.VIRTUALIZATION_MODE_AUTO,
-                                        "Binaural" to Virtualizer.VIRTUALIZATION_MODE_BINAURAL,
-                                        "Transaural" to Virtualizer.VIRTUALIZATION_MODE_TRANSAURAL
-                                    )
-                                ) { (label, mode) ->
-                                    val selected = fxState.virtualizerMode == mode
-                                    AssistChip(
-                                        onClick = { enhVm.setVirtualizerMode(mode) },
-                                        label = { Text(label) },
-                                        shape = CircleShape,
-                                        leadingIcon = if (selected) {
-                                            {
-                                                Icon(
-                                                    Icons.Default.Check,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(18.dp)
-                                                )
-                                            }
-                                        } else null
-                                    )
-                                }
-                            }
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                     } else {

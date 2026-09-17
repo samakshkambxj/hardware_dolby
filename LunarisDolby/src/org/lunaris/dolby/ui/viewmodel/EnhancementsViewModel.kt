@@ -21,7 +21,6 @@ data class EnhancementsUiState(
     val virtualizerSupported: Boolean = false,
     val virtualizerEnabled: Boolean = false,
     val virtualizerStrengthPercent: Int = 0,
-    val virtualizerMode: Int = 1,
     val reverbSupported: Boolean = false,
     val reverbEnabled: Boolean = false,
     val reverbPreset: Int = 0,
@@ -55,7 +54,6 @@ class EnhancementsViewModel(application: Application) : AndroidViewModel(applica
         engine.setBassStrength(stored.bassStrengthPercent)
         engine.setBassEnabled(stored.bassEnabled)
         engine.setVirtualizerStrength(stored.virtualizerStrengthPercent)
-        engine.setVirtualizerMode(stored.virtualizerMode)
         engine.setVirtualizerEnabled(stored.virtualizerEnabled)
         engine.setReverbPreset(stored.reverbPreset)
         engine.setReverbEnabled(stored.reverbEnabled)
@@ -71,7 +69,6 @@ class EnhancementsViewModel(application: Application) : AndroidViewModel(applica
                 bassStrengthPercent = s.bassStrengthPercent,
                 virtualizerEnabled = s.virtualizerEnabled,
                 virtualizerStrengthPercent = s.virtualizerStrengthPercent,
-                virtualizerMode = s.virtualizerMode,
                 reverbEnabled = s.reverbEnabled,
                 reverbPreset = s.reverbPreset,
                 loudnessEnabled = s.loudnessEnabled,
@@ -88,7 +85,6 @@ class EnhancementsViewModel(application: Application) : AndroidViewModel(applica
             virtualizerSupported = engine.virtualizerSupported,
             virtualizerEnabled = engine.virtualizerEnabled,
             virtualizerStrengthPercent = engine.virtualizerStrengthPercent,
-            virtualizerMode = engine.virtualizerMode,
             reverbSupported = engine.reverbSupported,
             reverbEnabled = engine.reverbEnabled,
             reverbPreset = engine.reverbPreset,
@@ -120,12 +116,6 @@ class EnhancementsViewModel(application: Application) : AndroidViewModel(applica
         engine.setVirtualizerStrength(percent.toInt())
         _uiState.value =
             _uiState.value.copy(virtualizerStrengthPercent = engine.virtualizerStrengthPercent)
-        persistState()
-    }
-
-    fun setVirtualizerMode(mode: Int) {
-        engine.setVirtualizerMode(mode)
-        _uiState.value = _uiState.value.copy(virtualizerMode = engine.virtualizerMode)
         persistState()
     }
 
