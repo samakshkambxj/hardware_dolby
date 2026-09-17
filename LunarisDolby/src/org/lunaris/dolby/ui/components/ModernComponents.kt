@@ -11,6 +11,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -23,12 +24,14 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
@@ -103,6 +106,40 @@ fun DolbyLogo(
             modifier = Modifier.fillMaxSize()
         )
     }
+}
+
+/**
+ * Loading indicator: the Dolby mark spinning in place. Used while the
+ * decoder list is queried; static when the user disabled animations.
+ */
+@Composable
+fun SpinningDolbyLogo(
+    modifier: Modifier = Modifier,
+    size: Dp = 56.dp,
+    color: Color = MaterialTheme.colorScheme.primary
+) {
+    if (rememberReducedMotion()) {
+        DolbyLogo(
+            modifier = modifier.size(size),
+            color = color
+        )
+        return
+    }
+    val spin = rememberInfiniteTransition(label = "dolby_logo_spin")
+    val angle by spin.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1400, easing = LinearEasing)
+        ),
+        label = "angle"
+    )
+    DolbyLogo(
+        modifier = modifier
+            .size(size)
+            .graphicsLayer { rotationZ = angle },
+        color = color
+    )
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -476,7 +513,7 @@ fun ModernSettingSwitch(
         modifier = modifier
             .fillMaxWidth()
             .alpha(if (enabled) 1f else 0.6f)
-            .clip(if (checked) MaterialTheme.shapes.extraLarge else MaterialTheme.shapes.large),
+            .clip(CircleShape),
         color = containerColor
     ) {
         Row(

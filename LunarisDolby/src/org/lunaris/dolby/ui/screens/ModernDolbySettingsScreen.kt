@@ -16,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -65,111 +64,97 @@ fun ModernDolbySettingsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                // M3 actions only inset 4.dp at the end, which leaves the
-                // reset icon flush with (and on some devices clipped by)
-                // the screen edge — see z.png.
-                modifier = Modifier.padding(end = 8.dp),
-                title = {
-                    Column(
-                        modifier = if (pageStyle.headerCentered) Modifier.fillMaxWidth()
-                        else Modifier
-                    ) {
-                        if (pageStyle.showTitle) {
-                            Row(
-                                modifier = if (pageStyle.headerCentered) Modifier.fillMaxWidth()
-                                else Modifier,
-                                horizontalArrangement = if (pageStyle.headerCentered) Arrangement.Center
-                                else Arrangement.Start,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    pageStyle.headerTitle,
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    textAlign = if (pageStyle.headerCentered) TextAlign.Center
-                                    else TextAlign.Start
-                                )
-                                // Live dot: Dolby on AND audio actually
-                                // playing — not just the master switch.
-                                val playing = rememberIsAudioPlaying()
-                                val live = (uiState as? DolbyUiState.Success)
-                                    ?.settings?.enabled == true && playing
-                                if (live) {
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Icon(
-                                        imageVector = Icons.Default.FiberManualRecord,
-                                        contentDescription = stringResource(
-                                            R.string.dolby_live_dot
-                                        ),
-                                        tint = MaterialTheme.colorScheme.tertiary,
-                                        modifier = Modifier.size(10.dp)
-                                    )
-                                }
-                            }
-                        }
-                        if (pageStyle.showSubtitle) {
+            // Custom header row instead of TopAppBar's title slot: M3's
+            // internal title inset does not line up with the 16dp body
+            // padding, leaving the "Dolby Atmos" title offset from the
+            // cards below. Explicit 16dp start padding here keeps header
+            // text and body content on the same left edge on every M3
+            // version. End stays at 8dp so the action icons never sit
+            // flush with (or clipped by) the screen edge.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
+                    .heightIn(min = 64.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = if (pageStyle.headerCentered) Alignment.CenterHorizontally
+                    else Alignment.Start
+                ) {
+                    if (pageStyle.showTitle) {
+                        Row(
+                            modifier = if (pageStyle.headerCentered) Modifier.fillMaxWidth()
+                            else Modifier,
+                            horizontalArrangement = if (pageStyle.headerCentered) Arrangement.Center
+                            else Arrangement.Start,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                pageStyle.subtitleText,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                pageStyle.headerTitle,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 textAlign = if (pageStyle.headerCentered) TextAlign.Center
-                                else TextAlign.Start,
-                                modifier = if (pageStyle.headerCentered) Modifier.fillMaxWidth()
-                                else Modifier
+                                else TextAlign.Start
                             )
-                        }
-                    }
-                },
-                expandedHeight = 92.dp,
-                actions = {
-                    IconButton(onClick = { navController.navigate(Screen.PageStyle.route) }) {
-                        Icon(
-                            Icons.Default.Palette,
-                            contentDescription = "Page style",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    IconButton(onClick = { navController.navigate(Screen.About.route) }) {
-                        Icon(
-                            Icons.Default.Info, 
-                            contentDescription = "About",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    IconButton(onClick = {
-                        // Direct reset with undo — no confirm dialog.
-                        viewModel.resetAllProfiles()
-                        scope.launch {
-                            val res = snackbarHost.showSnackbar(
-                                message = context.getString(R.string.dolby_reset_all),
-                                actionLabel = context.getString(R.string.undo),
-                                withDismissAction = true
-                            )
-                            if (res == SnackbarResult.ActionPerformed) {
-                                viewModel.undoProfilesReset { ok ->
-                                    if (ok) {
-                                        ToastHelper.showToast(
-                                            context,
-                                            context.getString(R.string.reset_undone)
-                                        )
-                                    }
-                                }
+                            // Live dot: Dolby on AND audio actually
+                            // playing — not just the master switch.
+                            val playing = rememberIsAudioPlaying()
+                            val live = (uiState as? DolbyUiState.Success)
+                                ?.settings?.enabled == true && playing
+                            if (live) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    imageVector = Icons.Default.FiberManualRecord,
+                                    contentDescription = stringResource(
+                                        R.string.dolby_live_dot
+                                    ),
+                                    tint = MaterialTheme.colorScheme.tertiary,
+                                    modifier = Modifier.size(10.dp)
+                                )
                             }
                         }
-                    }) {
-                        Icon(
-                            Icons.Default.RestartAlt, 
-                            contentDescription = "Reset",
-                            tint = MaterialTheme.colorScheme.onSurface
+                    }
+                    if (pageStyle.showSubtitle) {
+                        Text(
+                            pageStyle.subtitleText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = if (pageStyle.headerCentered) TextAlign.Center
+                            else TextAlign.Start,
+                            modifier = if (pageStyle.headerCentered) Modifier.fillMaxWidth()
+                            else Modifier
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
-            )
+                }
+                IconButton(onClick = { navController.navigate(Screen.Customization.route) }) {
+                    Icon(
+                        Icons.Default.Palette,
+                        contentDescription = "Customization",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                IconButton(onClick = { navController.navigate(Screen.About.route) }) {
+                    Icon(
+                        Icons.Default.Info,
+                        contentDescription = "About",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                IconButton(onClick = {
+                    // Direct reset — no confirm dialog, no toast.
+                    viewModel.resetAllProfiles()
+                }) {
+                    Icon(
+                        Icons.Default.RestartAlt,
+                        contentDescription = "Reset",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         contentColor = MaterialTheme.colorScheme.onSurface,
@@ -390,23 +375,6 @@ private fun ModernDolbySettingsContent(
                     dirtyProfiles = dirtyProfiles,
                     onResetProfile = { profile ->
                         viewModel.resetProfile(profile)
-                        scope.launch {
-                            val res = snackbarHost.showSnackbar(
-                                message = context.getString(R.string.profile_reset_done),
-                                actionLabel = context.getString(R.string.undo),
-                                withDismissAction = true
-                            )
-                            if (res == SnackbarResult.ActionPerformed) {
-                                viewModel.undoProfilesReset { ok ->
-                                    if (ok) {
-                                        ToastHelper.showToast(
-                                            context,
-                                            context.getString(R.string.reset_undone)
-                                        )
-                                    }
-                                }
-                            }
-                        }
                     }
                 )
             }

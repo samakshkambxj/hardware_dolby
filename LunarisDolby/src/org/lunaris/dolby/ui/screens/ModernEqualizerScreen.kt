@@ -16,12 +16,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -268,13 +270,7 @@ private fun ModernEqualizerContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.extraLarge,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
-        ) {
+        EqualizerCard {
             ModernPresetSelector(
                 presets = state.presets,
                 currentPreset = state.currentPreset,
@@ -288,12 +284,8 @@ private fun ModernEqualizerContent(
         )
         
         if (!isBandModeCompatible && !isFlatPreset) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
+            EqualizerCard(
+                containerColor = MaterialTheme.colorScheme.errorContainer
             ) {
                 Row(
                     modifier = Modifier
@@ -327,13 +319,7 @@ private fun ModernEqualizerContent(
             }
         }
         
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.extraLarge,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
-        ) {
+        EqualizerCard {
             Column(modifier = Modifier.padding(20.dp)) {
                 EqualizerSectionHeader(
                     icon = Icons.Default.Visibility,
@@ -409,6 +395,31 @@ private fun ModernEqualizerContent(
     }
 }
 
+/**
+ * Card wrapper for the equalizer page that honors Page Style > Cards and
+ * Corners (shape, fill, outline, elevation) like [ModernSettingsCard] does,
+ * instead of hardcoding extraLarge + surfaceContainerLow.
+ */
+@Composable
+private fun EqualizerCard(
+    modifier: Modifier = Modifier,
+    containerColor: Color? = null,
+    content: @Composable () -> Unit
+) {
+    val pageStyle by rememberPageStyle()
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = pageStyle.cardShape,
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor ?: pageStyle.cardContainer()
+        ),
+        border = pageStyle.cardBorder(),
+        elevation = pageStyle.cardElevation()
+    ) {
+        content()
+    }
+}
+
 @Composable
 private fun CurveViewContent(
     state: EqualizerUiState.Success,
@@ -416,14 +427,8 @@ private fun CurveViewContent(
     canEdit: Boolean,
     isActive: Boolean
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(380.dp),
-        shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+    EqualizerCard(
+        modifier = Modifier.height(380.dp)
     ) {
         Column(
             modifier = Modifier
@@ -444,9 +449,9 @@ private fun CurveViewContent(
                           else MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Surface(
-                    shape = MaterialTheme.shapes.small,
+                    shape = CircleShape,
                     color = if (canEdit) MaterialTheme.colorScheme.secondaryContainer
-                          else MaterialTheme.colorScheme.errorContainer
+                           else MaterialTheme.colorScheme.errorContainer
                 ) {
                     Text(
                         text = "${state.bandMode.bandCount} bands",
@@ -492,14 +497,8 @@ private fun SlidersViewContent(
     canEdit: Boolean
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp),
-            shape = MaterialTheme.shapes.extraLarge,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
+        EqualizerCard(
+            modifier = Modifier.height(180.dp)
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Row(
@@ -514,7 +513,7 @@ private fun SlidersViewContent(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Surface(
-                        shape = MaterialTheme.shapes.small,
+                        shape = CircleShape,
                         color = MaterialTheme.colorScheme.secondaryContainer
                     ) {
                         Text(
@@ -536,14 +535,8 @@ private fun SlidersViewContent(
             }
         }
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(380.dp),
-            shape = MaterialTheme.shapes.extraLarge,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
+        EqualizerCard(
+            modifier = Modifier.height(380.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -566,7 +559,7 @@ private fun SlidersViewContent(
                     
                     if (!canEdit) {
                         Surface(
-                            shape = MaterialTheme.shapes.small,
+                            shape = CircleShape,
                             color = MaterialTheme.colorScheme.errorContainer
                         ) {
                             Row(
@@ -665,12 +658,8 @@ private fun BandTunerCard(
     var sliderValue by remember(index, band.gain) { mutableFloatStateOf(band.gain / 10f) }
     var lastHapticStep by remember(index) { mutableIntStateOf(band.gain) }
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+    EqualizerCard(
+        modifier = modifier
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             EqualizerSectionHeader(
@@ -741,7 +730,7 @@ private fun BandTunerCard(
                 )
 
                 Surface(
-                    shape = MaterialTheme.shapes.small,
+                    shape = CircleShape,
                     color = if (enabled) MaterialTheme.colorScheme.primaryContainer
                            else MaterialTheme.colorScheme.surfaceContainerHighest
                 ) {
@@ -850,7 +839,7 @@ private fun BandStepButton(
         modifier = Modifier
             .size(width = 64.dp, height = 40.dp)
             .squishable(enabled = enabled, scaleDown = 0.9f),
-        shape = MaterialTheme.shapes.extraLarge,
+        shape = CircleShape,
         color = if (enabled) MaterialTheme.colorScheme.secondaryContainer
                else MaterialTheme.colorScheme.surfaceContainerHighest
     ) {
@@ -887,7 +876,7 @@ private fun BandAdjustButton(
         modifier = modifier
             .height(48.dp)
             .squishable(enabled = enabled, scaleDown = 0.93f),
-        shape = MaterialTheme.shapes.extraLarge,
+        shape = CircleShape,
         color = if (enabled) MaterialTheme.colorScheme.secondaryContainer
                else MaterialTheme.colorScheme.surfaceContainerHighest
     ) {
@@ -946,10 +935,7 @@ private fun ViewModeTile(
             MaterialTheme.colorScheme.onPrimaryContainer
         else
             MaterialTheme.colorScheme.onSurface,
-        shape = if (isSelected)
-            MaterialTheme.shapes.extraLarge
-        else
-            MaterialTheme.shapes.large,
+        shape = CircleShape,
         border = tileSelectionBorder(isSelected)
     ) {
         Row(
@@ -961,10 +947,7 @@ private fun ViewModeTile(
         ) {
             Surface(
                 modifier = Modifier.size(40.dp),
-                shape = if (isSelected)
-                    MaterialTheme.shapes.extraLarge
-                else
-                    MaterialTheme.shapes.medium,
+                shape = CircleShape,
                 color = if (isSelected)
                     MaterialTheme.colorScheme.primary
                 else
@@ -1007,12 +990,8 @@ private fun BandModeSelector(
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
     
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+    EqualizerCard(
+        modifier = modifier
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             EqualizerSectionHeader(
@@ -1078,10 +1057,7 @@ private fun BandModeTile(
             MaterialTheme.colorScheme.onPrimaryContainer
         else
             MaterialTheme.colorScheme.onSurface,
-        shape = if (isSelected)
-            MaterialTheme.shapes.extraLarge
-        else
-            MaterialTheme.shapes.large,
+        shape = CircleShape,
         border = tileSelectionBorder(isSelected)
     ) {
         Column(
@@ -1093,10 +1069,7 @@ private fun BandModeTile(
         ) {
             Surface(
                 modifier = Modifier.size(32.dp),
-                shape = if (isSelected)
-                    MaterialTheme.shapes.extraLarge
-                else
-                    MaterialTheme.shapes.small,
+                shape = CircleShape,
                 color = if (isSelected)
                     MaterialTheme.colorScheme.primary
                 else
@@ -1705,6 +1678,92 @@ private fun formatDynamicsFrequency(hz: Float): String {
 }
 
 @Composable
+/**
+ * One collapsible dynamics band: a pill row showing the band name plus a
+ * live value summary, expanding to reveal its sliders. Collapsed by
+ * default so the Bands/MBC tabs stay compact; expansion survives
+ * rotation via [saveKey].
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun CollapsibleDynamicsBand(
+    title: String,
+    summary: String,
+    saveKey: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    var expanded by rememberSaveable(saveKey) { mutableStateOf(false) }
+    val chevronAngle by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+        label = "band_chevron"
+    )
+
+    Surface(
+        onClick = { expanded = !expanded },
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = if (expanded)
+            MaterialTheme.colorScheme.secondaryContainer
+        else
+            MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = if (expanded)
+            MaterialTheme.colorScheme.onSecondaryContainer
+        else
+            MaterialTheme.colorScheme.onSurface,
+        border = tileSelectionBorder(expanded)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = summary,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (expanded)
+                            MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f)
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Default.ExpandMore,
+                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    modifier = Modifier
+                        .size(24.dp)
+                        .graphicsLayer { rotationZ = chevronAngle }
+                )
+            }
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(
+                    animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
+                ) + fadeIn(
+                    animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
+                ),
+                exit = shrinkVertically(
+                    animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
+                ) + fadeOut(
+                    animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
+                )
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    content()
+                }
+            }
+        }
+    }
+}
+
 private fun DynamicsProcessingSection(
     dynamicsVm: DynamicsEqualizerViewModel = viewModel()
 ) {
@@ -1715,13 +1774,7 @@ private fun DynamicsProcessingSection(
     var presetName by remember { mutableStateOf("") }
     val tabs = listOf("Bands", "MBC", "Limiter")
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
+    EqualizerCard {
         Column(modifier = Modifier.padding(20.dp)) {
             EqualizerSectionHeader(
                 icon = Icons.Default.GraphicEq,
@@ -1752,6 +1805,7 @@ private fun DynamicsProcessingSection(
                     AssistChip(
                         onClick = { dynamicsVm.loadPreset(name) },
                         label = { Text(name) },
+                        shape = CircleShape,
                         trailingIcon = {
                             IconButton(onClick = { dynamicsVm.deletePreset(name) }) {
                                 Icon(
@@ -1791,15 +1845,24 @@ private fun DynamicsProcessingSection(
                         valueLabel = { "$it dB" }
                     )
                     state.bandFrequencies.forEachIndexed { index, freq ->
+                        val gain = state.bandGains.getOrElse(index) { 0f }.toInt()
                         Spacer(modifier = Modifier.height(8.dp))
-                        ModernSettingSlider(
-                            title = formatDynamicsFrequency(freq),
-                            value = state.bandGains.getOrElse(index) { 0f }.toInt(),
-                            valueRange = -20f..20f,
-                            steps = 39,
-                            onValueChange = { dynamicsVm.setBandGain(index, it) },
-                            valueLabel = { "$it dB" }
-                        )
+                        key("dynamics_eq_band_$index") {
+                            CollapsibleDynamicsBand(
+                                title = formatDynamicsFrequency(freq),
+                                summary = "$gain dB",
+                                saveKey = "dynamics_eq_band_$index"
+                            ) {
+                                ModernSettingSlider(
+                                    title = "Gain",
+                                    value = gain,
+                                    valueRange = -20f..20f,
+                                    steps = 39,
+                                    onValueChange = { dynamicsVm.setBandGain(index, it) },
+                                    valueLabel = { "$it dB" }
+                                )
+                            }
+                        }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedButton(
@@ -1819,44 +1882,46 @@ private fun DynamicsProcessingSection(
                     if (state.mbcEnabled) {
                         state.mbcBands.forEachIndexed { index, band ->
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "${band.label} band",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            ModernSettingSlider(
-                                title = "Threshold",
-                                value = band.threshold.toInt(),
-                                valueRange = -60f..0f,
-                                steps = 59,
-                                onValueChange = { dynamicsVm.setMbcThreshold(index, it) },
-                                valueLabel = { "$it dB" }
-                            )
-                            ModernSettingSlider(
-                                title = "Ratio",
-                                value = band.ratio.toInt(),
-                                valueRange = 1f..20f,
-                                steps = 18,
-                                onValueChange = { dynamicsVm.setMbcRatio(index, it) },
-                                valueLabel = { "${it}:1" }
-                            )
-                            ModernSettingSlider(
-                                title = "Attack",
-                                value = band.attackMs.toInt(),
-                                valueRange = 1f..200f,
-                                steps = 198,
-                                onValueChange = { dynamicsVm.setMbcAttack(index, it) },
-                                valueLabel = { "$it ms" }
-                            )
-                            ModernSettingSlider(
-                                title = "Release",
-                                value = band.releaseMs.toInt(),
-                                valueRange = 10f..1000f,
-                                steps = 98,
-                                onValueChange = { dynamicsVm.setMbcRelease(index, it) },
-                                valueLabel = { "$it ms" }
-                            )
+                            key("dynamics_mbc_band_$index") {
+                                CollapsibleDynamicsBand(
+                                    title = "${band.label} band",
+                                    summary = "${band.threshold.toInt()} dB · ${band.ratio.toInt()}:1",
+                                    saveKey = "dynamics_mbc_band_$index"
+                                ) {
+                                    ModernSettingSlider(
+                                        title = "Threshold",
+                                        value = band.threshold.toInt(),
+                                        valueRange = -60f..0f,
+                                        steps = 59,
+                                        onValueChange = { dynamicsVm.setMbcThreshold(index, it) },
+                                        valueLabel = { "$it dB" }
+                                    )
+                                    ModernSettingSlider(
+                                        title = "Ratio",
+                                        value = band.ratio.toInt(),
+                                        valueRange = 1f..20f,
+                                        steps = 18,
+                                        onValueChange = { dynamicsVm.setMbcRatio(index, it) },
+                                        valueLabel = { "${it}:1" }
+                                    )
+                                    ModernSettingSlider(
+                                        title = "Attack",
+                                        value = band.attackMs.toInt(),
+                                        valueRange = 1f..200f,
+                                        steps = 198,
+                                        onValueChange = { dynamicsVm.setMbcAttack(index, it) },
+                                        valueLabel = { "$it ms" }
+                                    )
+                                    ModernSettingSlider(
+                                        title = "Release",
+                                        value = band.releaseMs.toInt(),
+                                        valueRange = 10f..1000f,
+                                        steps = 98,
+                                        onValueChange = { dynamicsVm.setMbcRelease(index, it) },
+                                        valueLabel = { "$it ms" }
+                                    )
+                                }
+                            }
                         }
                     }
                     if (state.mbcEnabled) {

@@ -43,7 +43,7 @@ fun PageStyleScreen(navController: NavController) {
                 modifier = Modifier.padding(end = 8.dp),
                 title = {
                     Text(
-                        "Page style",
+                        "Customization",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -222,6 +222,31 @@ fun PageStyleScreen(navController: NavController) {
                 )
             }
 
+            ModernSettingsCard(title = "Navbar", icon = Icons.Default.Navigation) {
+                Text(
+                    "Style",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                StyleOptionRow(
+                    options = PageNavbarStyle.entries.map {
+                        it.name.lowercase().replaceFirstChar(Char::uppercase)
+                    },
+                    selectedIndex = PageNavbarStyle.entries.indexOf(style.navbarStyle),
+                    onSelect = { index ->
+                        repo.update { it.copy(navbarStyle = PageNavbarStyle.entries[index]) }
+                    }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                ModernSettingSwitch(
+                    title = "Navbar blur",
+                    subtitle = "Live blur behind the navbar — pure blur when transparent, frosted pill otherwise",
+                    checked = style.navBlur,
+                    onCheckedChange = { checked -> repo.update { it.copy(navBlur = checked) } }
+                )
+            }
+
             ModernSettingsCard(title = "Background FX", icon = Icons.Default.BlurOn) {
                 Text(
                     "Particles",
@@ -237,13 +262,6 @@ fun PageStyleScreen(navController: NavController) {
                     onSelect = { index ->
                         repo.update { it.copy(particleDensity = ParticleDensity.entries[index]) }
                     }
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                ModernSettingSwitch(
-                    title = "Navbar blur",
-                    subtitle = "Live blur behind the nav pill (turn off on low-end devices)",
-                    checked = style.navBlur,
-                    onCheckedChange = { checked -> repo.update { it.copy(navBlur = checked) } }
                 )
             }
 
@@ -318,8 +336,8 @@ fun PageStyleScreen(navController: NavController) {
 
     if (showResetDialog) {
         ModernConfirmDialog(
-            title = "Reset page style",
-            message = "This resets all page style options — header, banner, cards, icons, corners, background FX and theme — back to defaults.",
+            title = "Reset customization",
+            message = "This resets all customization options — header, banner, cards, icons, corners, navbar, background FX and theme — back to defaults.",
             icon = Icons.Default.RestartAlt,
             onConfirm = {
                 repo.resetAll()
@@ -436,7 +454,7 @@ private fun AppIconRow(
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp),
-        shape = if (selected) MaterialTheme.shapes.extraLarge else MaterialTheme.shapes.large,
+        shape = CircleShape,
         color = if (selected) MaterialTheme.colorScheme.primaryContainer
         else MaterialTheme.colorScheme.surfaceContainerHigh,
         contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer

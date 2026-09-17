@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -289,10 +290,14 @@ fun CodecInfoCard(
         )
         Spacer(modifier = Modifier.height(12.dp))
         if (codecs == null) {
-            SkeletonRows(
-                rows = 4,
-                modifier = Modifier.fillMaxWidth()
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                SpinningDolbyLogo()
+            }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 codecs.forEach { codec ->

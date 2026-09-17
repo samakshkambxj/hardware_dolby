@@ -175,6 +175,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
             // Routing settles asynchronously; re-read before updating UI.
             try {
                 kotlinx.coroutines.delay(400L)
+                repository.updateSpeakerState()
                 _outputDevices.value = repository.getOutputDevices()
                 loadSettings()
             } catch (e: Exception) {

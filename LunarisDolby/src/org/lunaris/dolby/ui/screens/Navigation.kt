@@ -43,6 +43,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.ui.components.FloatingNavToolbar
+import org.lunaris.dolby.ui.components.PageNavbarStyle
+import org.lunaris.dolby.ui.components.rememberPageStyle
 import org.lunaris.dolby.ui.viewmodel.AppProfileViewModel
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
@@ -57,7 +59,7 @@ sealed class Screen(val route: String) {
     object EasterEgg : Screen("easter_egg")
     object DapProbe : Screen("dap_probe")
     object About : Screen("about")
-    object PageStyle : Screen("page_style")
+    object Customization : Screen("customization")
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -101,7 +103,7 @@ fun MainPagerScreen(
 
     // Bucketed swipe offset drives navbar blur re-snapshots: coarse enough
     // (~6 steps per swipe) to avoid recomposing per frame, fresh enough that
-    // the blur never looks stale/delayed. Throttled to ~100ms in the view.
+    // the blur never looks stale/delayed. Throttled to ~33ms in the view.
     val offsetBucket = try {
         (pagerState.currentPageOffsetFraction * 6).toInt()
     } catch (_: Exception) {
@@ -111,8 +113,8 @@ fun MainPagerScreen(
     // Vertical list scrolls never touch Android Views (LazyColumn scrolls by
     // recomposing), so the blur view cannot hear them via ViewTreeObserver.
     // Instead the root observes every nested scroll delta from the pages
-    // below and bumps a tick — throttled here, throttled again (~100ms) in
-    // the blur view, so scrolls refresh at ~8fps and never per frame.
+    // below and bumps a tick — throttled here, throttled again (~50ms) in
+    // the blur view, so scrolls refresh at ~20fps and never per frame.
     // The tick state is read only inside BottomNavOverlay (via blurKey),
     // so scroll ticks recompose just the pill — never the pager pages.
     val scrollTickState = remember { mutableIntStateOf(0) }
@@ -125,7 +127,7 @@ fun MainPagerScreen(
                 source: NestedScrollSource
             ): Offset {
                 val now = SystemClock.uptimeMillis()
-                if (now - lastTickMs > 90L) {
+                if (now - lastTickMs > 33L) {
                     lastTickMs = now
                     scrollTickState.intValue++
                 }
@@ -199,20 +201,23 @@ private fun BottomNavOverlay(
     equalizerBadge: Boolean = false
 ) {
     Box(modifier = modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(130.dp)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.45f)
+        val pageStyle by rememberPageStyle()
+        if (pageStyle.navbarStyle == PageNavbarStyle.FROSTED) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(130.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.45f)
+                            )
                         )
                     )
-                )
-        )
+            )
+        }
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -242,12 +247,14 @@ fun DolbyNavHost(
         if (isOnboardingDone(context)) "main_pager" else Screen.Onboarding.route
     }
 
-    // Fade-only transitions on all four directions: the back-arrow button
-    // calls navigateUp()/popBackStack() while an edge swipe drives the same
-    // pop via the system gesture. Without explicit transitions the gesture
-    // path falls back to the platform predictive-back animation (window
-    // scale/shift), which looks unrelated to the in-app fade. Pinning all
-    // four to the same fade keeps button-back and swipe-back identical.
+    // Fade-only transitions on all four directions, identical for the
+    // back-arrow button and the edge-swipe gesture. The manifest opts out
+    // of the predictive-back SYSTEM animation
+    // (enableOnBackInvokedCallback=false), so a swipe dispatches a plain
+    // back to the NavController and these pop transitions actually run —
+    // otherwise the platform window scale/shift plays over the top and the
+    // pop cuts underneath it. OnBackPressedDispatcher (which NavController
+    // uses) is unaffected by that flag.
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -312,7 +319,7 @@ fun DolbyNavHost(
             )
         }
 
-        composable(Screen.PageStyle.route) {
+        composable(Screen.Customization.route) {
             PageStyleScreen(
                 navController = navController
             )
