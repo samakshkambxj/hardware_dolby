@@ -24,7 +24,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
 import org.lunaris.dolby.data.SleepTimerState
 import org.lunaris.dolby.domain.models.DolbyUiState
@@ -52,8 +51,6 @@ fun ModernDolbySettingsScreen(
     val pageStyle by rememberPageStyle()
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
-    val scope = rememberCoroutineScope()
-    val snackbarHost = remember { SnackbarHostState() }
 
     LaunchedEffect(outputError) {
         outputError?.let {
@@ -157,8 +154,7 @@ fun ModernDolbySettingsScreen(
             }
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        snackbarHost = { SnackbarHost(snackbarHost) }
+        contentColor = MaterialTheme.colorScheme.onSurface
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
         StyledParticles(modifier = Modifier.padding(paddingValues))
@@ -191,7 +187,6 @@ fun ModernDolbySettingsScreen(
                     scenes = scenes,
                     sleepState = sleepState,
                     dirtyProfiles = dirtyProfiles,
-                    snackbarHost = snackbarHost,
                     onOutputCardClick = {
                         viewModel.refreshOutputDevices()
                         showOutputDialog = true
@@ -205,18 +200,9 @@ fun ModernDolbySettingsScreen(
                         showSaveSceneDialog = true
                     },
                     onDeleteSceneClick = { scene ->
+                        // Direct delete — no snackbar, no toast.
                         if (!scene.isBuiltIn) {
                             viewModel.deleteScene(scene.id)
-                            scope.launch {
-                                val res = snackbarHost.showSnackbar(
-                                    message = context.getString(R.string.scene_deleted),
-                                    actionLabel = context.getString(R.string.undo),
-                                    withDismissAction = true
-                                )
-                                if (res == SnackbarResult.ActionPerformed) {
-                                    viewModel.restoreScene(scene)
-                                }
-                            }
                         }
                     },
                     onResetScenesClick = { showResetScenesDialog = true },
@@ -319,7 +305,6 @@ private fun ModernDolbySettingsContent(
     scenes: List<Scene>,
     sleepState: SleepTimerState,
     dirtyProfiles: Set<Int>,
-    snackbarHost: SnackbarHostState,
     onOutputCardClick: () -> Unit,
     onApplyScene: (Scene) -> Unit,
     onSaveSceneClick: () -> Unit,
@@ -330,7 +315,6 @@ private fun ModernDolbySettingsContent(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     LazyColumn(
         modifier = modifier
             .fillMaxSize()

@@ -5,10 +5,12 @@
 
 package org.lunaris.dolby.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -18,9 +20,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.lunaris.dolby.ui.components.*
@@ -131,21 +136,28 @@ fun PageStyleScreen(navController: NavController) {
             }
 
             ModernSettingsCard(title = "Header banner", icon = Icons.Default.Image) {
+                Text(
+                    "Style",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                StyleOptionRow(
+                    options = PageBannerStyle.entries.map {
+                        it.name.lowercase().replaceFirstChar(Char::uppercase)
+                    },
+                    selectedIndex = PageBannerStyle.entries.indexOf(style.bannerStyle),
+                    onSelect = { index ->
+                        repo.update { it.copy(bannerStyle = PageBannerStyle.entries[index]) }
+                    }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 ModernSettingSwitch(
                     title = "Waveform banner",
                     subtitle = "Animated visualizer behind the logo",
                     checked = style.showBannerWaveform,
                     onCheckedChange = { checked ->
                         repo.update { it.copy(showBannerWaveform = checked) }
-                    }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                ModernSettingSwitch(
-                    title = "Banner gradient",
-                    subtitle = "Fade the banner into the card",
-                    checked = style.bannerGradient,
-                    onCheckedChange = { checked ->
-                        repo.update { it.copy(bannerGradient = checked) }
                     }
                 )
             }
@@ -241,9 +253,39 @@ fun PageStyleScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(12.dp))
                 ModernSettingSwitch(
                     title = "Navbar blur",
-                    subtitle = "Live blur behind the navbar — pure blur when transparent, frosted pill otherwise",
+                    subtitle = "Live blur behind the navbar (Transparent and Frosted styles)",
                     checked = style.navBlur,
                     onCheckedChange = { checked -> repo.update { it.copy(navBlur = checked) } }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                ModernSettingSlider(
+                    title = "Blur strength",
+                    value = style.navBlurRadius.toInt(),
+                    onValueChange = { repo.update { it.copy(navBlurRadius = it) } },
+                    valueRange = 0f..60f,
+                    steps = 14,
+                    valueLabel = { "$it" }
+                )
+                Text(
+                    "Backdrop blur radius for the Transparent and Frosted navbar — 0 is clear glass.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                ModernSettingSlider(
+                    title = "Background tint",
+                    value = (style.navTint * 100).toInt(),
+                    onValueChange = { repo.update { it.copy(navTint = it / 100f) } },
+                    valueRange = 0f..100f,
+                    steps = 19,
+                    valueLabel = { "$it%" }
+                )
+                Text(
+                    "Veil opacity for the Frosted navbar — 0% is clear glass, 100% is solid.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp)
                 )
             }
 
@@ -311,23 +353,17 @@ fun PageStyleScreen(navController: NavController) {
             }
 
             ModernSettingsCard(title = "App icon", icon = Icons.Default.Apps) {
-                AppIconManager.OPTIONS.forEach { option ->
-                    AppIconRow(
-                        label = option.label,
-                        selected = currentIconId == option.id,
-                        onClick = {
-                            AppIconManager.apply(context, option.id)
-                            currentIconId = option.id
-                            ToastHelper.showToast(
-                                context,
-                                "Icon applied — the launcher refreshes in a few seconds"
-                            )
-                        }
-                    )
-                    if (option != AppIconManager.OPTIONS.last()) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                AppIconGrid(
+                    selectedId = currentIconId,
+                    onSelect = { id ->
+                        AppIconManager.apply(context, id)
+                        currentIconId = id
+                        ToastHelper.showToast(
+                            context,
+                            "Icon applied — the launcher refreshes in a few seconds"
+                        )
                     }
-                }
+                )
             }
 
             Spacer(modifier = Modifier.height(70.dp))
@@ -348,35 +384,45 @@ fun PageStyleScreen(navController: NavController) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun StyleOptionRow(
     options: List<String>,
     selectedIndex: Int,
-    onSelect: (Int) -> Unit
+    onSelect: (Int) -> Unit,
+    itemsPerRow: Int = 3
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        options.forEachIndexed { index, label ->
-            val selected = index == selectedIndex
-            Surface(
-                onClick = { onSelect(index) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
-                shape = if (selected) MaterialTheme.shapes.extraLarge else MaterialTheme.shapes.large,
-                color = if (selected) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surfaceContainerHigh,
-                contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.onSurface
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
-                    )
+    // Wrapping grid so long option sets (e.g. the five navbar styles)
+    // flow onto multiple rows instead of squeezing into one.
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val itemWidth = (maxWidth - (itemsPerRow - 1) * 8.dp) / itemsPerRow
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            options.forEachIndexed { index, label ->
+                val selected = index == selectedIndex
+                Surface(
+                    onClick = { onSelect(index) },
+                    modifier = Modifier
+                        .width(itemWidth)
+                        .height(48.dp),
+                    shape = if (selected) MaterialTheme.shapes.extraLarge else MaterialTheme.shapes.large,
+                    color = if (selected) MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                            else MaterialTheme.colorScheme.onSurface
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         }
@@ -443,41 +489,88 @@ private fun AccentSwatchGrid(
     }
 }
 
+/**
+ * Launcher icon picker: 4-per-row grid rendering each alias' actual
+ * adaptive icon, with a check badge on the active one.
+ */
 @Composable
-private fun AppIconRow(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
+private fun AppIconGrid(
+    selectedId: String,
+    onSelect: (String) -> Unit
 ) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp),
-        shape = CircleShape,
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.surfaceContainerHigh,
-        contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-        else MaterialTheme.colorScheme.onSurface
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
-            )
-            if (selected) {
-                Icon(
-                    Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        AppIconManager.OPTIONS.chunked(4).forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                row.forEach { option ->
+                    val isSelected = option.id == selectedId
+                    Surface(
+                        onClick = { onSelect(option.id) },
+                        modifier = Modifier.weight(1f),
+                        shape = if (isSelected) MaterialTheme.shapes.extraLarge
+                        else MaterialTheme.shapes.large,
+                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurface,
+                        border = if (isSelected) {
+                            androidx.compose.foundation.BorderStroke(
+                                1.1.dp,
+                                MaterialTheme.colorScheme.primary
+                            )
+                        } else null
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier.size(52.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(option.iconRes),
+                                    contentDescription = option.label,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(percent = 28))
+                                )
+                                if (isSelected) {
+                                    Surface(
+                                        modifier = Modifier
+                                            .align(Alignment.BottomEnd)
+                                            .size(20.dp),
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.primary
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                Icons.Default.Check,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onPrimary,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = option.label,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+                // Pad an incomplete last row so tiles keep equal width.
+                repeat(4 - row.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
             }
         }
     }

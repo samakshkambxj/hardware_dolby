@@ -38,8 +38,12 @@ import kotlin.math.max
  * - No infinite ticker loop (that re-drew the whole root every 240ms even
  *   when idle and kept the UI thread hot).
  * - Re-snapshot is on-demand only (attach / size change / [updateKey] /
- *   any scroll in the window via ViewTreeObserver) and throttled to ~50ms
- *   with coalescing, so pager swipes and list scrolls refresh at ~20fps.
+ *   any scroll in the window) plus a slow idle cadence, so animated
+ *   content behind the pill (particles, visualizers) never goes stale
+ *   on a static screen.
+ * - While content is moving, captures stream every vsync frame instead of
+ *   being throttled to ~20fps, so the blur tracks scrolls at full display
+ *   rate instead of stepping behind them.
  * - Capture runs on a Choreographer frame callback (right after the fresh
  *   frame lands) instead of a bare post(), so the blur matches what is on
  *   screen instead of trailing a frame behind.
@@ -116,28 +120,56 @@ class BackdropBlurView @JvmOverloads constructor(
     private val drawRect = android.graphics.Rect()
     private var attached = false
     private var lastCaptureMs = 0L
+    private var lastTriggerMs = 0L
     private var frameScheduled = false
+    private var idleScheduled = false
     private var scrollObserver: ViewTreeObserver? = null
     private val choreographer = Choreographer.getInstance()
     private val frameCallback = Choreographer.FrameCallback {
         frameScheduled = false
+        if (!attached || !isAttachedToWindow) return@FrameCallback
+        val now = SystemClock.uptimeMillis()
+        // Active window over — the idle ticker owns refreshes from here.
+        if (now - lastTriggerMs > ACTIVE_WINDOW_MS) return@FrameCallback
         // Not due yet — retry on a later frame to stay vsync-aligned
         // instead of drifting via postDelayed.
-        if (SystemClock.uptimeMillis() - lastCaptureMs < MIN_INTERVAL_MS) {
+        if (now - lastCaptureMs < ACTIVE_INTERVAL_MS) {
             scheduleFrame()
             return@FrameCallback
         }
         refresh()
+        // Keep streaming frames while the window is open so scrolls and
+        // flings track at full display rate instead of stepping.
+        scheduleFrame()
+    }
+    private val idleRunnable = Runnable {
+        idleScheduled = false
+        if (!attached || !isAttachedToWindow) return@Runnable
+        val now = SystemClock.uptimeMillis()
+        if (now - lastTriggerMs < ACTIVE_WINDOW_MS) {
+            // Active path is streaming frames; just re-arm the idle check.
+            scheduleIdle()
+            return@Runnable
+        }
+        // Static screen: slow ambient cadence so animated content behind
+        // the pill (particles, visualizers) never goes visibly stale.
+        if (now - lastCaptureMs >= IDLE_INTERVAL_MS) refresh()
+        scheduleIdle()
     }
     private val scrollListener = ViewTreeObserver.OnScrollChangedListener {
         // Scroll of any list in the window moves the pixels behind the
-        // pill — refresh (throttled + coalesced in requestRefresh, so
-        // flings collapse to ~20fps captures, never one per frame).
+        // pill — refresh at full rate (coalesced per-frame in the
+        // callback above, never one root.draw() per call site).
         requestRefresh()
     }
 
     companion object {
-        private const val MIN_INTERVAL_MS = 50L
+        /** Min gap between captures while content is moving (~60fps). */
+        private const val ACTIVE_INTERVAL_MS = 16L
+        /** Ambient refresh cadence on a static screen. */
+        private const val IDLE_INTERVAL_MS = 400L
+        /** How long after a trigger captures keep streaming per-frame. */
+        private const val ACTIVE_WINDOW_MS = 600L
     }
 
     init {
@@ -175,6 +207,8 @@ class BackdropBlurView @JvmOverloads constructor(
         scrollObserver = null
         choreographer.removeFrameCallback(frameCallback)
         frameScheduled = false
+        removeCallbacks(idleRunnable)
+        idleScheduled = false
         removeCallbacks(null)
         snapshot?.recycle()
         snapshot = null
@@ -188,13 +222,18 @@ class BackdropBlurView @JvmOverloads constructor(
     private fun applyRenderEffect() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && attached) {
             try {
-                setRenderEffect(
-                    RenderEffect.createBlurEffect(
-                        blurRadiusPx.coerceIn(4f, 64f),
-                        blurRadiusPx.coerceIn(4f, 64f),
-                        Shader.TileMode.CLAMP
+                // 0 = clear glass (sharp backdrop, tint only).
+                if (blurRadiusPx < 1f) {
+                    setRenderEffect(null)
+                } else {
+                    setRenderEffect(
+                        RenderEffect.createBlurEffect(
+                            blurRadiusPx.coerceIn(1f, 64f),
+                            blurRadiusPx.coerceIn(1f, 64f),
+                            Shader.TileMode.CLAMP
+                        )
                     )
-                )
+                }
             } catch (_: Exception) {
                 // OEM without RenderEffect: snapshot stays sharp, tint covers.
             }
@@ -203,20 +242,30 @@ class BackdropBlurView @JvmOverloads constructor(
 
     /**
      * Throttled, coalesced refresh request. Safe to call from Compose update
-     * blocks or scroll-driven recompositions — rapid calls collapse into one
-     * deferred capture instead of one root.draw() per frame. The capture
+     * blocks or scroll-driven recompositions — rapid calls collapse into the
+     * streaming frame loop instead of one root.draw() per call. The capture
      * itself runs on the next vsync via Choreographer, right after the fresh
-     * frame lands, so the blur tracks content instead of trailing it.
+     * frame lands, so the blur tracks content instead of trailing it. Also
+     * (re)arms the slow idle ticker that keeps static screens fresh.
      */
     fun requestRefresh() {
         if (!attached || width <= 0 || height <= 0 || !isAttachedToWindow) return
+        lastTriggerMs = SystemClock.uptimeMillis()
         scheduleFrame()
+        scheduleIdle()
     }
 
     private fun scheduleFrame() {
         if (!frameScheduled && attached && isAttachedToWindow) {
             frameScheduled = true
             choreographer.postFrameCallback(frameCallback)
+        }
+    }
+
+    private fun scheduleIdle() {
+        if (!idleScheduled && attached && isAttachedToWindow) {
+            idleScheduled = true
+            postDelayed(idleRunnable, IDLE_INTERVAL_MS)
         }
     }
 

@@ -10,7 +10,11 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothA2dp
 import android.bluetooth.BluetoothCodecConfig
+import android.bluetooth.BluetoothDevice
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -35,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -75,8 +80,37 @@ fun BluetoothCodecCard(
     }
     var info by remember { mutableStateOf<BtAudioInfo?>(null) }
     var queried by remember { mutableStateOf(false) }
+    // Re-query tick: bumped by the connection-state receiver below so the
+    // card appears/disappears live as devices connect and disconnect.
+    var refreshTick by remember { mutableIntStateOf(0) }
 
     DisposableEffect(hasPermission) {
+        if (!hasPermission) return@DisposableEffect onDispose {}
+        val filter = IntentFilter().apply {
+            addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED)
+            addAction(BluetoothA2dp.ACTION_CODEC_CONFIG_CHANGED)
+            addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
+            addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
+        }
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                refreshTick++
+            }
+        }
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                @Suppress("DEPRECATION")
+                context.registerReceiver(receiver, filter)
+            }
+        }
+        onDispose {
+            runCatching { context.unregisterReceiver(receiver) }
+        }
+    }
+
+    DisposableEffect(hasPermission, refreshTick) {
         if (!hasPermission) {
             info = null
             queried = false
@@ -110,6 +144,12 @@ fun BluetoothCodecCard(
         }
     }
 
+    // No A2DP device connected: emit nothing so the card disappears
+    // instead of idling on a "not connected" placeholder. The receiver
+    // above re-queries on connect/disconnect, so the card pops back the
+    // moment a device connects.
+    if (hasPermission && queried && info == null) return
+
     ModernSettingsCard(
         title = "Bluetooth audio",
         icon = Icons.Default.Bluetooth,
@@ -135,13 +175,6 @@ fun BluetoothCodecCard(
             }
             !queried -> {
                 SpinningDolbyLogo(size = 40.dp)
-            }
-            info == null -> {
-                Text(
-                    text = "No Bluetooth audio device connected.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
             else -> {
                 val current = info!!

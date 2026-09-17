@@ -51,7 +51,10 @@ enum class ParticleDensity(val count: Int) {
 
 enum class AccentChoice { DEFAULT, AZURE, VIOLET, TEAL, JADE, GOLD, ROSE, RUBY }
 
-enum class PageNavbarStyle { TRANSPARENT, FROSTED }
+enum class PageNavbarStyle { TRANSPARENT, FROSTED, FILLED, TONAL, OUTLINED }
+
+/** Header banner background wash behind the logo. */
+enum class PageBannerStyle { GRADIENT, FLAT, VIBRANT, FADE, MINIMAL }
 
 data class PageStyle(
     val headerTitle: String = AppBrand.NAME,
@@ -59,16 +62,20 @@ data class PageStyle(
     val showTitle: Boolean = true,
     val showSubtitle: Boolean = true,
     val iconStyle: PageIconStyle = PageIconStyle.ACCENT,
-    val cornerStyle: PageCornerStyle = PageCornerStyle.PILL,
+    val cornerStyle: PageCornerStyle = PageCornerStyle.ROUNDED,
     val cardStyle: PageCardStyle = PageCardStyle.FILLED,
     val iconShape: PageIconShape = PageIconShape.ROUNDED,
     val iconSize: PageIconSize = PageIconSize.M,
     val showBannerWaveform: Boolean = true,
-    val bannerGradient: Boolean = true,
+    val bannerStyle: PageBannerStyle = PageBannerStyle.GRADIENT,
     val headerCentered: Boolean = false,
     val particleDensity: ParticleDensity = ParticleDensity.DENSE,
     val navBlur: Boolean = true,
     val navbarStyle: PageNavbarStyle = PageNavbarStyle.TRANSPARENT,
+    /** Veil opacity for the Frosted navbar background (0 = clear, 1 = solid). */
+    val navTint: Float = 0.55f,
+    /** Backdrop blur radius in px (0 = clear glass). */
+    val navBlurRadius: Float = 20f,
     val dynamicColor: Boolean = true,
     val amoledDark: Boolean = false,
     val accent: AccentChoice = AccentChoice.DEFAULT
@@ -95,11 +102,16 @@ private const val KEY_CARD_STYLE = "card_style"
 private const val KEY_ICON_SHAPE = "icon_shape"
 private const val KEY_ICON_SIZE = "icon_size"
 private const val KEY_SHOW_BANNER_WAVEFORM = "show_banner_waveform"
+private const val KEY_BANNER_STYLE = "banner_style"
+// Legacy pre-style flag (true = gradient, false = flat); only read when
+// KEY_BANNER_STYLE was never written.
 private const val KEY_BANNER_GRADIENT = "banner_gradient"
 private const val KEY_HEADER_CENTERED = "header_centered"
 private const val KEY_PARTICLE_DENSITY = "particle_density"
 private const val KEY_NAV_BLUR = "nav_blur"
 private const val KEY_NAVBAR_STYLE = "navbar_style"
+private const val KEY_NAV_TINT = "nav_tint"
+private const val KEY_NAV_BLUR_RADIUS = "nav_blur_radius"
 private const val KEY_DYNAMIC_COLOR = "dynamic_color"
 private const val KEY_AMOLED_DARK = "amoled_dark"
 private const val KEY_ACCENT = "accent"
@@ -117,16 +129,24 @@ class PageStyleRepository(context: Context) {
         showTitle = prefs.getBoolean(KEY_SHOW_TITLE, true),
         showSubtitle = prefs.getBoolean(KEY_SHOW_SUBTITLE, true),
         iconStyle = readEnum(KEY_ICON_STYLE, PageIconStyle.ACCENT),
-        cornerStyle = readEnum(KEY_CORNER_STYLE, PageCornerStyle.PILL),
+        cornerStyle = readEnum(KEY_CORNER_STYLE, PageCornerStyle.ROUNDED),
         cardStyle = readEnum(KEY_CARD_STYLE, PageCardStyle.FILLED),
         iconShape = readEnum(KEY_ICON_SHAPE, PageIconShape.ROUNDED),
         iconSize = readEnum(KEY_ICON_SIZE, PageIconSize.M),
         showBannerWaveform = prefs.getBoolean(KEY_SHOW_BANNER_WAVEFORM, true),
-        bannerGradient = prefs.getBoolean(KEY_BANNER_GRADIENT, true),
+        bannerStyle = prefs.getString(KEY_BANNER_STYLE, null)?.let {
+            runCatching { PageBannerStyle.valueOf(it) }.getOrNull()
+        } ?: if (prefs.getBoolean(KEY_BANNER_GRADIENT, true)) {
+            PageBannerStyle.GRADIENT
+        } else {
+            PageBannerStyle.FLAT
+        },
         headerCentered = prefs.getBoolean(KEY_HEADER_CENTERED, false),
         particleDensity = readEnum(KEY_PARTICLE_DENSITY, ParticleDensity.DENSE),
         navBlur = prefs.getBoolean(KEY_NAV_BLUR, true),
         navbarStyle = readEnum(KEY_NAVBAR_STYLE, PageNavbarStyle.TRANSPARENT),
+        navTint = prefs.getFloat(KEY_NAV_TINT, 0.55f).coerceIn(0f, 1f),
+        navBlurRadius = prefs.getFloat(KEY_NAV_BLUR_RADIUS, 20f).coerceIn(0f, 64f),
         dynamicColor = prefs.getBoolean(KEY_DYNAMIC_COLOR, true),
         amoledDark = prefs.getBoolean(KEY_AMOLED_DARK, false),
         accent = readEnum(KEY_ACCENT, AccentChoice.DEFAULT)
@@ -149,11 +169,13 @@ class PageStyleRepository(context: Context) {
             .putString(KEY_ICON_SHAPE, next.iconShape.name)
             .putString(KEY_ICON_SIZE, next.iconSize.name)
             .putBoolean(KEY_SHOW_BANNER_WAVEFORM, next.showBannerWaveform)
-            .putBoolean(KEY_BANNER_GRADIENT, next.bannerGradient)
+            .putString(KEY_BANNER_STYLE, next.bannerStyle.name)
             .putBoolean(KEY_HEADER_CENTERED, next.headerCentered)
             .putString(KEY_PARTICLE_DENSITY, next.particleDensity.name)
             .putBoolean(KEY_NAV_BLUR, next.navBlur)
             .putString(KEY_NAVBAR_STYLE, next.navbarStyle.name)
+            .putFloat(KEY_NAV_TINT, next.navTint.coerceIn(0f, 1f))
+            .putFloat(KEY_NAV_BLUR_RADIUS, next.navBlurRadius.coerceIn(0f, 64f))
             .putBoolean(KEY_DYNAMIC_COLOR, next.dynamicColor)
             .putBoolean(KEY_AMOLED_DARK, next.amoledDark)
             .putString(KEY_ACCENT, next.accent.name)
