@@ -51,6 +51,8 @@ import org.lunaris.dolby.data.autoeq.*
 import org.lunaris.dolby.ui.components.*
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
 import org.lunaris.dolby.ui.viewmodel.DynamicsEqualizerViewModel
+import org.lunaris.dolby.ui.viewmodel.EnhancementsViewModel
+import org.lunaris.dolby.audio.FrameworkEnhancementsEngine
 import org.lunaris.dolby.domain.models.*
 import org.lunaris.dolby.utils.*
 
@@ -1765,14 +1767,16 @@ private fun CollapsibleDynamicsBand(
 }
 
 private fun DynamicsProcessingSection(
-    dynamicsVm: DynamicsEqualizerViewModel = viewModel()
+    dynamicsVm: DynamicsEqualizerViewModel = viewModel(),
+    enhVm: EnhancementsViewModel = viewModel()
 ) {
     val state by dynamicsVm.uiState.collectAsState()
+    val fxState by enhVm.uiState.collectAsState()
     val spectrum by dynamicsVm.spectrum.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
     var showSaveDialog by remember { mutableStateOf(false) }
     var presetName by remember { mutableStateOf("") }
-    val tabs = listOf("Bands", "MBC", "Limiter")
+    val tabs = listOf("Bands", "MBC", "Limiter", "FX")
 
     EqualizerCard {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -1782,7 +1786,7 @@ private fun DynamicsProcessingSection(
                 modifier = Modifier.padding(bottom = 4.dp)
             )
             Text(
-                text = "Independent pre-EQ, multiband compressor and limiter",
+                text = "Independent pre-EQ, multiband compressor, limiter and FX",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -1934,7 +1938,7 @@ private fun DynamicsProcessingSection(
                         }
                     }
                 }
-                else -> {
+                2 -> {
                     ModernSettingSwitch(
                         title = "Limiter",
                         subtitle = "Final-stage output limiter, prevents clipping",
@@ -1984,6 +1988,115 @@ private fun DynamicsProcessingSection(
                         ) {
                             Text("Reset limiter")
                         }
+                    }
+                }
+                else -> {
+                    Text(
+                        text = "Framework effects — they stack with Dolby and Dynamics, combine to taste",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    if (fxState.bassSupported) {
+                        ModernSettingSwitch(
+                            title = "Bass boost",
+                            subtitle = "Extra low-end on top of the Dolby bass enhancer",
+                            checked = fxState.bassEnabled,
+                            onCheckedChange = { enhVm.setBassEnabled(it) }
+                        )
+                        if (fxState.bassEnabled) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            ModernSettingSlider(
+                                title = "Strength",
+                                value = fxState.bassStrengthPercent,
+                                valueRange = 0f..100f,
+                                steps = 99,
+                                onValueChange = { enhVm.setBassStrength(it) },
+                                valueLabel = { "$it%" }
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    if (fxState.virtualizerSupported) {
+                        ModernSettingSwitch(
+                            title = "Virtualizer",
+                            subtitle = "Headphone widening, alongside the Dolby virtualizers",
+                            checked = fxState.virtualizerEnabled,
+                            onCheckedChange = { enhVm.setVirtualizerEnabled(it) }
+                        )
+                        if (fxState.virtualizerEnabled) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            ModernSettingSlider(
+                                title = "Strength",
+                                value = fxState.virtualizerStrengthPercent,
+                                valueRange = 0f..100f,
+                                steps = 99,
+                                onValueChange = { enhVm.setVirtualizerStrength(it) },
+                                valueLabel = { "$it%" }
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    if (fxState.reverbSupported) {
+                        ModernSettingSwitch(
+                            title = "Reverb",
+                            subtitle = "Room simulation on the output mix",
+                            checked = fxState.reverbEnabled,
+                            onCheckedChange = { enhVm.setReverbEnabled(it) }
+                        )
+                        if (fxState.reverbEnabled) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                itemsIndexed(FrameworkEnhancementsEngine.REVERB_PRESET_NAMES) { index, name ->
+                                    val selected = fxState.reverbPreset == index
+                                    AssistChip(
+                                        onClick = { enhVm.setReverbPreset(index) },
+                                        label = { Text(name) },
+                                        shape = CircleShape,
+                                        leadingIcon = if (selected) {
+                                            {
+                                                Icon(
+                                                    Icons.Default.Check,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        } else null
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    if (fxState.loudnessSupported) {
+                        ModernSettingSwitch(
+                            title = "Loudness",
+                            subtitle = "Output gain alongside the Dolby volume leveler",
+                            checked = fxState.loudnessEnabled,
+                            onCheckedChange = { enhVm.setLoudnessEnabled(it) }
+                        )
+                        if (fxState.loudnessEnabled) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            ModernSettingSlider(
+                                title = "Gain",
+                                value = fxState.loudnessGainHalfDb,
+                                valueRange = 0f..20f,
+                                steps = 19,
+                                onValueChange = { enhVm.setLoudnessGainHalfDb(it) },
+                                valueLabel = { "%.1f dB".format(it / 2f) }
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    OutlinedButton(
+                        onClick = { enhVm.resetFx() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Reset FX")
                     }
                 }
             }
