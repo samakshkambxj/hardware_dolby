@@ -43,6 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
@@ -53,6 +55,7 @@ import org.lunaris.dolby.ui.components.*
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
 import org.lunaris.dolby.ui.viewmodel.DynamicsEqualizerViewModel
 import org.lunaris.dolby.ui.viewmodel.EnhancementsViewModel
+import org.lunaris.dolby.ui.viewmodel.VeynFxViewModel
 import org.lunaris.dolby.audio.FrameworkEnhancementsEngine
 import org.lunaris.dolby.domain.models.*
 import org.lunaris.dolby.utils.*
@@ -394,6 +397,7 @@ private fun ModernEqualizerContent(
 
         DynamicsProcessingSection()
 
+        VeynFxSection()
 
         Spacer(modifier = Modifier.height(70.dp))
     }
@@ -2197,3 +2201,557 @@ private fun DynamicsProcessingSection(
         )
     }
 }
+
+/**
+ * Stage-A controller UI for the VeynFx DSP chain (AxionFx-native
+ * effects: convolver, crossfeed, exciter, tube, AGC, compressor,
+ * widener, surround, spatial, multiband compressor). Each block is
+ * enable-gated and collapsed by default, reusing
+ * [CollapsibleDynamicsBand].
+ *
+ * Blocks already covered by Dolby/Dynamics/framework FX (EQ, bass,
+ * limiter, MBC, FIR, reverb) are intentionally not duplicated here.
+ * Until libveynfxaidl lands in the device tree the section reports
+ * the engine missing instead of failing.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun VeynFxSection(
+    veynVm: VeynFxViewModel = viewModel()
+) {
+    val s by veynVm.uiState.collectAsState()
+    val irPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) veynVm.loadIr(uri)
+    }
+
+    EqualizerCard {
+        Column(modifier = Modifier.padding(20.dp)) {
+            EqualizerSectionHeader(
+                icon = Icons.Default.GraphicEq,
+                title = "VeynFx DSP",
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+            Text(
+                text = "Native Viper-style chain: convolver, crossfeed, exciter, tube, AGC and more",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+            if (!s.available) {
+                Text(
+                    text = "VeynFx engine not found on this build — port libveynfxaidl " +
+                        "and register it in audio_effects.xml to enable this section.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+            ModernSettingSwitch(
+                title = "Enable VeynFx",
+                subtitle = "Master switch for the whole chain",
+                checked = s.masterEnabled,
+                onCheckedChange = { veynVm.setMasterEnabled(it) }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            ModernSettingSlider(
+                title = "Output gain",
+                value = s.outputGain,
+                valueRange = 0f..200f,
+                steps = 99,
+                onValueChange = { veynVm.setOutputGain(it) },
+                valueLabel = { "$it%" }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            key("veyn_widener") {
+                CollapsibleDynamicsBand(
+                    title = "Stereo widener",
+                    summary = if (s.widenerEnabled) "On · ${s.widenerWidth}%" else "Off",
+                    saveKey = "veyn_widener"
+                ) {
+                    ModernSettingSwitch(
+                        title = "Stereo widener",
+                        subtitle = "Width enhancement alongside the Dolby widener",
+                        checked = s.widenerEnabled,
+                        onCheckedChange = { veynVm.setWidenerEnabled(it) }
+                    )
+                    if (s.widenerEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ModernSettingSlider(
+                            title = "Width",
+                            value = s.widenerWidth,
+                            valueRange = 0f..200f,
+                            steps = 99,
+                            onValueChange = { veynVm.setWidenerWidth(it) },
+                            valueLabel = { "$it%" }
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            key("veyn_tube") {
+                CollapsibleDynamicsBand(
+                    title = "Tube simulator",
+                    summary = if (s.tubeEnabled) "On · Drive ${s.tubeDrive}" else "Off",
+                    saveKey = "veyn_tube"
+                ) {
+                    ModernSettingSwitch(
+                        title = "Tube simulator",
+                        subtitle = "Warm saturation",
+                        checked = s.tubeEnabled,
+                        onCheckedChange = { veynVm.setTubeEnabled(it) }
+                    )
+                    if (s.tubeEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ModernSettingSlider(
+                            title = "Drive",
+                            value = s.tubeDrive,
+                            valueRange = 0f..100f,
+                            steps = 99,
+                            onValueChange = { veynVm.setTubeDrive(it) },
+                            valueLabel = { "$it%" }
+                        )
+                        ModernSettingSlider(
+                            title = "Mix",
+                            value = s.tubeMix,
+                            valueRange = 0f..100f,
+                            steps = 99,
+                            onValueChange = { veynVm.setTubeMix(it) },
+                            valueLabel = { "$it%" }
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            key("veyn_exciter") {
+                CollapsibleDynamicsBand(
+                    title = "Exciter",
+                    summary = if (s.exciterEnabled) "On · Drive ${s.exciterDrive}" else "Off",
+                    saveKey = "veyn_exciter"
+                ) {
+                    ModernSettingSwitch(
+                        title = "Exciter",
+                        subtitle = "Harmonic brightness",
+                        checked = s.exciterEnabled,
+                        onCheckedChange = { veynVm.setExciterEnabled(it) }
+                    )
+                    if (s.exciterEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ModernSettingSlider(
+                            title = "Drive",
+                            value = s.exciterDrive,
+                            valueRange = 0f..100f,
+                            steps = 99,
+                            onValueChange = { veynVm.setExciterDrive(it) },
+                            valueLabel = { "$it" }
+                        )
+                        ModernSettingSlider(
+                            title = "Blend",
+                            value = s.exciterBlend,
+                            valueRange = 0f..100f,
+                            steps = 99,
+                            onValueChange = { veynVm.setExciterBlend(it) },
+                            valueLabel = { "$it" }
+                        )
+                        ModernSettingSlider(
+                            title = "Frequency",
+                            value = s.exciterFreq,
+                            valueRange = 1000f..20000f,
+                            steps = 189,
+                            onValueChange = { veynVm.setExciterFreq(it) },
+                            valueLabel = { formatFrequency(it) }
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            key("veyn_xfeed") {
+                CollapsibleDynamicsBand(
+                    title = "Crossfeed",
+                    summary = if (s.xfeedEnabled) "On · ${s.xfeedLevel}%" else "Off",
+                    saveKey = "veyn_xfeed"
+                ) {
+                    ModernSettingSwitch(
+                        title = "Crossfeed",
+                        subtitle = "Speaker-like imaging on headphones",
+                        checked = s.xfeedEnabled,
+                        onCheckedChange = { veynVm.setXfeedEnabled(it) }
+                    )
+                    if (s.xfeedEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ModernSettingSlider(
+                            title = "Level",
+                            value = s.xfeedLevel,
+                            valueRange = 0f..100f,
+                            steps = 99,
+                            onValueChange = { veynVm.setXfeedLevel(it) },
+                            valueLabel = { "$it%" }
+                        )
+                        ModernSettingSlider(
+                            title = "Cutoff",
+                            value = s.xfeedCutoff,
+                            valueRange = 200f..5000f,
+                            steps = 47,
+                            onValueChange = { veynVm.setXfeedCutoff(it) },
+                            valueLabel = { formatFrequency(it) }
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            key("veyn_agc") {
+                CollapsibleDynamicsBand(
+                    title = "Auto gain",
+                    summary = if (s.agcEnabled) "On · ${s.agcTargetDb} dB" else "Off",
+                    saveKey = "veyn_agc"
+                ) {
+                    ModernSettingSwitch(
+                        title = "Auto gain",
+                        subtitle = "Automatic level control",
+                        checked = s.agcEnabled,
+                        onCheckedChange = { veynVm.setAgcEnabled(it) }
+                    )
+                    if (s.agcEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ModernSettingSlider(
+                            title = "Target",
+                            value = s.agcTargetDb,
+                            valueRange = -30f..0f,
+                            steps = 29,
+                            onValueChange = { veynVm.setAgcTargetDb(it) },
+                            valueLabel = { "$it dB" }
+                        )
+                        ModernSettingSlider(
+                            title = "Max gain",
+                            value = s.agcMaxGainDb,
+                            valueRange = 0f..30f,
+                            steps = 29,
+                            onValueChange = { veynVm.setAgcMaxGainDb(it) },
+                            valueLabel = { "$it dB" }
+                        )
+                        ModernSettingSlider(
+                            title = "Speed",
+                            value = s.agcSpeed,
+                            valueRange = 0f..100f,
+                            steps = 99,
+                            onValueChange = { veynVm.setAgcSpeed(it) },
+                            valueLabel = { "$it" }
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            key("veyn_comp") {
+                CollapsibleDynamicsBand(
+                    title = "Compressor",
+                    summary = if (s.compEnabled) "On · ${s.compThresholdDb} dB" else "Off",
+                    saveKey = "veyn_comp"
+                ) {
+                    ModernSettingSwitch(
+                        title = "Compressor",
+                        subtitle = "Single-band dynamics control",
+                        checked = s.compEnabled,
+                        onCheckedChange = { veynVm.setCompEnabled(it) }
+                    )
+                    if (s.compEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ModernSettingSlider(
+                            title = "Threshold",
+                            value = s.compThresholdDb,
+                            valueRange = -60f..0f,
+                            steps = 59,
+                            onValueChange = { veynVm.setCompThresholdDb(it) },
+                            valueLabel = { "$it dB" }
+                        )
+                        ModernSettingSlider(
+                            title = "Ratio",
+                            value = s.compRatio,
+                            valueRange = 1f..20f,
+                            steps = 18,
+                            onValueChange = { veynVm.setCompRatio(it) },
+                            valueLabel = { "${it}:1" }
+                        )
+                        ModernSettingSlider(
+                            title = "Attack",
+                            value = s.compAttackMs,
+                            valueRange = 1f..200f,
+                            steps = 198,
+                            onValueChange = { veynVm.setCompAttackMs(it) },
+                            valueLabel = { "$it ms" }
+                        )
+                        ModernSettingSlider(
+                            title = "Release",
+                            value = s.compReleaseMs,
+                            valueRange = 10f..1000f,
+                            steps = 98,
+                            onValueChange = { veynVm.setCompReleaseMs(it) },
+                            valueLabel = { "$it ms" }
+                        )
+                        ModernSettingSlider(
+                            title = "Knee",
+                            value = s.compKneeDb,
+                            valueRange = 0f..30f,
+                            steps = 29,
+                            onValueChange = { veynVm.setCompKneeDb(it) },
+                            valueLabel = { "$it dB" }
+                        )
+                        ModernSettingSlider(
+                            title = "Makeup",
+                            value = s.compMakeupDb,
+                            valueRange = 0f..24f,
+                            steps = 23,
+                            onValueChange = { veynVm.setCompMakeupDb(it) },
+                            valueLabel = { "$it dB" }
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            key("veyn_surr") {
+                CollapsibleDynamicsBand(
+                    title = "Surround",
+                    summary = if (s.surrEnabled) "On · ${s.surrWidth}%" else "Off",
+                    saveKey = "veyn_surr"
+                ) {
+                    ModernSettingSwitch(
+                        title = "Surround",
+                        subtitle = "Diffuse surround widening",
+                        checked = s.surrEnabled,
+                        onCheckedChange = { veynVm.setSurrEnabled(it) }
+                    )
+                    if (s.surrEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ModernSettingSlider(
+                            title = "Delay",
+                            value = s.surrDelay,
+                            valueRange = 0f..100f,
+                            steps = 99,
+                            onValueChange = { veynVm.setSurrDelay(it) },
+                            valueLabel = { "$it%" }
+                        )
+                        ModernSettingSlider(
+                            title = "Width",
+                            value = s.surrWidth,
+                            valueRange = 0f..100f,
+                            steps = 99,
+                            onValueChange = { veynVm.setSurrWidth(it) },
+                            valueLabel = { "$it%" }
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            key("veyn_spat") {
+                CollapsibleDynamicsBand(
+                    title = "Spatial",
+                    summary = if (s.spatEnabled) "On · ${s.spatWidth}%" else "Off",
+                    saveKey = "veyn_spat"
+                ) {
+                    ModernSettingSwitch(
+                        title = "Spatial",
+                        subtitle = "HRTF binaural spatialization",
+                        checked = s.spatEnabled,
+                        onCheckedChange = { veynVm.setSpatEnabled(it) }
+                    )
+                    if (s.spatEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ModernSettingSlider(
+                            title = "Width",
+                            value = s.spatWidth,
+                            valueRange = 0f..100f,
+                            steps = 99,
+                            onValueChange = { veynVm.setSpatWidth(it) },
+                            valueLabel = { "$it%" }
+                        )
+                        ModernSettingSlider(
+                            title = "Blend",
+                            value = s.spatBlend,
+                            valueRange = 0f..100f,
+                            steps = 99,
+                            onValueChange = { veynVm.setSpatBlend(it) },
+                            valueLabel = { "$it%" }
+                        )
+                        Text(
+                            text = "HRTF profile",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)
+                        )
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            val hrtfLabels = listOf("Default", "Alt 1", "Alt 2")
+                            items(hrtfLabels.size) { index ->
+                                val selected = s.spatHrtf == index
+                                AssistChip(
+                                    onClick = { veynVm.setSpatHrtf(index) },
+                                    label = { Text(hrtfLabels[index]) },
+                                    shape = CircleShape,
+                                    leadingIcon = if (selected) {
+                                        {
+                                            Icon(
+                                                Icons.Default.Check,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    } else null
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            key("veyn_conv") {
+                CollapsibleDynamicsBand(
+                    title = "Convolver",
+                    summary = if (s.convEnabled) {
+                        "On · " + s.convIrName.ifEmpty { "${s.convMix}%" }
+                    } else "Off",
+                    saveKey = "veyn_conv"
+                ) {
+                    ModernSettingSwitch(
+                        title = "Convolver",
+                        subtitle = "Impulse-response reverb",
+                        checked = s.convEnabled,
+                        onCheckedChange = { veynVm.setConvEnabled(it) }
+                    )
+                    if (s.convEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ModernSettingSlider(
+                            title = "Mix",
+                            value = s.convMix,
+                            valueRange = 0f..100f,
+                            steps = 99,
+                            onValueChange = { veynVm.setConvMix(it) },
+                            valueLabel = { "$it%" }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { irPicker.launch("audio/*") },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    if (s.convIrName.isEmpty()) "Load IR file"
+                                    else s.convIrName
+                                )
+                            }
+                            if (s.convIrName.isNotEmpty()) {
+                                IconButton(onClick = { veynVm.clearIr() }) {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "Clear IR",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            key("veyn_mcomp") {
+                CollapsibleDynamicsBand(
+                    title = "Multiband comp",
+                    summary = if (s.mcompEnabled) "On · 4 bands" else "Off",
+                    saveKey = "veyn_mcomp"
+                ) {
+                    ModernSettingSwitch(
+                        title = "Multiband comp",
+                        subtitle = "4-band compressor with crossovers",
+                        checked = s.mcompEnabled,
+                        onCheckedChange = { veynVm.setMcompEnabled(it) }
+                    )
+                    if (s.mcompEnabled) {
+                        val bandLabels = listOf("Low", "Low-mid", "High-mid", "High")
+                        s.mcompBands.forEachIndexed { index, band ->
+                            Spacer(modifier = Modifier.height(8.dp))
+                            key("veyn_mcomp_band_$index") {
+                                CollapsibleDynamicsBand(
+                                    title = "${bandLabels.getOrElse(index) { "Band $index" }} band",
+                                    summary = "${band.thresholdDb} dB · ${band.ratio}:1",
+                                    saveKey = "veyn_mcomp_band_$index"
+                                ) {
+                                    ModernSettingSlider(
+                                        title = "Threshold",
+                                        value = band.thresholdDb,
+                                        valueRange = -60f..0f,
+                                        steps = 59,
+                                        onValueChange = { veynVm.setMcompThresholdDb(index, it) },
+                                        valueLabel = { "$it dB" }
+                                    )
+                                    ModernSettingSlider(
+                                        title = "Ratio",
+                                        value = band.ratio,
+                                        valueRange = 1f..20f,
+                                        steps = 18,
+                                        onValueChange = { veynVm.setMcompRatio(index, it) },
+                                        valueLabel = { "${it}:1" }
+                                    )
+                                    ModernSettingSlider(
+                                        title = "Attack",
+                                        value = band.attackMs,
+                                        valueRange = 1f..200f,
+                                        steps = 198,
+                                        onValueChange = { veynVm.setMcompAttackMs(index, it) },
+                                        valueLabel = { "$it ms" }
+                                    )
+                                    ModernSettingSlider(
+                                        title = "Release",
+                                        value = band.releaseMs,
+                                        valueRange = 10f..1000f,
+                                        steps = 98,
+                                        onValueChange = { veynVm.setMcompReleaseMs(index, it) },
+                                        valueLabel = { "$it ms" }
+                                    )
+                                    ModernSettingSlider(
+                                        title = "Makeup",
+                                        value = band.makeupDb,
+                                        valueRange = -12f..12f,
+                                        steps = 23,
+                                        onValueChange = { veynVm.setMcompMakeupDb(index, it) },
+                                        valueLabel = { "$it dB" }
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Crossovers",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        s.mcompXovers.forEachIndexed { index, hz ->
+                            ModernSettingSlider(
+                                title = "Crossover ${index + 1}",
+                                value = hz,
+                                valueRange = 100f..12000f,
+                                steps = 118,
+                                onValueChange = { veynVm.setMcompXover(index, it) },
+                                valueLabel = { formatFrequency(it) }
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = { veynVm.resetAll() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Reset VeynFx")
+            }
+            }
+        }
+    }
+}
+
