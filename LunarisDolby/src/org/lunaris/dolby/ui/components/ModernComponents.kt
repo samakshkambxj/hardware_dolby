@@ -10,6 +10,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -300,7 +301,10 @@ fun DolbyMainCard(
                     modifier = Modifier
                         .height(60.dp)
                         .squishable(enabled = true, scaleDown = 0.9f)
-                        .clickable {
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {
                             logoTaps = EasterEggs.recordLogoTap(context)
                             when {
                                 logoTaps >= EasterEggs.LOGO_TAP_TARGET -> {

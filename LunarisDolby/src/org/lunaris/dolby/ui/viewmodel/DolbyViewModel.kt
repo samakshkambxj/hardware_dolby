@@ -305,6 +305,13 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val profile = repository.getCurrentProfile()
                 repository.setBassLevel(profile, level)
+                // Fan the master out to the sub/mid/upper trims so the
+                // three sliders visibly follow it. Each trim applies its
+                // own delta on top of the master curve (stacking is by
+                // design), and the combined gains show up in the EQ graph.
+                repository.setSubBassLevel(profile, level)
+                repository.setMidBassLevel(profile, level)
+                repository.setUpperBassLevel(profile, level)
                 loadSettings()
             } catch (e: IllegalArgumentException) {
                 DolbyConstants.dlog(TAG, "Invalid bass level: ${e.message}")

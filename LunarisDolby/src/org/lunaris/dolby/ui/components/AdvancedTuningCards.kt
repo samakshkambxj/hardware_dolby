@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -78,7 +79,10 @@ fun ExperimentalCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { expanded = !expanded },
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { expanded = !expanded },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 SettingsCardIcon(icon = Icons.Default.Science)
@@ -309,7 +313,10 @@ fun CodecInfoCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { expanded = !expanded },
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { expanded = !expanded },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 SettingsCardIcon(icon = Icons.Default.Audiotrack)

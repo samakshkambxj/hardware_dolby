@@ -76,6 +76,8 @@ data class PageStyle(
     val navTint: Float = 0.55f,
     /** Backdrop blur radius in px (0 = clear glass). */
     val navBlurRadius: Float = 20f,
+    /** Navbar outline ring thickness in dp (0 = no ring). */
+    val navBorderWidth: Float = 2f,
     val dynamicColor: Boolean = true,
     val amoledDark: Boolean = false,
     val accent: AccentChoice = AccentChoice.DEFAULT
@@ -112,6 +114,7 @@ private const val KEY_NAV_BLUR = "nav_blur"
 private const val KEY_NAVBAR_STYLE = "navbar_style"
 private const val KEY_NAV_TINT = "nav_tint"
 private const val KEY_NAV_BLUR_RADIUS = "nav_blur_radius"
+private const val KEY_NAV_BORDER_WIDTH = "nav_border_width"
 private const val KEY_DYNAMIC_COLOR = "dynamic_color"
 private const val KEY_AMOLED_DARK = "amoled_dark"
 private const val KEY_ACCENT = "accent"
@@ -147,6 +150,7 @@ class PageStyleRepository(context: Context) {
         navbarStyle = readEnum(KEY_NAVBAR_STYLE, PageNavbarStyle.TRANSPARENT),
         navTint = prefs.getFloat(KEY_NAV_TINT, 0.55f).coerceIn(0f, 1f),
         navBlurRadius = prefs.getFloat(KEY_NAV_BLUR_RADIUS, 20f).coerceIn(0f, 64f),
+        navBorderWidth = prefs.getFloat(KEY_NAV_BORDER_WIDTH, 2f).coerceIn(0f, 4f),
         dynamicColor = prefs.getBoolean(KEY_DYNAMIC_COLOR, true),
         amoledDark = prefs.getBoolean(KEY_AMOLED_DARK, false),
         accent = readEnum(KEY_ACCENT, AccentChoice.DEFAULT)
@@ -176,6 +180,7 @@ class PageStyleRepository(context: Context) {
             .putString(KEY_NAVBAR_STYLE, next.navbarStyle.name)
             .putFloat(KEY_NAV_TINT, next.navTint.coerceIn(0f, 1f))
             .putFloat(KEY_NAV_BLUR_RADIUS, next.navBlurRadius.coerceIn(0f, 64f))
+            .putFloat(KEY_NAV_BORDER_WIDTH, next.navBorderWidth.coerceIn(0f, 4f))
             .putBoolean(KEY_DYNAMIC_COLOR, next.dynamicColor)
             .putBoolean(KEY_AMOLED_DARK, next.amoledDark)
             .putString(KEY_ACCENT, next.accent.name)

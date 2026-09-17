@@ -540,12 +540,6 @@ private fun ModernAdvancedSettingsContent(
         }
         }
 
-        if (match("bluetooth", "codec", "ldac", "aptx", "aac", "a2dp", "sbc")) {
-        item(key = "bt_codec") {
-            BluetoothCodecCard()
-        }
-        }
-
         if (match("automation", "tasker", "broadcast", "macrodroid")) {
         item(key = "automation") {
             AutomationCard(forceExpand = query.isNotEmpty())
@@ -565,21 +559,6 @@ private fun ModernAdvancedSettingsContent(
                 onAssign = { viewModel.assignDeviceScene(it) },
                 onClear = { viewModel.clearDeviceScene(it) }
             )
-        }
-        }
-
-        if (state.settings.enabled) {
-        if (match("lab", "tuning", "dap", "experimental", "param", "reverb", "height")) {
-        item(key = "experimental") {
-            ExperimentalCard(
-                labParams = state.profileSettings.labParams,
-                onParamChange = { paramId, value ->
-                    viewModel.setLabParam(paramId, value)
-                },
-                onReset = { viewModel.resetLabParams() },
-                forceExpand = query.isNotEmpty()
-            )
-        }
         }
         }
 

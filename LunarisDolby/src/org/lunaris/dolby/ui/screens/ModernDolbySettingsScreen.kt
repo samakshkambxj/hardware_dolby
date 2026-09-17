@@ -44,6 +44,7 @@ fun ModernDolbySettingsScreen(
     val dirtyProfiles by viewModel.dirtyProfiles.collectAsState()
     var showSaveSceneDialog by remember { mutableStateOf(false) }
     var showResetScenesDialog by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
     var sceneName by remember { mutableStateOf("") }
     var showOutputDialog by remember { mutableStateOf(false) }
     val outputDevices by viewModel.outputDevices.collectAsState()
@@ -141,10 +142,7 @@ fun ModernDolbySettingsScreen(
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
-                IconButton(onClick = {
-                    // Direct reset — no confirm dialog, no toast.
-                    viewModel.resetAllProfiles()
-                }) {
+                IconButton(onClick = { showResetDialog = true }) {
                     Icon(
                         Icons.Default.RestartAlt,
                         contentDescription = "Reset",
@@ -260,6 +258,19 @@ fun ModernDolbySettingsScreen(
         }
 
     }
+    if (showResetDialog) {
+        ModernConfirmDialog(
+            title = stringResource(R.string.dolby_reset_all),
+            message = stringResource(R.string.dolby_reset_all_message),
+            icon = Icons.Default.RestartAlt,
+            onConfirm = {
+                viewModel.resetAllProfiles()
+                showResetDialog = false
+            },
+            onDismiss = { showResetDialog = false }
+        )
+    }
+
     if (showSaveSceneDialog) {
         SaveSceneDialog(
             name = sceneName,

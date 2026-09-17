@@ -2,6 +2,9 @@
 
 ### 2026-09-17
 
+- Add navbar border-width slider (0–4 dp, 2 dp default) driving the Transparent/Frosted/Tonal/Outlined ring
+- Fan the master bass level out to the sub/mid/upper trims so they follow it and the EQ graph shows the result
+
 - Add framework FX tab (bass boost, virtualizer, reverb, loudness) to dynamics processing
 - Add transparent navbar style with retained live blur, rename Page Style to Customization
 - Fix navbar blur stutter/delay with vsync-aligned captures and faster throttles

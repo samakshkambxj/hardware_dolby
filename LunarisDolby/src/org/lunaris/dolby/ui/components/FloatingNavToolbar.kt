@@ -57,11 +57,11 @@ fun FloatingNavToolbar(
     // Navbar-only real blur: the list behind the pill is snapshotted and
     // GPU-blurred (see RealBlurBackdrop). Which chrome is drawn depends on
     // Customization > Navbar > Style:
-    // - Transparent: live blur only + hairline border, no veil/shadow.
+    // - Transparent: live blur only + adjustable border, no veil/shadow.
     // - Frosted: tinted veil (Background tint) + blur + border + shadow.
     // - Filled: the pre-blur opaque primaryContainer pill + shadow.
     // - Tonal: opaque surface pill + border + shadow, never blurred.
-    // - Outlined: transparent fill + hairline border only.
+    // - Outlined: transparent fill + adjustable border only.
     val pageStyle by rememberPageStyle()
     val navbarStyle = pageStyle.navbarStyle
     val veilAlpha = pageStyle.navTint.coerceIn(0f, 1f)
@@ -69,6 +69,7 @@ fun FloatingNavToolbar(
     val barSolid = MaterialTheme.colorScheme.surfaceContainerHigh
     val filledContainer = MaterialTheme.colorScheme.primaryContainer
     val barEdge = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
+    val barBorderWidth = pageStyle.navBorderWidth.coerceIn(0f, 4f).dp
     val onContainerColor = MaterialTheme.colorScheme.onPrimaryContainer
     val primaryColor = MaterialTheme.colorScheme.primary
     val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
@@ -118,7 +119,7 @@ fun FloatingNavToolbar(
                     Box(
                         modifier = Modifier
                             .matchParentSize()
-                            .border(width = 1.dp, color = barEdge, shape = CircleShape)
+                            .border(width = barBorderWidth, color = barEdge, shape = CircleShape)
                     )
                 }
                 PageNavbarStyle.FROSTED -> {
@@ -141,7 +142,7 @@ fun FloatingNavToolbar(
                     Box(
                         modifier = Modifier
                             .matchParentSize()
-                            .border(width = 1.dp, color = barEdge, shape = CircleShape)
+                            .border(width = barBorderWidth, color = barEdge, shape = CircleShape)
                     )
                 }
                 PageNavbarStyle.FILLED -> {
@@ -157,14 +158,14 @@ fun FloatingNavToolbar(
                     Box(
                         modifier = Modifier
                             .matchParentSize()
-                            .border(width = 1.dp, color = barEdge, shape = CircleShape)
+                            .border(width = barBorderWidth, color = barEdge, shape = CircleShape)
                     )
                 }
                 PageNavbarStyle.OUTLINED -> {
                     Box(
                         modifier = Modifier
                             .matchParentSize()
-                            .border(width = 1.dp, color = barEdge, shape = CircleShape)
+                            .border(width = barBorderWidth, color = barEdge, shape = CircleShape)
                     )
                 }
             }
