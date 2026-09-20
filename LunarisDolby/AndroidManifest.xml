@@ -15,6 +15,13 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- signature|privileged, auto-granted via platform cert + privapp
+         allowlist, non-revocable. Preferred over SCHEDULE_EXACT_ALARM for
+         this platform-signed priv-app: canScheduleExactAlarms() is always
+         true, sleep timer never silently degrades to inexact. Keep
+         SCHEDULE_EXACT_ALARM for API 31-32 where USE_EXACT_ALARM
+         does not exist. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <!-- Required to drive the framework Spatializer (setEnabled /
          setHeadTrackerEnabled are gated by this in AudioService).

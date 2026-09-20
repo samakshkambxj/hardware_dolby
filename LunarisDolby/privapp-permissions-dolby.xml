@@ -9,5 +9,6 @@
         <permission name="android.permission.MODIFY_DEFAULT_AUDIO_EFFECTS"/>
         <permission name="android.permission.BLUETOOTH_CONNECT"/>
         <permission name="android.permission.WRITE_SETTINGS"/>
+        <permission name="android.permission.USE_EXACT_ALARM"/>
     </privapp-permissions>
 </permissions>
