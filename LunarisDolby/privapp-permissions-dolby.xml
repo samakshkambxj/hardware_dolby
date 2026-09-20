@@ -10,5 +10,6 @@
         <permission name="android.permission.BLUETOOTH_CONNECT"/>
         <permission name="android.permission.WRITE_SETTINGS"/>
         <permission name="android.permission.USE_EXACT_ALARM"/>
+        <permission name="android.permission.SCHEDULE_EXACT_ALARM"/>
     </privapp-permissions>
 </permissions>
