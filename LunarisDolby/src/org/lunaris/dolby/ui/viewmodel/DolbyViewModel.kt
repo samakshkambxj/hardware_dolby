@@ -43,14 +43,6 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     private val _spatialError = MutableStateFlow<String?>(null)
     val spatialError: StateFlow<String?> = _spatialError.asStateFlow()
 
-    private val _outputDevices =
-        MutableStateFlow<List<org.lunaris.dolby.domain.models.OutputDevice>>(emptyList())
-    val outputDevices: StateFlow<List<org.lunaris.dolby.domain.models.OutputDevice>> =
-        _outputDevices.asStateFlow()
-
-    private val _outputError = MutableStateFlow<String?>(null)
-    val outputError: StateFlow<String?> = _outputError.asStateFlow()
-
     private val _uiState = MutableStateFlow<DolbyUiState>(DolbyUiState.Loading)
     val uiState: StateFlow<DolbyUiState> = _uiState.asStateFlow()
     val currentProfile: StateFlow<Int> = repository.currentProfile
@@ -87,7 +79,6 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         refreshSleepState()
         refreshBalance()
         refreshSpatializer()
-        refreshOutputDevices()
         refreshCodecInfo()
         observeAudioOutputState()
         observeProfileChanges()
@@ -154,44 +145,6 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         _spatialError.value = null
     }
 
-    fun refreshOutputDevices() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                _outputDevices.value = repository.getOutputDevices()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error listing outputs: ${e.message}")
-            }
-        }
-    }
-
-    fun selectOutputDevice(key: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val ok = try {
-                repository.selectOutputDevice(key)
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error switching output: ${e.message}")
-                false
-            }
-            // Routing settles asynchronously; re-read before updating UI.
-            try {
-                kotlinx.coroutines.delay(400L)
-                repository.updateSpeakerState()
-                _outputDevices.value = repository.getOutputDevices()
-                loadSettings()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error refreshing after switch: ${e.message}")
-            }
-            if (!ok) {
-                _outputError.value =
-                    getApplication<Application>().getString(R.string.output_switch_failed)
-            }
-        }
-    }
-
-    fun clearOutputError() {
-        _outputError.value = null
-    }
-    
     private fun observeProfileChanges() {
         profileChangeJob?.cancel()
         profileChangeJob = viewModelScope.launch {
@@ -860,11 +813,6 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         if (!isCleared) {
             viewModelScope.launch(Dispatchers.IO) {
                 repository.updateSpeakerState()
-                try {
-                    _outputDevices.value = repository.getOutputDevices()
-                } catch (e: Exception) {
-                    DolbyConstants.dlog(TAG, "Error refreshing outputs: ${e.message}")
-                }
             }
         }
     }

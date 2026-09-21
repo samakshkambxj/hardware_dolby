@@ -145,9 +145,7 @@ fun SpinningDolbyLogo(
 @Composable
 fun ActiveAudioDeviceCard(
     device: ActiveAudioDevice,
-    modifier: Modifier = Modifier,
-    /** When non-null the card opens the output picker on tap. */
-    onClick: (() -> Unit)? = null
+    modifier: Modifier = Modifier
 ) {
     val categoryLabel = when (device.category) {
         AudioDeviceCategory.SPEAKER -> stringResource(R.string.audio_output_speaker)
@@ -159,8 +157,6 @@ fun ActiveAudioDeviceCard(
     val pageStyle by rememberPageStyle()
 
     Card(
-        onClick = { onClick?.invoke() },
-        enabled = onClick != null,
         modifier = modifier.fillMaxWidth(),
         shape = pageStyle.cardShape,
         colors = CardDefaults.cardColors(
@@ -202,14 +198,6 @@ fun ActiveAudioDeviceCard(
                     text = categoryLabel,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
-                )
-            }
-            if (onClick != null) {
-                Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = stringResource(R.string.output_title),
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f),
-                    modifier = Modifier.size(24.dp)
                 )
             }
         }
