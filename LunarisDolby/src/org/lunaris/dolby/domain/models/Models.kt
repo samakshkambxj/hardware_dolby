@@ -43,9 +43,6 @@ data class ProfileSettings(
     val midLevel: Int = 0,
     val trebleLevel: Int = 0,
     val bassCurve: Int = 0,
-    val subBassLevel: Int = 0,
-    val midBassLevel: Int = 0,
-    val upperBassLevel: Int = 0,
     /** Tuning Lab values keyed by raw DAP param ID (only HAL-supported IDs). */
     val labParams: Map<Int, Int> = emptyMap()
 )

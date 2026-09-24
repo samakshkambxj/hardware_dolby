@@ -652,96 +652,6 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
         }
     }
 
-    fun getSubBassLevel(profile: Int): Int {
-        return getProfilePrefs(profile).getInt(DolbyConstants.PREF_SUB_BASS_LEVEL, 0)
-    }
-
-    fun getMidBassLevel(profile: Int): Int {
-        return getProfilePrefs(profile).getInt(DolbyConstants.PREF_MID_BASS_LEVEL, 0)
-    }
-
-    fun getUpperBassLevel(profile: Int): Int {
-        return getProfilePrefs(profile).getInt(DolbyConstants.PREF_UPPER_BASS_LEVEL, 0)
-    }
-
-    /**
-     * Sub/mid/upper bass trims stack additively on top of the master
-     * bass level + curve. Each trim applies a flat gain over its own
-     * slice of the 20-band GEQ (20-band indices):
-     * sub 0..1 (32-47 Hz), mid-bass 2..4 (141-328 Hz),
-     * upper-bass 5..7 (469-844 Hz).
-     * Upper-bass overlaps the mid enhancer (bands 5..13) by design —
-     * deltas compose, same as the existing bass/mid overlap.
-     */
-    private fun setBassTrim(
-        profile: Int,
-        prefKey: String,
-        label: String,
-        level: Int,
-        bands: IntRange
-    ) {
-        if (isReleased) return
-
-        DolbyConstants.dlog(TAG, "set$label: profile=$profile level=$level")
-
-        if (level !in 0..100) {
-            DolbyConstants.dlog(TAG, "set$label: invalid level $level")
-            throw IllegalArgumentException("$label level must be between 0 and 100")
-        }
-
-        try {
-            val prefs = getProfilePrefs(profile)
-            val previousLevel = prefs.getInt(prefKey, 0)
-
-            prefs.edit().putInt(prefKey, level).apply()
-
-            checkEffect()
-            val currentGains = dolbyEffect.getDapParameter(DsParam.GEQ_BAND_GAINS, profile)
-            val modifiedGains = currentGains.copyOf()
-
-            if (previousLevel > 0) {
-                val previousGain = (previousLevel * BASS_GAIN_MULTIPLIER).toInt()
-                for (i in bands) {
-                    if (i < modifiedGains.size) {
-                        modifiedGains[i] = (modifiedGains[i] - previousGain).coerceIn(-150, 150)
-                    }
-                }
-            }
-
-            if (level > 0) {
-                val trimGain = (level * BASS_GAIN_MULTIPLIER).toInt()
-                for (i in bands) {
-                    if (i < modifiedGains.size) {
-                        modifiedGains[i] = (modifiedGains[i] + trimGain).coerceIn(-150, 150)
-                    }
-                }
-            }
-
-            dolbyEffect.setDapParameter(DsParam.GEQ_BAND_GAINS, modifiedGains, profile)
-
-            val gainsString = modifiedGains.joinToString(",")
-            prefs.edit().putString(DolbyConstants.PREF_PRESET, gainsString).apply()
-
-            DolbyConstants.dlog(TAG, "set$label: success")
-        } catch (e: IllegalArgumentException) {
-            DolbyConstants.dlog(TAG, "set$label: validation error - ${e.message}")
-            getProfilePrefs(profile).edit().putInt(prefKey, 0).apply()
-            throw e
-        } catch (e: Exception) {
-            DolbyConstants.dlog(TAG, "set$label: unexpected error - ${e.message}")
-            throw e
-        }
-    }
-
-    fun setSubBassLevel(profile: Int, level: Int) =
-        setBassTrim(profile, DolbyConstants.PREF_SUB_BASS_LEVEL, "SubBassLevel", level, 0..1)
-
-    fun setMidBassLevel(profile: Int, level: Int) =
-        setBassTrim(profile, DolbyConstants.PREF_MID_BASS_LEVEL, "MidBassLevel", level, 2..4)
-
-    fun setUpperBassLevel(profile: Int, level: Int) =
-        setBassTrim(profile, DolbyConstants.PREF_UPPER_BASS_LEVEL, "UpperBassLevel", level, 5..7)
-
     fun getTrebleEnhancerEnabled(profile: Int): Boolean {
         val prefs = getProfilePrefs(profile)
         return prefs.getBoolean(DolbyConstants.PREF_TREBLE, false)
@@ -1369,9 +1279,6 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
                 prefs.getBoolean(DolbyConstants.PREF_VOLUME, false) ||
                 prefs.getInt(DolbyConstants.PREF_BASS_LEVEL, 0) != 0 ||
                 prefs.getInt(DolbyConstants.PREF_BASS_CURVE, 0) != 0 ||
-                prefs.getInt(DolbyConstants.PREF_SUB_BASS_LEVEL, 0) != 0 ||
-                prefs.getInt(DolbyConstants.PREF_MID_BASS_LEVEL, 0) != 0 ||
-                prefs.getInt(DolbyConstants.PREF_UPPER_BASS_LEVEL, 0) != 0 ||
                 prefs.getInt(DolbyConstants.PREF_MID_LEVEL, 0) != 0 ||
                 prefs.getInt(DolbyConstants.PREF_TREBLE_LEVEL, 0) != 0 ||
                 prefs.getInt(DolbyConstants.PREF_VOLUME_AMOUNT, LEVELER_AMOUNT_DEFAULT) !=
