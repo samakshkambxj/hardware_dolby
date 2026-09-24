@@ -28,9 +28,6 @@
     <string name="dolby_bass_curve_balanced">Balanced</string>
     <string name="dolby_bass_curve_sub_boost">Sub boost</string>
     <string name="dolby_bass_curve_punch">Punch</string>
-    <string name="dolby_sub_bass_level">Sub bass (32–47 Hz)</string>
-    <string name="dolby_mid_bass_level">Mid bass (141–328 Hz)</string>
-    <string name="dolby_upper_bass_level">Upper bass (469–844 Hz)</string>
     <string name="dolby_treble_enhancer">Treble enhancer</string>
     <string name="dolby_treble_level">Treble level</string>
     <string name="dolby_dialogue_enhancer">Dialogue enhancer</string>

@@ -190,9 +190,6 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
                     midLevel = repository.getMidLevel(profile),
                     trebleLevel = repository.getTrebleLevel(profile),
                     bassCurve = repository.getBassCurve(profile),
-                    subBassLevel = repository.getSubBassLevel(profile),
-                    midBassLevel = repository.getMidBassLevel(profile),
-                    upperBassLevel = repository.getUpperBassLevel(profile),
                     labParams = repository.getLabParams(profile)
                 )
                 
@@ -258,13 +255,6 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val profile = repository.getCurrentProfile()
                 repository.setBassLevel(profile, level)
-                // Fan the master out to the sub/mid/upper trims so the
-                // three sliders visibly follow it. Each trim applies its
-                // own delta on top of the master curve (stacking is by
-                // design), and the combined gains show up in the EQ graph.
-                repository.setSubBassLevel(profile, level)
-                repository.setMidBassLevel(profile, level)
-                repository.setUpperBassLevel(profile, level)
                 loadSettings()
             } catch (e: IllegalArgumentException) {
                 DolbyConstants.dlog(TAG, "Invalid bass level: ${e.message}")
@@ -284,54 +274,6 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
                 loadSettings()
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error setting bass curve: ${e.message}")
-            }
-        }
-    }
-
-    fun setSubBassLevel(level: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val profile = repository.getCurrentProfile()
-                repository.setSubBassLevel(profile, level)
-                loadSettings()
-            } catch (e: IllegalArgumentException) {
-                DolbyConstants.dlog(TAG, "Invalid sub bass level: ${e.message}")
-                _uiState.value = DolbyUiState.Error("Invalid sub bass level: ${e.message}")
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error setting sub bass level: ${e.message}")
-                _uiState.value = DolbyUiState.Error("Failed to set sub bass level")
-            }
-        }
-    }
-
-    fun setMidBassLevel(level: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val profile = repository.getCurrentProfile()
-                repository.setMidBassLevel(profile, level)
-                loadSettings()
-            } catch (e: IllegalArgumentException) {
-                DolbyConstants.dlog(TAG, "Invalid mid bass level: ${e.message}")
-                _uiState.value = DolbyUiState.Error("Invalid mid bass level: ${e.message}")
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error setting mid bass level: ${e.message}")
-                _uiState.value = DolbyUiState.Error("Failed to set mid bass level")
-            }
-        }
-    }
-
-    fun setUpperBassLevel(level: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val profile = repository.getCurrentProfile()
-                repository.setUpperBassLevel(profile, level)
-                loadSettings()
-            } catch (e: IllegalArgumentException) {
-                DolbyConstants.dlog(TAG, "Invalid upper bass level: ${e.message}")
-                _uiState.value = DolbyUiState.Error("Invalid upper bass level: ${e.message}")
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error setting upper bass level: ${e.message}")
-                _uiState.value = DolbyUiState.Error("Failed to set upper bass level")
             }
         }
     }
