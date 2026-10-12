@@ -20,19 +20,37 @@ import android.view.ViewTreeObserver
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import org.lunaris.dolby.ui.glass.LocalGlassBackdrop
+import org.lunaris.dolby.ui.glass.liquid.lens
+import org.lunaris.dolby.ui.glass.liquid.vibrancy
+import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
+import top.yukonga.miuix.kmp.blur.highlight.BloomStroke
+import top.yukonga.miuix.kmp.blur.highlight.Highlight
 import kotlin.math.max
 
 /**
  * Navbar-only real backdrop blur.
  *
- * Snapshots the pixels behind the floating nav pill from the activity root
- * and draws them back GPU-blurred. Deliberately used ONLY by
- * [FloatingNavToolbar] — the top bar stays a solid/translucent surface so
- * the two never compete and we pay the snapshot cost once, not twice.
+ * Two engines, same signature:
+ * - Liquid glass (API 33+ with a [LocalGlassBackdrop] provided): the pill
+ *   samples a live layer of the content behind it through the miuix-blur
+ *   engine — refraction lens, vibrancy, specular highlight — with no
+ *   snapshot loop, no staleness hacks, and no per-frame root redraws.
+ * - Snapshot fallback (older releases or no backdrop): the original
+ *   [BackdropBlurView] path below (root snapshot + RenderEffect).
+ *
+ * Deliberately used ONLY by [FloatingNavToolbar] — the top bar stays a
+ * solid/translucent surface so the two never compete and we pay the blur
+ * cost once, not twice.
  *
  * Lag fixes vs the earlier dual-bar version:
  * - No infinite ticker loop (that re-drew the whole root every 240ms even
@@ -61,8 +79,46 @@ fun RealBlurBackdrop(
     modifier: Modifier = Modifier,
     blurRadiusPx: Float = 20f,
     updateKey: Any = Unit,
-    downsample: Int = 8
+    downsample: Int = 8,
+    backdrop: Backdrop? = LocalGlassBackdrop.current,
 ) {
+    // Liquid glass: live refraction over the sampled backdrop. updateKey is
+    // accepted for call-site compatibility but unneeded — the layer is
+    // always fresh, which is exactly what the bucketed pager offset and
+    // scroll ticks were emulating for the snapshot path.
+    @Suppress("UNUSED_EXPRESSION")
+    updateKey
+    if (backdrop != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Box(modifier = modifier) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { CircleShape },
+                        effects = {
+                            padding = maxOf(padding, 40.dp.toPx())
+                            vibrancy()
+                            val radius = blurRadiusPx.coerceIn(1f, 64f)
+                            blur(radius, radius)
+                            lens(
+                                refractionHeight = 24.dp.toPx(),
+                                refractionAmount = 24.dp.toPx(),
+                            )
+                        },
+                        highlight = {
+                            Highlight(style = BloomStroke.GlassStrokeMiddleLight)
+                        },
+                    )
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(tint)
+            )
+        }
+        return
+    }
     Box(modifier = modifier) {
         AndroidView(
             factory = { context ->

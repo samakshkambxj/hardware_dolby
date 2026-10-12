@@ -8,6 +8,7 @@ package org.lunaris.dolby.ui.screens
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import android.os.Build
 import android.os.SystemClock
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -20,6 +21,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,6 +47,9 @@ import kotlinx.coroutines.launch
 import org.lunaris.dolby.ui.components.FloatingNavToolbar
 import org.lunaris.dolby.ui.components.PageNavbarStyle
 import org.lunaris.dolby.ui.components.rememberPageStyle
+import org.lunaris.dolby.ui.glass.LocalGlassBackdrop
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import org.lunaris.dolby.ui.viewmodel.AppProfileViewModel
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
@@ -136,53 +141,73 @@ fun MainPagerScreen(
         }
     }
 
+    // Liquid-glass backdrop root (API 33+): pager pages record into this
+    // layer; the nav pill samples it via RealBlurBackdrop. Static per
+    // device, so the conditional remember below never mismatches slots.
+    val glassBackdrop = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        rememberLayerBackdrop()
+    } else {
+        null
+    }
+
+    CompositionLocalProvider(LocalGlassBackdrop provides glassBackdrop) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(blurScrollConnection)
     ) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize()
-        ) { page ->
-            when (page) {
-                0 -> ModernDolbySettingsScreen(
-                    viewModel = dolbyViewModel,
-                    navController = navController
-                )
-                1 -> ModernEqualizerScreen(
-                    viewModel = equalizerViewModel,
-                    navController = navController
-                )
-                2 -> ModernAdvancedSettingsScreen(
-                    viewModel = dolbyViewModel,
-                    navController = navController
-                )
-                3 -> VolumeControlScreen()
-            }
-        }
-
-        // Soft translucent fade only: the nav pill carries live blur, so this
-        // must stay translucent — an opaque scrim would flatten the blur.
-        BottomNavOverlay(
-            currentRoute = currentFakeRoute,
-            blurKey = {
-                "${pagerState.currentPage}:$offsetBucket:${scrollTickState.intValue}"
-            },
-            advancedBadge = advancedBadge,
-            equalizerBadge = equalizerBadge,
-            onNavigate = { route ->
-                coroutineScope.launch {
-                    when (route) {
-                        "settings" -> pagerState.animateScrollToPage(0)
-                        "equalizer" -> pagerState.animateScrollToPage(1)
-                        "advanced" -> pagerState.animateScrollToPage(2)
-                        "volume" -> pagerState.animateScrollToPage(3)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (glassBackdrop != null) Modifier.layerBackdrop(glassBackdrop)
+                        else Modifier
+                    )
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
+                    when (page) {
+                        0 -> ModernDolbySettingsScreen(
+                            viewModel = dolbyViewModel,
+                            navController = navController
+                        )
+                        1 -> ModernEqualizerScreen(
+                            viewModel = equalizerViewModel,
+                            navController = navController
+                        )
+                        2 -> ModernAdvancedSettingsScreen(
+                            viewModel = dolbyViewModel,
+                            navController = navController
+                        )
+                        3 -> VolumeControlScreen()
                     }
                 }
-            },
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+            }
+
+            // Soft translucent fade only: the nav pill carries live blur, so this
+            // must stay translucent — an opaque scrim would flatten the blur.
+            BottomNavOverlay(
+                currentRoute = currentFakeRoute,
+                blurKey = {
+                    "${pagerState.currentPage}:$offsetBucket:${scrollTickState.intValue}"
+                },
+                advancedBadge = advancedBadge,
+                equalizerBadge = equalizerBadge,
+                onNavigate = { route ->
+                    coroutineScope.launch {
+                        when (route) {
+                            "settings" -> pagerState.animateScrollToPage(0)
+                            "equalizer" -> pagerState.animateScrollToPage(1)
+                            "advanced" -> pagerState.animateScrollToPage(2)
+                            "volume" -> pagerState.animateScrollToPage(3)
+                        }
+                    }
+                },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
     }
 }
 
