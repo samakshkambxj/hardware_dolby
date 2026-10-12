@@ -79,6 +79,7 @@ fun FloatingNavToolbar(
     // stay flat; Transparent only clips when blur needs clean edges
     // (the border ring draws itself).
     val pillChrome = navbarStyle == PageNavbarStyle.FROSTED ||
+        navbarStyle == PageNavbarStyle.LIQUID ||
         navbarStyle == PageNavbarStyle.FILLED ||
         navbarStyle == PageNavbarStyle.TONAL
     val clipStadium = pillChrome ||
@@ -138,6 +139,28 @@ fun FloatingNavToolbar(
                             modifier = Modifier
                                 .matchParentSize()
                                 .background(barSolid)
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .border(width = barBorderWidth, color = barEdge, shape = CircleShape)
+                    )
+                }
+                PageNavbarStyle.LIQUID -> {
+                    if (pageStyle.navBlur) {
+                        LiquidGlassBackdrop(
+                            tint = barTint,
+                            blurRadiusPx = pageStyle.navBlurRadius,
+                            backdrop = LocalGlassBackdrop.current,
+                            modifier = Modifier.matchParentSize()
+                        )
+                    } else {
+                        // No blur: tint veil only, same cheap idea as above.
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(barTint)
                         )
                     }
                     Box(

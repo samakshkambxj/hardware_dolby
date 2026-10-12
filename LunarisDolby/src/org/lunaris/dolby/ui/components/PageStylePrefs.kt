@@ -51,7 +51,7 @@ enum class ParticleDensity(val count: Int) {
 
 enum class AccentChoice { DEFAULT, AZURE, VIOLET, TEAL, JADE, GOLD, ROSE, RUBY }
 
-enum class PageNavbarStyle { TRANSPARENT, FROSTED, FILLED, TONAL, OUTLINED }
+enum class PageNavbarStyle { TRANSPARENT, FROSTED, LIQUID, FILLED, TONAL, OUTLINED }
 
 /** Header banner background wash behind the logo. */
 enum class PageBannerStyle { GRADIENT, FLAT, VIBRANT, FADE, MINIMAL }
@@ -71,7 +71,7 @@ data class PageStyle(
     val headerCentered: Boolean = false,
     val particleDensity: ParticleDensity = ParticleDensity.DENSE,
     val navBlur: Boolean = true,
-    val navbarStyle: PageNavbarStyle = PageNavbarStyle.TRANSPARENT,
+    val navbarStyle: PageNavbarStyle = PageNavbarStyle.LIQUID,
     /** Veil opacity for the Frosted navbar background (0 = clear, 1 = solid). */
     val navTint: Float = 0.55f,
     /** Backdrop blur radius in px (0 = clear glass). */
@@ -147,7 +147,7 @@ class PageStyleRepository(context: Context) {
         headerCentered = prefs.getBoolean(KEY_HEADER_CENTERED, false),
         particleDensity = readEnum(KEY_PARTICLE_DENSITY, ParticleDensity.DENSE),
         navBlur = prefs.getBoolean(KEY_NAV_BLUR, true),
-        navbarStyle = readEnum(KEY_NAVBAR_STYLE, PageNavbarStyle.TRANSPARENT),
+        navbarStyle = readEnum(KEY_NAVBAR_STYLE, PageNavbarStyle.LIQUID),
         navTint = prefs.getFloat(KEY_NAV_TINT, 0.55f).coerceIn(0f, 1f),
         navBlurRadius = prefs.getFloat(KEY_NAV_BLUR_RADIUS, 20f).coerceIn(0f, 64f),
         navBorderWidth = prefs.getFloat(KEY_NAV_BORDER_WIDTH, 2f).coerceIn(0f, 4f),
