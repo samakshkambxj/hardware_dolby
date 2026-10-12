@@ -255,7 +255,7 @@ fun PageStyleScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(12.dp))
                 ModernSettingSwitch(
                     title = "Navbar blur",
-                    subtitle = "Live blur behind the navbar (Transparent and Frosted styles)",
+                    subtitle = "Live blur behind the navbar (Transparent, Frosted and Liquid styles)",
                     checked = style.navBlur,
                     onCheckedChange = { checked -> repo.update { it.copy(navBlur = checked) } }
                 )
