@@ -450,8 +450,7 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     /** Undo path for preset delete: reinserts the removed user preset. */
-    fun restorePreset(preset: EqualizerPreset) {
-        if (!preset.isUserDefined) return
+    fun restorePreset(preset: EqualizerPreset) {        if (!preset.isUserDefined) return
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -463,8 +462,33 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun saveImportedPreset(preset: EqualizerPreset): String? {
-        val state = _uiState.value
+    /** Hearing test result: applies gains to the DSP and stores them as the "Personal" preset. */
+    fun applyHearingGains(gains: List<BandGain>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val targetGains = if (currentBandMode == BandMode.TEN_BAND) {
+                    gains
+                } else {
+                    convertPresetToBandMode(
+                        EqualizerPreset(
+                            name = "Personal",
+                            bandGains = gains,
+                            isUserDefined = true,
+                            bandMode = BandMode.TEN_BAND,
+                        ),
+                        currentBandMode,
+                    )
+                }
+                repository.setEqualizerGains(currentProfile, targetGains, currentBandMode)
+                repository.addUserPreset("Personal", targetGains, currentBandMode)
+                loadEqualizer()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error applying hearing gains: ${e.message}")
+            }
+        }
+    }
+
+    fun saveImportedPreset(preset: EqualizerPreset): String? {        val state = _uiState.value
         if (state !is EqualizerUiState.Success) return "Invalid state"
         
         if (state.presets.any { it.name.equals(preset.name.trim(), ignoreCase = true) }) {
