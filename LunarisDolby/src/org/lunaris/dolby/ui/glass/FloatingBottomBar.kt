@@ -4,6 +4,9 @@
  *
  * Ported from OriginSU FloatingBottomBar via the AOSPA Dolby tree.
  */
+
+package org.lunaris.dolby.ui.glass
+
 import android.os.Build
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseOut

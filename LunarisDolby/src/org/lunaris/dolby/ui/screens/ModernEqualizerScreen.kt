@@ -1171,7 +1171,7 @@ fun ModernPresetSelector(
                     ) {
                         if (currentPreset.isUserDefined) {
                             Icon(
-                                imageVector = Icons.Default.Person,
+                                imageVector = Icons.Default.Hearing,
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
                                 tint = MaterialTheme.colorScheme.primary
@@ -1207,7 +1207,7 @@ fun ModernPresetSelector(
                                 )
                                 if (preset.isUserDefined) {
                                     Icon(
-                                        imageVector = Icons.Default.Person,
+                                        imageVector = Icons.Default.Hearing,
                                         contentDescription = null,
                                         modifier = Modifier.size(16.dp),
                                         tint = MaterialTheme.colorScheme.primary
