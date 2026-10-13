@@ -371,6 +371,25 @@
     <string name="onboarding_replay_title">Replay tutorial</string>
     <string name="onboarding_replay_subtitle">See the first-run tour again</string>
 
+    <!-- Hearing test -->
+    <string name="hearing_test_title">Hearing test</string>
+    <string name="hearing_intro_title">Tune it to your ears</string>
+    <string name="hearing_intro_body">We play soft tones ear by ear and find the quietest sound you can hear at each pitch. Then we build a Personal preset that gently lifts what you miss. Quiet room, earbuds in, media volume around half.</string>
+    <string name="hearing_start">Start test</string>
+    <string name="hearing_left_ear">Left ear</string>
+    <string name="hearing_right_ear">Right ear</string>
+    <string name="hearing_freq">%1$d Hz</string>
+    <string name="hearing_listen_body">The tone gets quieter. Tap the moment you can no longer hear it.</string>
+    <string name="hearing_lost">I can\'t hear it</string>
+    <string name="hearing_replay">Replay</string>
+    <string name="hearing_skip">Skip</string>
+    <string name="hearing_result_title">Your Personal curve</string>
+    <string name="hearing_result_body">Boost per band, relative to your best hearing. Apply to hear it right away.</string>
+    <string name="hearing_apply">Apply as Personal</string>
+    <string name="hearing_applied">Personal preset applied</string>
+    <string name="hearing_retake">Retake</string>
+    <string name="hearing_done">Done</string>
+
     <!-- Easter eggs -->
     <string name="egg_lounge_title">Lunar Lounge</string>
     <string name="egg_lounge_sub">Members only. You found it.</string>

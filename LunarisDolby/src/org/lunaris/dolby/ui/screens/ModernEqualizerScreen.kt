@@ -117,6 +117,13 @@ fun ModernEqualizerScreen(
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
+                    IconButton(onClick = { navController.navigate("hearing_test") }) {
+                        Icon(
+                            Icons.Default.Hearing,
+                            contentDescription = "Hearing test",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                     if (uiState is EqualizerUiState.Success) {
                         val state = uiState as EqualizerUiState.Success
                         if (state.currentPreset.isUserDefined) {
