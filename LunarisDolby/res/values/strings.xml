@@ -367,6 +367,7 @@
     <string name="onboarding_eq_body">10 to 20 bands, AutoEQ headphone correction, plus dynamics processing with a live spectrum.</string>
     <string name="onboarding_pro_title">Pro tools included</string>
     <string name="onboarding_pro_body">Spatial audio, channel balance, sleep timer, per-app profiles and Quick Settings tiles.</string>
+    <string name="onboarding_page_counter">%1$d of %2$d</string>
     <string name="onboarding_replay_title">Replay tutorial</string>
     <string name="onboarding_replay_subtitle">See the first-run tour again</string>
 
