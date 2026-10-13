@@ -76,6 +76,8 @@ data class PageStyle(
     val navBlur: Boolean = true,
     val navbarStyle: PageNavbarStyle = PageNavbarStyle.LIQUID,
     val navbarDesign: PageNavbarDesign = PageNavbarDesign.APPLE,
+    /** Liquid-glass background on the Volume Media hero card. */
+    val glassHeroCard: Boolean = true,
     /** Veil opacity for the Frosted navbar background (0 = clear, 1 = solid). */
     val navTint: Float = 0.55f,
     /** Backdrop blur radius in px (0 = clear glass). */
@@ -117,6 +119,7 @@ private const val KEY_PARTICLE_DENSITY = "particle_density"
 private const val KEY_NAV_BLUR = "nav_blur"
 private const val KEY_NAVBAR_STYLE = "navbar_style"
 private const val KEY_NAVBAR_DESIGN = "navbar_design"
+private const val KEY_GLASS_HERO = "glass_hero_card"
 private const val KEY_NAV_TINT = "nav_tint"
 private const val KEY_NAV_BLUR_RADIUS = "nav_blur_radius"
 private const val KEY_NAV_BORDER_WIDTH = "nav_border_width"
@@ -154,6 +157,7 @@ class PageStyleRepository(context: Context) {
         navBlur = prefs.getBoolean(KEY_NAV_BLUR, true),
         navbarStyle = readEnum(KEY_NAVBAR_STYLE, PageNavbarStyle.LIQUID),
         navbarDesign = readEnum(KEY_NAVBAR_DESIGN, PageNavbarDesign.APPLE),
+        glassHeroCard = prefs.getBoolean(KEY_GLASS_HERO, true),
         navTint = prefs.getFloat(KEY_NAV_TINT, 0.55f).coerceIn(0f, 1f),
         navBlurRadius = prefs.getFloat(KEY_NAV_BLUR_RADIUS, 20f).coerceIn(0f, 64f),
         navBorderWidth = prefs.getFloat(KEY_NAV_BORDER_WIDTH, 2f).coerceIn(0f, 4f),
@@ -185,6 +189,7 @@ class PageStyleRepository(context: Context) {
             .putBoolean(KEY_NAV_BLUR, next.navBlur)
             .putString(KEY_NAVBAR_STYLE, next.navbarStyle.name)
             .putString(KEY_NAVBAR_DESIGN, next.navbarDesign.name)
+            .putBoolean(KEY_GLASS_HERO, next.glassHeroCard)
             .putFloat(KEY_NAV_TINT, next.navTint.coerceIn(0f, 1f))
             .putFloat(KEY_NAV_BLUR_RADIUS, next.navBlurRadius.coerceIn(0f, 64f))
             .putFloat(KEY_NAV_BORDER_WIDTH, next.navBorderWidth.coerceIn(0f, 4f))

@@ -174,6 +174,13 @@ fun PageStyleScreen(navController: NavController) {
                         repo.update { it.copy(cardStyle = PageCardStyle.entries[index]) }
                     }
                 )
+                Spacer(modifier = Modifier.height(12.dp))
+                ModernSettingSwitch(
+                    title = "Glass hero card",
+                    subtitle = "Liquid-glass background on the volume Media card",
+                    checked = style.glassHeroCard,
+                    onCheckedChange = { checked -> repo.update { it.copy(glassHeroCard = checked) } }
+                )
             }
 
             ModernSettingsCard(title = "Icons", icon = Icons.Default.Tune) {

@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import org.lunaris.dolby.ui.glass.LocalGlassBackdrop
 import org.lunaris.dolby.ui.glass.liquid.lens
@@ -41,6 +42,7 @@ fun LiquidGlassBackdrop(
     blurRadiusPx: Float,
     backdrop: Backdrop?,
     modifier: Modifier = Modifier,
+    shape: Shape = CircleShape,
 ) {
     val glass = backdrop?.takeIf {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
@@ -52,7 +54,7 @@ fun LiquidGlassBackdrop(
                     .fillMaxSize()
                     .drawBackdrop(
                         backdrop = glass,
-                        shape = { CircleShape },
+                        shape = { shape },
                         effects = {
                             padding = maxOf(padding, 40.dp.toPx())
                             vibrancy()
