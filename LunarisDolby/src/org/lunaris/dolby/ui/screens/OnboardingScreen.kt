@@ -6,6 +6,9 @@
 package org.lunaris.dolby.ui.screens
 
 import android.content.Context
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +48,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -54,16 +58,29 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
+import org.lunaris.dolby.ui.components.AnimatedEqualizerIconDynamic
 import org.lunaris.dolby.ui.components.BouncyPopIn
 import org.lunaris.dolby.ui.components.DolbyLogo
+import org.lunaris.dolby.ui.components.FloatingParticles
 import org.lunaris.dolby.ui.components.ModernSettingSwitch
+import org.lunaris.dolby.ui.components.rememberReducedMotion
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
+import org.lunaris.dolby.utils.HapticFeedbackHelper
 import org.lunaris.dolby.utils.ToastHelper
+import org.lunaris.dolby.utils.rememberHapticFeedback
+
+private enum class PreviewKind {
+    LOGO,
+    SCENE_CHIPS,
+    EQ_ANIMATED,
+    PRO_CHIPS,
+}
 
 private data class OnboardingPage(
     val icon: ImageVector,
     val titleRes: Int,
-    val bodyRes: Int
+    val bodyRes: Int,
+    val preview: PreviewKind,
 )
 
 /**
@@ -78,30 +95,41 @@ fun OnboardingScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val haptic = rememberHapticFeedback()
     val pages = listOf(
         OnboardingPage(
             icon = Icons.Default.Tune,
             titleRes = R.string.onboarding_welcome_title,
-            bodyRes = R.string.onboarding_welcome_body
+            bodyRes = R.string.onboarding_welcome_body,
+            preview = PreviewKind.LOGO,
         ),
         OnboardingPage(
             icon = Icons.Default.Interests,
             titleRes = R.string.onboarding_scenes_title,
-            bodyRes = R.string.onboarding_scenes_body
+            bodyRes = R.string.onboarding_scenes_body,
+            preview = PreviewKind.SCENE_CHIPS,
         ),
         OnboardingPage(
             icon = Icons.Default.GraphicEq,
             titleRes = R.string.onboarding_eq_title,
-            bodyRes = R.string.onboarding_eq_body
+            bodyRes = R.string.onboarding_eq_body,
+            preview = PreviewKind.EQ_ANIMATED,
         ),
         OnboardingPage(
             icon = Icons.Default.SurroundSound,
             titleRes = R.string.onboarding_pro_title,
-            bodyRes = R.string.onboarding_pro_body
+            bodyRes = R.string.onboarding_pro_body,
+            preview = PreviewKind.PRO_CHIPS,
         )
     )
     val pagerState = rememberPagerState(pageCount = { pages.size })
     var dolbyOn by remember { mutableStateOf(true) }
+
+    fun tap() {
+        scope.launch {
+            haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.CLICK)
+        }
+    }
 
     fun finish() {
         viewModel.setDolbyEnabled(dolbyOn)
@@ -114,178 +142,285 @@ fun OnboardingScreen(
         }
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(24.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                if (pagerState.currentPage < pages.size - 1) {
-                    TextButton(onClick = { finish() }) {
-                        Text(stringResource(R.string.onboarding_skip))
-                    }
-                } else {
-                    Spacer(modifier = Modifier.height(40.dp))
-                }
-            }
-
-            HorizontalPager(
-                state = pagerState,
+    Box(modifier = Modifier.fillMaxSize()) {
+        FloatingParticles(
+            modifier = Modifier.fillMaxSize(),
+            particleCount = 35,
+        )
+        Scaffold(
+            containerColor = Color.Transparent,
+        ) { paddingValues ->
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            ) { index ->
-                val page = pages[index]
-                BouncyPopIn(key = "onboarding_$index") {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        if (index == 0) {
-                            DolbyLogo(modifier = Modifier.size(96.dp))
-                        } else {
-                            Surface(
-                                modifier = Modifier.size(96.dp),
-                                shape = MaterialTheme.shapes.extraLarge,
-                                color = MaterialTheme.colorScheme.primaryContainer
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    androidx.compose.material3.Icon(
-                                        imageVector = page.icon,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        modifier = Modifier.size(48.dp)
-                                    )
-                                }
-                            }
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(24.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(
+                            R.string.onboarding_page_counter,
+                            pagerState.currentPage + 1,
+                            pages.size,
+                        ),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    if (pagerState.currentPage < pages.size - 1) {
+                        TextButton(onClick = {
+                            tap()
+                            finish()
+                        }) {
+                            Text(stringResource(R.string.onboarding_skip))
                         }
-                        Spacer(modifier = Modifier.height(32.dp))
-                        Text(
-                            text = stringResource(page.titleRes),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = stringResource(page.bodyRes),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                        if (index == pages.size - 1) {
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Card(
-                                shape = MaterialTheme.shapes.extraLarge,
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    } else {
+                        Spacer(modifier = Modifier.width(64.dp))
+                    }
+                }
+
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) { index ->
+                    val page = pages[index]
+                    BouncyPopIn(key = "onboarding_$index") {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            BouncyPopIn(key = "onboarding_visual_$index", delayMillis = 60) {
+                                PageVisual(page = page)
+                            }
+                            Spacer(modifier = Modifier.height(28.dp))
+                            BouncyPopIn(key = "onboarding_title_$index", delayMillis = 140) {
+                                Text(
+                                    text = stringResource(page.titleRes),
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    textAlign = TextAlign.Center
                                 )
-                            ) {
-                                Column(modifier = Modifier.padding(8.dp)) {
-                                    ModernSettingSwitch(
-                                        title = stringResource(R.string.dolby_enable),
-                                        subtitle = stringResource(R.string.dolby_summary),
-                                        checked = dolbyOn,
-                                        onCheckedChange = { dolbyOn = it },
-                                        icon = Icons.Default.Tune
-                                    )
-                                }
                             }
                             Spacer(modifier = Modifier.height(12.dp))
-                            // Starter nudge: hear a difference in 10 seconds.
-                            OutlinedButton(
-                                onClick = {
-                                    viewModel.applySceneById("builtin_movie_night")
-                                    ToastHelper.showToast(
-                                        context,
-                                        context.getString(R.string.scene_applied)
-                                    )
-                                },
-                                shape = MaterialTheme.shapes.large,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Movie,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
+                            BouncyPopIn(key = "onboarding_body_$index", delayMillis = 220) {
+                                Text(
+                                    text = stringResource(page.bodyRes),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.onboarding_try_scene))
+                            }
+                            if (index == pages.size - 1) {
+                                Spacer(modifier = Modifier.height(24.dp))
+                                BouncyPopIn(key = "onboarding_cta", delayMillis = 300) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Card(
+                                            shape = MaterialTheme.shapes.extraLarge,
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                                            )
+                                        ) {
+                                            Column(modifier = Modifier.padding(8.dp)) {
+                                                ModernSettingSwitch(
+                                                    title = stringResource(R.string.dolby_enable),
+                                                    subtitle = stringResource(R.string.dolby_summary),
+                                                    checked = dolbyOn,
+                                                    onCheckedChange = { dolbyOn = it },
+                                                    icon = Icons.Default.Tune
+                                                )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        // Starter nudge: hear a difference in 10 seconds.
+                                        OutlinedButton(
+                                            onClick = {
+                                                tap()
+                                                viewModel.applySceneById("builtin_movie_night")
+                                                ToastHelper.showToast(
+                                                    context,
+                                                    context.getString(R.string.scene_applied)
+                                                )
+                                            },
+                                            shape = MaterialTheme.shapes.large,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Movie,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(stringResource(R.string.onboarding_try_scene))
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                repeat(pages.size) { i ->
-                    val selected = i == pagerState.currentPage
-                    Surface(
-                        modifier = Modifier
-                            .padding(horizontal = 4.dp)
-                            .size(
-                                width = if (selected) 28.dp else 8.dp,
-                                height = 8.dp
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    repeat(pages.size) { i ->
+                        val selected = i == pagerState.currentPage
+                        val dotWidth by animateDpAsState(
+                            targetValue = if (selected) 28.dp else 8.dp,
+                            animationSpec = spring(
+                                stiffness = Spring.StiffnessMediumLow,
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
                             ),
-                        shape = CircleShape,
-                        color = if (selected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outlineVariant
-                        }
-                    ) {}
+                            label = "onboarding_dot_$i",
+                        )
+                        Surface(
+                            modifier = Modifier
+                                .padding(horizontal = 4.dp)
+                                .size(width = dotWidth, height = 8.dp),
+                            shape = CircleShape,
+                            color = if (selected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.outlineVariant
+                            }
+                        ) {}
+                    }
                 }
-            }
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (pagerState.currentPage > 0) {
-                    TextButton(onClick = {
-                        scope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (pagerState.currentPage > 0) {
+                        TextButton(onClick = {
+                            tap()
+                            scope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                            }
+                        }) {
+                            Text(stringResource(R.string.onboarding_back))
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.width(64.dp))
+                    }
+                    Button(onClick = {
+                        tap()
+                        if (pagerState.currentPage == pages.size - 1) {
+                            finish()
+                        } else {
+                            scope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
                         }
                     }) {
-                        Text(stringResource(R.string.onboarding_back))
-                    }
-                } else {
-                    Spacer(modifier = Modifier.width(64.dp))
-                }
-                Button(onClick = {
-                    if (pagerState.currentPage == pages.size - 1) {
-                        finish()
-                    } else {
-                        scope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        }
-                    }
-                }) {
-                    Text(
-                        stringResource(
-                            if (pagerState.currentPage == pages.size - 1) {
-                                R.string.onboarding_get_started
-                            } else {
-                                R.string.onboarding_next
-                            }
+                        Text(
+                            stringResource(
+                                if (pagerState.currentPage == pages.size - 1) {
+                                    R.string.onboarding_get_started
+                                } else {
+                                    R.string.onboarding_next
+                                }
+                            )
                         )
-                    )
+                    }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PageVisual(page: OnboardingPage) {
+    when (page.preview) {
+        PreviewKind.LOGO -> {
+            DolbyLogo(modifier = Modifier.size(112.dp))
+        }
+        PreviewKind.SCENE_CHIPS -> {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                HeroIcon(page = page)
+                Spacer(modifier = Modifier.height(20.dp))
+                PreviewChips(labels = listOf("Movie Night", "Gaming", "Bass Boost"))
+            }
+        }
+        PreviewKind.EQ_ANIMATED -> {
+            Surface(
+                modifier = Modifier.size(112.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    if (rememberReducedMotion()) {
+                        Icon(
+                            imageVector = page.icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(52.dp)
+                        )
+                    } else {
+                        AnimatedEqualizerIconDynamic(
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            size = 56.dp,
+                            barCount = 7,
+                        )
+                    }
+                }
+            }
+        }
+        PreviewKind.PRO_CHIPS -> {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                HeroIcon(page = page)
+                Spacer(modifier = Modifier.height(20.dp))
+                PreviewChips(labels = listOf("Spatial", "Sleep timer", "Per-app"))
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroIcon(page: OnboardingPage) {
+    Surface(
+        modifier = Modifier.size(96.dp),
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.primaryContainer
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = page.icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(48.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun PreviewChips(labels: List<String>) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        labels.forEach { label ->
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.secondaryContainer,
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                )
             }
         }
     }
