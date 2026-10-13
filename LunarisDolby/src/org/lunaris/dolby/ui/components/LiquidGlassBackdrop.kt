@@ -61,6 +61,8 @@ fun LiquidGlassBackdrop(
                             lens(
                                 refractionHeight = 24.dp.toPx(),
                                 refractionAmount = 24.dp.toPx(),
+                                // Rainbow fringe: prismatic dispersion at the pill edge.
+                                chromaticAberration = 0.5f,
                             )
                         },
                         highlight = {
