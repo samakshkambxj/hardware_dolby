@@ -53,6 +53,9 @@ enum class AccentChoice { DEFAULT, AZURE, VIOLET, TEAL, JADE, GOLD, ROSE, RUBY }
 
 enum class PageNavbarStyle { TRANSPARENT, FROSTED, LIQUID, FILLED, TONAL, OUTLINED }
 
+/** Which navbar to show: Lunaris ToggleButton toolbar or Apple glass pill. */
+enum class PageNavbarDesign { LUNARIS, APPLE }
+
 /** Header banner background wash behind the logo. */
 enum class PageBannerStyle { GRADIENT, FLAT, VIBRANT, FADE, MINIMAL }
 
@@ -72,6 +75,7 @@ data class PageStyle(
     val particleDensity: ParticleDensity = ParticleDensity.DENSE,
     val navBlur: Boolean = true,
     val navbarStyle: PageNavbarStyle = PageNavbarStyle.LIQUID,
+    val navbarDesign: PageNavbarDesign = PageNavbarDesign.APPLE,
     /** Veil opacity for the Frosted navbar background (0 = clear, 1 = solid). */
     val navTint: Float = 0.55f,
     /** Backdrop blur radius in px (0 = clear glass). */
@@ -112,6 +116,7 @@ private const val KEY_HEADER_CENTERED = "header_centered"
 private const val KEY_PARTICLE_DENSITY = "particle_density"
 private const val KEY_NAV_BLUR = "nav_blur"
 private const val KEY_NAVBAR_STYLE = "navbar_style"
+private const val KEY_NAVBAR_DESIGN = "navbar_design"
 private const val KEY_NAV_TINT = "nav_tint"
 private const val KEY_NAV_BLUR_RADIUS = "nav_blur_radius"
 private const val KEY_NAV_BORDER_WIDTH = "nav_border_width"
@@ -148,6 +153,7 @@ class PageStyleRepository(context: Context) {
         particleDensity = readEnum(KEY_PARTICLE_DENSITY, ParticleDensity.DENSE),
         navBlur = prefs.getBoolean(KEY_NAV_BLUR, true),
         navbarStyle = readEnum(KEY_NAVBAR_STYLE, PageNavbarStyle.LIQUID),
+        navbarDesign = readEnum(KEY_NAVBAR_DESIGN, PageNavbarDesign.APPLE),
         navTint = prefs.getFloat(KEY_NAV_TINT, 0.55f).coerceIn(0f, 1f),
         navBlurRadius = prefs.getFloat(KEY_NAV_BLUR_RADIUS, 20f).coerceIn(0f, 64f),
         navBorderWidth = prefs.getFloat(KEY_NAV_BORDER_WIDTH, 2f).coerceIn(0f, 4f),
@@ -178,6 +184,7 @@ class PageStyleRepository(context: Context) {
             .putString(KEY_PARTICLE_DENSITY, next.particleDensity.name)
             .putBoolean(KEY_NAV_BLUR, next.navBlur)
             .putString(KEY_NAVBAR_STYLE, next.navbarStyle.name)
+            .putString(KEY_NAVBAR_DESIGN, next.navbarDesign.name)
             .putFloat(KEY_NAV_TINT, next.navTint.coerceIn(0f, 1f))
             .putFloat(KEY_NAV_BLUR_RADIUS, next.navBlurRadius.coerceIn(0f, 64f))
             .putFloat(KEY_NAV_BORDER_WIDTH, next.navBorderWidth.coerceIn(0f, 4f))

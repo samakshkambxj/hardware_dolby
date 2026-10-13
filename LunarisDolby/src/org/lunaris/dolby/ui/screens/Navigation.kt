@@ -45,6 +45,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.ui.components.FloatingNavToolbar
+import org.lunaris.dolby.ui.components.LiquidGlassNavbar
+import org.lunaris.dolby.ui.components.PageNavbarDesign
 import org.lunaris.dolby.ui.components.PageNavbarStyle
 import org.lunaris.dolby.ui.components.rememberPageStyle
 import org.lunaris.dolby.ui.glass.LocalGlassBackdrop
@@ -250,13 +252,22 @@ private fun BottomNavOverlay(
                 .safeDrawingPadding(),
             contentAlignment = Alignment.Center
         ) {
-            FloatingNavToolbar(
-                currentRoute = currentRoute,
-                blurKey = blurKey(),
-                advancedBadge = advancedBadge,
-                equalizerBadge = equalizerBadge,
-                onNavigate = onNavigate
-            )
+            if (pageStyle.navbarDesign == PageNavbarDesign.APPLE) {
+                LiquidGlassNavbar(
+                    currentRoute = currentRoute,
+                    advancedBadge = advancedBadge,
+                    equalizerBadge = equalizerBadge,
+                    onNavigate = onNavigate
+                )
+            } else {
+                FloatingNavToolbar(
+                    currentRoute = currentRoute,
+                    blurKey = blurKey(),
+                    advancedBadge = advancedBadge,
+                    equalizerBadge = equalizerBadge,
+                    onNavigate = onNavigate
+                )
+            }
         }
     }
 }
