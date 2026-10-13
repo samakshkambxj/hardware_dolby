@@ -253,6 +253,20 @@ fun PageStyleScreen(navController: NavController) {
                     }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    "Design",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                StyleOptionRow(
+                    options = listOf("Lunaris", "Apple"),
+                    selectedIndex = PageNavbarDesign.entries.indexOf(style.navbarDesign),
+                    onSelect = { index ->
+                        repo.update { it.copy(navbarDesign = PageNavbarDesign.entries[index]) }
+                    }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 ModernSettingSwitch(
                     title = "Navbar blur",
                     subtitle = "Live blur behind the navbar (Transparent, Frosted and Liquid styles)",
