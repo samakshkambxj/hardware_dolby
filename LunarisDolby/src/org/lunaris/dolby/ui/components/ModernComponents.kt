@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
 import org.lunaris.dolby.data.EasterEggs
-import org.lunaris.dolby.ui.glass.LiquidGlassBackdrop
 import org.lunaris.dolby.ui.glass.LocalGlassBackdrop
 import org.lunaris.dolby.domain.models.ActiveAudioDevice
 import org.lunaris.dolby.domain.models.AudioDeviceCategory
