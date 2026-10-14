@@ -5,4 +5,16 @@
 -->
 <resources>
     <string name="app_name">Dolby Atmos</string>
+
+    <string name="sound_profiles">Profiles</string>
+    <string name="sound_settings">Settings</string>
+    <string name="sound_ieq">Intelligent equalizer</string>
+    <string name="sound_bass">Bass enhancer</string>
+    <string name="sound_leveler">Volume leveler</string>
+
+    <string name="output_speaker">Speaker</string>
+    <string name="output_headphones">Headphones</string>
+    <string name="output_bluetooth">Bluetooth audio</string>
+    <string name="output_usb">USB audio</string>
+    <string name="output_unknown">Audio output</string>
 </resources>
