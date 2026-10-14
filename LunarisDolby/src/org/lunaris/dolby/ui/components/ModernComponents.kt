@@ -820,7 +820,8 @@ private fun ChunkyBar(
                     .size(24.dp)
             )
         }
-        // Cursor line riding the fill boundary, clamped inside the bar.
+        // Cursor line riding the fill boundary: taller than the bar so it
+        // pokes out top and bottom like the reference, clamped horizontally.
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
@@ -830,7 +831,7 @@ private fun ChunkyBar(
                     else (1f - fraction) * barWidthPx
                     translationX = (x - half).coerceIn(0f, (barWidthPx - half * 2).coerceAtLeast(0f))
                 }
-                .size(width = 3.dp, height = barHeight)
+                .size(width = 3.dp, height = barHeight + 12.dp)
                 .background(Color.White.copy(alpha = 0.9f), CircleShape)
         )
     }
