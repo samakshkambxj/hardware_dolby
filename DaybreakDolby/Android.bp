@@ -26,5 +26,12 @@ android_app {
         "androidx.navigation_navigation-compose",
         "kotlinx-coroutines-android",
         "kotlinx-coroutines-core",
+        "miuix-blur",
     ],
+}
+
+java_import {
+    name: "miuix-blur",
+    jars: ["libs/miuix-blur-0.9.1.jar"],
+    system_ext_specific: true,
 }
