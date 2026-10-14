@@ -223,6 +223,10 @@ fun FloatingBottomBar(
     backdrop: Backdrop? = null,
     /** Prismatic fringe on the pill edge; off = pure refraction. */
     rainbow: Boolean = true,
+    /** Refraction strength 0..1 for the pill lenses. */
+    intensity: Float = 0.6f,
+    /** Veil alpha over the pill container. */
+    veilAlpha: Float = 0.4f,
     content: @Composable RowScope.((Int) -> Unit) -> Unit
 ) {
     // miuix-blur requires API 33+; otherwise use the opaque fallback.
@@ -239,6 +243,8 @@ fun FloatingBottomBar(
             isDark = isDark,
             backdrop = backdrop,
             rainbow = rainbow,
+            intensity = intensity,
+            veilAlpha = veilAlpha,
             content = content,
         )
     }
@@ -254,13 +260,15 @@ private fun FloatingBottomBarContent(
     isDark: Boolean,
     backdrop: Backdrop?,
     rainbow: Boolean,
+    intensity: Float,
+    veilAlpha: Float,
     content: @Composable RowScope.((Int) -> Unit) -> Unit
 ) {
     val pillShape = remember { CircleShape }
     val accentColor = MaterialTheme.colorScheme.primary
     val tabContentColor = MaterialTheme.colorScheme.onSurface
     val surfaceContainer = MaterialTheme.colorScheme.surfaceContainer
-    val containerColor = if (blurEngaged) surfaceContainer.copy(alpha = 0.4f) else surfaceContainer
+    val containerColor = if (blurEngaged) surfaceContainer.copy(alpha = veilAlpha) else surfaceContainer
 
     // Only touch miuix Backdrop objects on the blur route.
     val activeBackdrop: Backdrop? = backdrop ?: if (blurEngaged) {
@@ -428,7 +436,7 @@ private fun FloatingBottomBarContent(
                                 blur(4.dp.toPx(), 4.dp.toPx())
                                 lens(
                                     refractionHeight = 24.dp.toPx(),
-                                    refractionAmount = 24.dp.toPx(),
+                                    refractionAmount = (8f + 32f * intensity).dp.toPx(),
                                     chromaticAberration = if (rainbow) 0.6f else 0f,
                                 )
                             },
@@ -481,7 +489,7 @@ private fun FloatingBottomBarContent(
                                 blur(4.dp.toPx(), 4.dp.toPx())
                                 lens(
                                     refractionHeight = 24.dp.toPx(),
-                                    refractionAmount = 24.dp.toPx(),
+                                    refractionAmount = (8f + 32f * intensity).dp.toPx(),
                                     chromaticAberration = if (rainbow) 0.6f else 0f,
                                 )
                             },

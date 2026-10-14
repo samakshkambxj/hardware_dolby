@@ -274,6 +274,15 @@ fun PageStyleScreen(navController: NavController) {
                     onCheckedChange = { checked -> repo.update { it.copy(rainbow = checked) } }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
+                ModernSettingSlider(
+                    title = "Glass intensity",
+                    value = (style.glassIntensity * 100).toInt(),
+                    onValueChange = { v -> repo.update { it.copy(glassIntensity = v / 100f) } },
+                    valueRange = 0f..100f,
+                    steps = 19,
+                    valueLabel = { "$it%" }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 ModernSettingSwitch(
                     title = "Navbar blur",
                     subtitle = "Live blur behind the navbar (Transparent, Frosted and Liquid styles)",
