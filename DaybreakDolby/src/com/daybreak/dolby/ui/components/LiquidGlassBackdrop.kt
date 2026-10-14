@@ -41,8 +41,20 @@ fun LiquidGlassBackdrop(
     val glass = backdrop?.takeIf {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
     }
-    if (glass != null) {
-        Box(modifier = modifier) {
+    if (glass == null) {
+        // No refraction engine: snapshot blur on S+, flat tint below.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            StockBlurBackdrop(
+                tint = tint,
+                blurRadiusPx = blurRadiusPx,
+                modifier = modifier,
+            )
+        } else {
+            Box(modifier.background(tint, shape))
+        }
+        return
+    }
+    Box(modifier = modifier) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -71,9 +83,4 @@ fun LiquidGlassBackdrop(
                     .background(tint)
             )
         }
-    } else {
-        Box(
-            modifier = modifier.background(tint, shape),
-        )
-    }
 }
