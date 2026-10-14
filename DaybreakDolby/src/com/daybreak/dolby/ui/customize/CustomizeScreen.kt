@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,14 +56,14 @@ fun CustomizeScreen() {
                     summary = stringResource(R.string.custom_dynamic_summary),
                     checked = customize.dynamicColor,
                     enabled = true,
-                    onToggle = { repo.update { it.copy(dynamicColor = it) } },
+                    onToggle = { v -> repo.update { it.copy(dynamicColor = v) } },
                 )
                 DaySwitchRow(
                     title = stringResource(R.string.custom_amoled),
                     summary = stringResource(R.string.custom_amoled_summary),
                     checked = customize.amoled,
                     enabled = true,
-                    onToggle = { repo.update { it.copy(amoled = it) } },
+                    onToggle = { v -> repo.update { it.copy(amoled = v) } },
                 )
             }
         }
@@ -74,7 +75,7 @@ fun CustomizeScreen() {
                 Column(Modifier.padding(16.dp)) {
                     AccentGrid(
                         selected = customize.accent,
-                        onSelect = { repo.update { it.copy(accent = it) } },
+                        onSelect = { a -> repo.update { it.copy(accent = a) } },
                     )
                 }
             }
@@ -94,7 +95,7 @@ fun CustomizeScreen() {
                     DayOptionRow(
                         options = CornerStyle.entries.map { it.name.lowercase() },
                         selectedIndex = CornerStyle.entries.indexOf(customize.cornerStyle),
-                        onSelect = { repo.update { it.copy(cornerStyle = CornerStyle.entries[it]) } },
+                        onSelect = { i -> repo.update { it.copy(cornerStyle = CornerStyle.entries[i]) } },
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
@@ -106,7 +107,7 @@ fun CustomizeScreen() {
                     DayOptionRow(
                         options = CardStyle.entries.map { it.name.lowercase() },
                         selectedIndex = CardStyle.entries.indexOf(customize.cardStyle),
-                        onSelect = { repo.update { it.copy(cardStyle = CardStyle.entries[it]) } },
+                        onSelect = { i -> repo.update { it.copy(cardStyle = CardStyle.entries[i]) } },
                     )
                 }
             }
@@ -126,7 +127,7 @@ fun CustomizeScreen() {
                     DayOptionRow(
                         options = BarDesign.entries.map { it.name.lowercase() },
                         selectedIndex = BarDesign.entries.indexOf(customize.barDesign),
-                        onSelect = { repo.update { it.copy(barDesign = BarDesign.entries[it]) } },
+                        onSelect = { i -> repo.update { it.copy(barDesign = BarDesign.entries[i]) } },
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
@@ -138,7 +139,7 @@ fun CustomizeScreen() {
                     DayOptionRow(
                         options = BarStyle.entries.map { it.name.lowercase() },
                         selectedIndex = BarStyle.entries.indexOf(customize.barStyle),
-                        onSelect = { repo.update { it.copy(barStyle = BarStyle.entries[it]) } },
+                        onSelect = { i -> repo.update { it.copy(barStyle = BarStyle.entries[i]) } },
                         itemsPerRow = 2,
                     )
                 }
@@ -152,7 +153,7 @@ fun CustomizeScreen() {
                     summary = stringResource(R.string.custom_rainbow_summary),
                     checked = customize.rainbow,
                     enabled = true,
-                    onToggle = { repo.update { it.copy(rainbow = it) } },
+                    onToggle = { v -> repo.update { it.copy(rainbow = v) } },
                 )
                 DaySettingSlider(
                     title = stringResource(R.string.custom_intensity),
