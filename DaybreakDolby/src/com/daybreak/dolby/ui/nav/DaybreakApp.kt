@@ -29,6 +29,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -37,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.daybreak.dolby.R
 import com.daybreak.dolby.ui.customize.BarDesign
@@ -79,10 +81,9 @@ fun DaybreakApp(
     volumeViewModel: VolumeViewModel,
 ) {
     val navController = rememberNavController()
-    val entry by navController.currentBackStackEntryAsState()
-    val selectedIndex = TABS.indexOfFirst { tab ->
-        entry?.destination?.hierarchy?.any { it.route == tab.route } == true
-    }.coerceAtLeast(0)
+    // Destinations change only through the bar below, so local selection
+    // state is always correct — no backstack observation needed.
+    var selectedIndex by remember { mutableIntStateOf(0) }
     val customize by rememberCustomize()
 
     // Backdrop root: tab content records into this layer; the pill and
@@ -104,6 +105,7 @@ fun DaybreakApp(
                             NavigationBarItem(
                                 selected = selected,
                                 onClick = {
+                                    selectedIndex = index
                                     navController.navigate(tab.route) {
                                         popUpTo(Destination.Sound.route)
                                         launchSingleTop = true
@@ -130,6 +132,7 @@ fun DaybreakApp(
                         FloatingBottomBar(
                             selectedIndex = selectedIndex,
                             onSelected = { index ->
+                                selectedIndex = index
                                 navController.navigate(TABS[index].route) {
                                     popUpTo(Destination.Sound.route)
                                     launchSingleTop = true

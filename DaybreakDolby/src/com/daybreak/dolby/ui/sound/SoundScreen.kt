@@ -39,7 +39,6 @@ import com.daybreak.dolby.ui.components.DayScreen
 import com.daybreak.dolby.ui.components.DaySectionHeader
 import com.daybreak.dolby.ui.components.DaySelectDialog
 import com.daybreak.dolby.ui.components.DaySwitchRow
-import com.daybreak.dolby.ui.components.ProfileGrid
 
 @Composable
 fun SoundScreen(viewModel: SoundViewModel, onCustomize: () -> Unit) {

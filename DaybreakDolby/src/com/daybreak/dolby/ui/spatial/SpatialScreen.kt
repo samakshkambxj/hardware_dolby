@@ -144,6 +144,7 @@ fun SpatialScreen(viewModel: SpatialViewModel) {
             },
             onDismiss = { stereoDialog = false },
             dismissLabel = context.getString(android.R.string.cancel),
+            dismissLabel = context.getString(android.R.string.cancel),
         )
     }
 
@@ -159,6 +160,7 @@ fun SpatialScreen(viewModel: SpatialViewModel) {
                 dialogueDialog = false
             },
             onDismiss = { dialogueDialog = false },
+            dismissLabel = context.getString(android.R.string.cancel),
         )
     }
 

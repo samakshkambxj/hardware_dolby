@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -122,7 +123,7 @@ fun EqScreen(viewModel: EqViewModel) {
             ) {
                 EqActionButton(
                     icon = Icons.Filled.Add,
-                    text = stringResource(R.string.eq_new),
+                    description = stringResource(R.string.eq_new),
                     onClick = { showNewDialog = true },
                 )
                 if (state.isUserPreset) {
@@ -139,7 +140,7 @@ fun EqScreen(viewModel: EqViewModel) {
                 }
                 EqActionButton(
                     icon = Icons.Filled.Refresh,
-                    text = stringResource(R.string.eq_reset),
+                    description = stringResource(R.string.eq_reset),
                     onClick = { viewModel.reset() },
                 )
             }
