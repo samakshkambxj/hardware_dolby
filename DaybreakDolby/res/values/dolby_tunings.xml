@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 samakshkambxj
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+
+    <string name="profile_dynamic">Dynamic</string>
+    <string name="profile_movie">Movie</string>
+    <string name="profile_music">Music</string>
+    <string name="profile_spatial">Spatial Audio</string>
+
+    <string name="preset_flat">Flat (off)</string>
+    <string name="preset_rock">Rock</string>
+    <string name="preset_jazz">Jazz</string>
+    <string name="preset_pop">Pop</string>
+    <string name="preset_classical">Classical</string>
+    <string name="preset_hiphop">Hip Hop</string>
+    <string name="preset_blues">Blues</string>
+    <string name="preset_electronic">Electronic</string>
+    <string name="preset_metal">Metal</string>
+
+    <string name="level_off">Off</string>
+    <string name="level_low">Low</string>
+    <string name="level_medium">Medium</string>
+    <string name="level_high">High</string>
+    <string name="level_max">Max</string>
+
+    <string name="ieq_balanced">Balanced</string>
+    <string name="ieq_warm">Warm</string>
+    <string name="ieq_detailed">Detailed</string>
+
+    <string-array name="profile_entries">
+        <item>@string/profile_dynamic</item>
+        <item>@string/profile_movie</item>
+        <item>@string/profile_music</item>
+        <item>@string/profile_spatial</item>
+    </string-array>
+
+    <string-array name="profile_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>4</item>
+    </string-array>
+
+    <!-- Tuned 20-band GEQ curves, unit order matches DsParam.GEQ_BAND_GAINS. -->
+    <string-array name="preset_entries" translatable="false">
+        <item>@string/preset_flat</item>
+        <item>@string/preset_rock</item>
+        <item>@string/preset_jazz</item>
+        <item>@string/preset_pop</item>
+        <item>@string/preset_classical</item>
+        <item>@string/preset_hiphop</item>
+        <item>@string/preset_blues</item>
+        <item>@string/preset_electronic</item>
+        <item>@string/preset_metal</item>
+    </string-array>
+
+    <string-array name="preset_values" translatable="false">
+        <item>0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</item>
+        <item>60,36,12,-12,-36,-24,-12,-8,-4,-20,-36,-20,-4,-20,-36,-16,4,32,60,60</item>
+        <item>8,8,8,8,8,0,-8,-8,-8,-24,-40,-20,0,4,8,8,8,8,8,8</item>
+        <item>-13,-1,11,-25,-61,-29,3,11,19,19,19,15,11,-9,-29,-9,11,15,19,19</item>
+        <item>-32,-32,-32,-32,-32,-32,-32,-28,-24,-4,16,0,-16,24,64,32,0,32,64,64</item>
+        <item>52,28,4,-20,-44,-24,-4,-4,-4,-24,-44,-24,-4,0,4,4,4,20,36,36</item>
+        <item>28,28,28,-36,-100,-68,-36,4,44,28,12,4,-4,4,12,4,-4,12,28,28</item>
+        <item>50,34,18,2,-14,-6,2,-2,-6,-26,-46,-26,-6,-2,2,2,2,2,2,2</item>
+        <item>40,24,8,8,8,-4,-16,-12,-8,-32,-56,-24,8,8,8,8,8,8,8,8</item>
+    </string-array>
+
+    <string-array name="dialogue_entries">
+        <item>@string/level_off</item>
+        <item>@string/level_low</item>
+        <item>@string/level_medium</item>
+        <item>@string/level_high</item>
+        <item>@string/level_max</item>
+    </string-array>
+
+    <string-array name="dialogue_values">
+        <item>0</item>
+        <item>2</item>
+        <item>6</item>
+        <item>9</item>
+        <item>12</item>
+    </string-array>
+
+    <string-array name="stereo_entries">
+        <item>@string/level_low</item>
+        <item>@string/level_medium</item>
+        <item>@string/level_high</item>
+        <item>@string/level_max</item>
+    </string-array>
+
+    <string-array name="stereo_values">
+        <item>4</item>
+        <item>24</item>
+        <item>44</item>
+        <item>64</item>
+    </string-array>
+
+    <string-array name="ieq_entries">
+        <item>@string/level_off</item>
+        <item>@string/ieq_balanced</item>
+        <item>@string/ieq_warm</item>
+        <item>@string/ieq_detailed</item>
+    </string-array>
+
+    <string-array name="ieq_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+</resources>
