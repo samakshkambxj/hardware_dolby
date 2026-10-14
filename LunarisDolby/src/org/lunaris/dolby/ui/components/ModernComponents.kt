@@ -11,8 +11,12 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,7 +32,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
@@ -685,17 +696,16 @@ fun ModernSettingSlider(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Chunky volume-panel bar: full-bleed rounded track with a thin
-        // cursor thumb and an optional icon in the inactive end.
-        val barHeight = 56.dp
-        val barShape = RoundedCornerShape(16.dp)
-        val isLtr =
-            LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Ltr
-        val fraction = ((sliderValue - valueRange.start) /
-            (valueRange.endInclusive - valueRange.start).coerceAtLeast(1e-6f))
-            .coerceIn(0f, 1f)
-        Slider(
+        // cursor thumb and an optional icon in the inactive end. Bespoke
+        // drag handling (not M3 Slider) because Slider insets its track by
+        // the default thumb radius, which leaves gaps at both bar ends.
+        ChunkyBar(
             value = sliderValue,
-            onValueChange = { newValue ->
+            valueRange = valueRange,
+            steps = steps,
+            icon = icon,
+            warning = warning,
+            onLiveChange = { newValue ->
                 isDragging = true
                 val intValue = newValue.toInt()
                 if (intValue != lastHapticValue) {
@@ -706,7 +716,7 @@ fun ModernSettingSlider(
                 }
                 sliderValue = newValue
             },
-            onValueChangeFinished = {
+            onCommit = {
                 isDragging = false
                 // Single commit on release: avoids queuing one HAL/IO write per
                 // drag tick, whose late loadSettings emissions kept moving the
@@ -716,58 +726,111 @@ fun ModernSettingSlider(
                 // Re-sync to the confirmed ViewModel value on the next
                 // emission; if the HAL clamped it, LaunchedEffect snaps back.
             },
-            valueRange = valueRange,
-            steps = steps,
-            modifier = Modifier.fillMaxWidth(),
-            thumb = {
-                Box(
-                    modifier = Modifier
-                        .size(width = 4.dp, height = barHeight)
-                        .background(Color.White.copy(alpha = 0.9f), CircleShape)
-                )
-            },
-            track = {
-                Box(modifier = Modifier.height(barHeight)) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(barHeight)
-                            .background(
-                                MaterialTheme.colorScheme.surfaceContainerHighest,
-                                barShape
-                            )
-                    ) {
-                        icon?.let {
-                            Icon(
-                                imageVector = it,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier
-                                    .align(
-                                        if (isLtr) Alignment.CenterEnd
-                                        else Alignment.CenterStart
-                                    )
-                                    .padding(horizontal = 16.dp)
-                                    .size(24.dp)
-                            )
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(fraction)
-                            .height(barHeight)
-                            .align(
-                                if (isLtr) Alignment.CenterStart
-                                else Alignment.CenterEnd
-                            )
-                            .background(
-                                if (warning) MaterialTheme.colorScheme.error
-                                else MaterialTheme.colorScheme.primaryContainer,
-                                barShape
-                            )
-                    )
-                }
+        )
+    }
+}
+
+@Composable
+private fun ChunkyBar(
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    icon: ImageVector?,
+    warning: Boolean,
+    onLiveChange: (Float) -> Unit,
+    onCommit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val barHeight = 56.dp
+    val barShape = RoundedCornerShape(16.dp)
+    val density = LocalDensity.current
+    val isLtr =
+        LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Ltr
+    var barWidthPx by remember { mutableFloatStateOf(0f) }
+
+    val span = (valueRange.endInclusive - valueRange.start).coerceAtLeast(1e-6f)
+    val interval = span / (steps + 1).coerceAtLeast(1)
+    fun snap(raw: Float): Float {
+        if (steps <= 0) return raw.coerceIn(valueRange.start, valueRange.endInclusive)
+        val n = ((raw - valueRange.start) / interval).roundToInt()
+        return (valueRange.start + n * interval)
+            .coerceIn(valueRange.start, valueRange.endInclusive)
+    }
+    val fraction = ((value - valueRange.start) / span).coerceIn(0f, 1f)
+
+    fun setFromX(xPx: Float) {
+        val logical = if (isLtr) xPx else barWidthPx - xPx
+        onLiveChange(snap(valueRange.start + (logical / barWidthPx.coerceAtLeast(1f)) * span))
+    }
+
+    val activeColor = if (warning) MaterialTheme.colorScheme.error
+    else MaterialTheme.colorScheme.primaryContainer
+    Box(
+        modifier
+            .fillMaxWidth()
+            .height(barHeight)
+            .onGloballyPositioned { barWidthPx = it.size.width.toFloat() }
+            .background(
+                MaterialTheme.colorScheme.surfaceContainerHighest,
+                barShape
+            )
+            .pointerInput(valueRange, steps) {
+                detectTapGestures(onTap = {
+                    setFromX(it.x)
+                    onCommit()
+                })
             }
+            .pointerInput(valueRange, steps) {
+                detectDragGestures(
+                    onDragStart = { setFromX(it.x) },
+                    onDragEnd = { onCommit() },
+                    onDragCancel = { onCommit() },
+                    onDrag = { change, _ -> setFromX(change.position.x) },
+                )
+            }
+            .focusable()
+            .onKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
+                val delta = when (event.key) {
+                    Key.DirectionLeft -> if (isLtr) -interval else interval
+                    Key.DirectionRight -> if (isLtr) interval else -interval
+                    else -> return@onKeyEvent false
+                }
+                onLiveChange(snap(value + delta))
+                onCommit()
+                true
+            }
+            .progressSemantics(value, valueRange, steps),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(fraction)
+                .height(barHeight)
+                .align(if (isLtr) Alignment.CenterStart else Alignment.CenterEnd)
+                .background(activeColor, barShape)
+        )
+        icon?.let {
+            Icon(
+                imageVector = it,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(horizontal = 16.dp)
+                    .size(24.dp)
+            )
+        }
+        // Cursor line riding the fill boundary.
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .graphicsLayer {
+                    val x = if (isLtr) fraction * barWidthPx
+                    else (1f - fraction) * barWidthPx
+                    translationX = x - 4.dp.toPx() / 2f
+                }
+                .size(width = 4.dp, height = barHeight)
+                .background(Color.White.copy(alpha = 0.9f), CircleShape)
         )
     }
 }
