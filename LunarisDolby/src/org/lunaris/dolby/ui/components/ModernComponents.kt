@@ -741,8 +741,8 @@ private fun ChunkyBar(
     onCommit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val barHeight = 56.dp
-    val barShape = RoundedCornerShape(16.dp)
+    val barHeight = 44.dp
+    val barShape = RoundedCornerShape(14.dp)
     val density = LocalDensity.current
     val isLtr =
         LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Ltr
@@ -820,16 +820,17 @@ private fun ChunkyBar(
                     .size(24.dp)
             )
         }
-        // Cursor line riding the fill boundary.
+        // Cursor line riding the fill boundary, clamped inside the bar.
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .graphicsLayer {
+                    val half = 1.5.dp.toPx()
                     val x = if (isLtr) fraction * barWidthPx
                     else (1f - fraction) * barWidthPx
-                    translationX = x - 4.dp.toPx() / 2f
+                    translationX = (x - half).coerceIn(0f, (barWidthPx - half * 2).coerceAtLeast(0f))
                 }
-                .size(width = 4.dp, height = barHeight)
+                .size(width = 3.dp, height = barHeight)
                 .background(Color.White.copy(alpha = 0.9f), CircleShape)
         )
     }
