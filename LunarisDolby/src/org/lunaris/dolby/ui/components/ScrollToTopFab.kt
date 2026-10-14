@@ -30,6 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.lunaris.dolby.ui.glass.LocalGlassBackdrop
 import org.lunaris.dolby.utils.HapticFeedbackHelper
 import org.lunaris.dolby.utils.rememberHapticFeedback
@@ -117,7 +119,7 @@ fun ScrollToTopFabOverlay(
     }
 }
 
-private fun rememberCoroutineScope.launchHaptic(haptic: org.lunaris.dolby.utils.HapticFeedback) {
+private fun CoroutineScope.launchHaptic(haptic: org.lunaris.dolby.utils.HapticFeedback) {
     launch {
         haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.CLICK)
     }
