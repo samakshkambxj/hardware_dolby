@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 Lunaris AOSP
+ * Copyright (C) 2026 samakshkambxj
  * SPDX-License-Identifier: Apache-2.0
  *
  * Ported from OriginSU FloatingBottomBar via the AOSPA Dolby tree.

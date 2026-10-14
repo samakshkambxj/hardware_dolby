@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024-2025 Lunaris AOSP
+ * Copyright (C) 2026 samakshkambxj
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +47,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.ui.components.FloatingNavToolbar
+import org.lunaris.dolby.ui.components.GlassSnackbarOverlay
+import org.lunaris.dolby.ui.components.LocalGlassSnackbar
+import org.lunaris.dolby.ui.components.LocalScrollToTop
+import org.lunaris.dolby.ui.components.ScrollToTopFabOverlay
+import org.lunaris.dolby.ui.components.ScrollToTopState
 import org.lunaris.dolby.ui.components.LiquidGlassNavbar
 import org.lunaris.dolby.ui.components.PageNavbarDesign
 import org.lunaris.dolby.ui.components.PageNavbarStyle
@@ -153,7 +160,17 @@ fun MainPagerScreen(
         null
     }
 
-    CompositionLocalProvider(LocalGlassBackdrop provides glassBackdrop) {
+    // Pager-wide overlay state: glass snackbar host + scroll-to-top action.
+    // Provided to pages; rendered as siblings above the recorded layer so
+    // their glass backgrounds never self-sample (see the hero-card crash).
+    val glassSnack = remember { SnackbarHostState() }
+    val scrollActions = remember { ScrollToTopState() }
+
+    CompositionLocalProvider(
+        LocalGlassBackdrop provides glassBackdrop,
+        LocalGlassSnackbar provides glassSnack,
+        LocalScrollToTop provides scrollActions,
+    ) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -209,6 +226,19 @@ fun MainPagerScreen(
                     }
                 },
                 modifier = Modifier.align(Alignment.BottomCenter)
+            )
+            GlassSnackbarOverlay(
+                hostState = glassSnack,
+                backdrop = glassBackdrop,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 112.dp)
+            )
+            ScrollToTopFabOverlay(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 20.dp, bottom = 108.dp)
             )
         }
     }

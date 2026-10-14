@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024-2025 Lunaris AOSP
+ * Copyright (C) 2026 samakshkambxj
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -73,7 +74,7 @@ fun ModernEqualizerScreen(
     var showSaveDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
     var viewMode by remember { mutableStateOf(EqualizerViewMode.CURVE) }
-    val snackbarHost = remember { SnackbarHostState() }
+    val snackbarHost = LocalGlassSnackbar.current ?: remember { SnackbarHostState() }
 
     Scaffold(
         topBar = {
@@ -155,8 +156,7 @@ fun ModernEqualizerScreen(
                 )
             )
         },
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        snackbarHost = { SnackbarHost(snackbarHost) }
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
         StyledParticles(modifier = Modifier.padding(paddingValues))
@@ -265,6 +265,11 @@ private fun ModernEqualizerContent(
 ) {
     val isFlatPreset = state.currentPreset.name == stringResource(R.string.dolby_preset_default)
     val scrollState = rememberScrollState()
+    val scrollScope = rememberCoroutineScope()
+    RegisterScrollToTop(
+        visible = scrollState.value > 1200,
+        onTop = { scrollScope.launch { scrollState.animateScrollTo(0) } },
+    )
     val isBandModeCompatible = state.currentPreset.bandMode == state.bandMode
     val canEdit = isBandModeCompatible || isFlatPreset
     val isActive = canEdit && !isFlatPreset

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 Lunaris AOSP
+ * Copyright (C) 2026 samakshkambxj
  * SPDX-License-Identifier: Apache-2.0
  */
 package org.lunaris.dolby.ui.glass.miuix.modifier

@@ -6,24 +6,30 @@
 package org.lunaris.dolby.ui.screens
 
 import android.content.Context
+import android.os.Build
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Interests
@@ -41,6 +47,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,8 +69,12 @@ import org.lunaris.dolby.ui.components.AnimatedEqualizerIconDynamic
 import org.lunaris.dolby.ui.components.BouncyPopIn
 import org.lunaris.dolby.ui.components.DolbyLogo
 import org.lunaris.dolby.ui.components.FloatingParticles
+import org.lunaris.dolby.ui.components.LiquidGlassBackdrop
 import org.lunaris.dolby.ui.components.ModernSettingSwitch
 import org.lunaris.dolby.ui.components.rememberReducedMotion
+import org.lunaris.dolby.ui.glass.LocalGlassBackdrop
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
 import org.lunaris.dolby.utils.HapticFeedbackHelper
 import org.lunaris.dolby.utils.ToastHelper
@@ -142,7 +153,23 @@ fun OnboardingScreen(
         }
     }
 
+    // Own backdrop root: the Get started bar below samples this layer.
+    val glassBackdrop = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        rememberLayerBackdrop()
+    } else {
+        null
+    }
+
+    CompositionLocalProvider(LocalGlassBackdrop provides glassBackdrop) {
     Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(
+                    if (glassBackdrop != null) Modifier.layerBackdrop(glassBackdrop)
+                    else Modifier
+                ),
+        ) {
         FloatingParticles(
             modifier = Modifier.fillMaxSize(),
             particleCount = 35,
@@ -294,10 +321,44 @@ fun OnboardingScreen(
                         ) {}
                     }
                 }
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(110.dp))
+            }
+        }
+        }
 
+        // Glass action bar overlay: outside the recorded layer, so its
+        // background never self-samples.
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                if (glassBackdrop != null) {
+                    LiquidGlassBackdrop(
+                        tint = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
+                        blurRadiusPx = 16f,
+                        backdrop = glassBackdrop,
+                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier.matchParentSize(),
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                MaterialTheme.colorScheme.surfaceContainerHigh,
+                                RoundedCornerShape(24.dp),
+                            ),
+                    )
+                }
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -336,6 +397,7 @@ fun OnboardingScreen(
                 }
             }
         }
+    }
     }
 }
 
