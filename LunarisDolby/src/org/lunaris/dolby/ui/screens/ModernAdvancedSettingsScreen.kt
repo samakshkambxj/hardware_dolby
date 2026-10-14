@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -23,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
 import org.lunaris.dolby.data.DolbyCodecSupport
 import org.lunaris.dolby.domain.models.DolbyUiState
@@ -49,6 +51,12 @@ fun ModernAdvancedSettingsScreen(
     val spatialError by viewModel.spatialError.collectAsState()
     val codecs by viewModel.codecInfo.collectAsState()
     val context = LocalContext.current
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    RegisterScrollToTop(
+        visible = listState.firstVisibleItemIndex > 3,
+        onTop = { scope.launch { listState.animateScrollToItem(0) } },
+    )
     // Hidden entry to the DAP probe debug screen: 5 taps on the title.
     var probeTaps by remember { mutableIntStateOf(0) }
 
@@ -181,6 +189,7 @@ private fun ModernAdvancedSettingsContent(
         modifier = modifier
             .fillMaxSize()
             .verticalBouncyEdge(),
+        state = listState,
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
