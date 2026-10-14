@@ -258,6 +258,7 @@ private fun BottomNavOverlay(
                     currentRoute = currentRoute,
                     advancedBadge = advancedBadge,
                     equalizerBadge = equalizerBadge,
+                    rainbow = pageStyle.rainbow,
                     onNavigate = onNavigate
                 )
             } else {

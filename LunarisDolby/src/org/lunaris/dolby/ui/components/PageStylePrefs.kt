@@ -76,7 +76,8 @@ data class PageStyle(
     val navBlur: Boolean = true,
     val navbarStyle: PageNavbarStyle = PageNavbarStyle.LIQUID,
     val navbarDesign: PageNavbarDesign = PageNavbarDesign.APPLE,
-    /** Veil opacity for the Frosted navbar background (0 = clear, 1 = solid). */
+    /** Prismatic fringe on liquid-glass surfaces; off = pure refraction. */
+    val rainbow: Boolean = true,    /** Veil opacity for the Frosted navbar background (0 = clear, 1 = solid). */
     val navTint: Float = 0.55f,
     /** Backdrop blur radius in px (0 = clear glass). */
     val navBlurRadius: Float = 20f,
@@ -117,6 +118,7 @@ private const val KEY_PARTICLE_DENSITY = "particle_density"
 private const val KEY_NAV_BLUR = "nav_blur"
 private const val KEY_NAVBAR_STYLE = "navbar_style"
 private const val KEY_NAVBAR_DESIGN = "navbar_design"
+private const val KEY_RAINBOW = "rainbow_dispersion"
 private const val KEY_NAV_TINT = "nav_tint"
 private const val KEY_NAV_BLUR_RADIUS = "nav_blur_radius"
 private const val KEY_NAV_BORDER_WIDTH = "nav_border_width"
@@ -154,6 +156,7 @@ class PageStyleRepository(context: Context) {
         navBlur = prefs.getBoolean(KEY_NAV_BLUR, true),
         navbarStyle = readEnum(KEY_NAVBAR_STYLE, PageNavbarStyle.LIQUID),
         navbarDesign = readEnum(KEY_NAVBAR_DESIGN, PageNavbarDesign.APPLE),
+        rainbow = prefs.getBoolean(KEY_RAINBOW, true),
         navTint = prefs.getFloat(KEY_NAV_TINT, 0.55f).coerceIn(0f, 1f),
         navBlurRadius = prefs.getFloat(KEY_NAV_BLUR_RADIUS, 20f).coerceIn(0f, 64f),
         navBorderWidth = prefs.getFloat(KEY_NAV_BORDER_WIDTH, 2f).coerceIn(0f, 4f),
@@ -185,6 +188,7 @@ class PageStyleRepository(context: Context) {
             .putBoolean(KEY_NAV_BLUR, next.navBlur)
             .putString(KEY_NAVBAR_STYLE, next.navbarStyle.name)
             .putString(KEY_NAVBAR_DESIGN, next.navbarDesign.name)
+            .putBoolean(KEY_RAINBOW, next.rainbow)
             .putFloat(KEY_NAV_TINT, next.navTint.coerceIn(0f, 1f))
             .putFloat(KEY_NAV_BLUR_RADIUS, next.navBlurRadius.coerceIn(0f, 64f))
             .putFloat(KEY_NAV_BORDER_WIDTH, next.navBorderWidth.coerceIn(0f, 4f))

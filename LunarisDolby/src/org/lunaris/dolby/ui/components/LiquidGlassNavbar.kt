@@ -66,6 +66,8 @@ fun LiquidGlassNavbar(
     advancedBadge: Boolean = false,
     /** Dot on Equalizer when a custom/user preset is active. */
     equalizerBadge: Boolean = false,
+    /** Prismatic fringe on the pill edge. */
+    rainbow: Boolean = true,
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
@@ -88,6 +90,7 @@ fun LiquidGlassNavbar(
             },
             tabsCount = GLASS_DESTINATIONS.size,
             backdrop = LocalGlassBackdrop.current,
+            rainbow = rainbow,
         ) { activateTab ->
             GLASS_DESTINATIONS.forEachIndexed { index, destination ->
                 val selected = index == selectedIndex

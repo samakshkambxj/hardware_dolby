@@ -43,6 +43,8 @@ fun LiquidGlassBackdrop(
     backdrop: Backdrop?,
     modifier: Modifier = Modifier,
     shape: Shape = CircleShape,
+    /** Prismatic fringe at the glass edge; off = pure refraction. */
+    rainbow: Boolean = true,
 ) {
     val glass = backdrop?.takeIf {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
@@ -64,7 +66,7 @@ fun LiquidGlassBackdrop(
                                 refractionHeight = 24.dp.toPx(),
                                 refractionAmount = 24.dp.toPx(),
                                 // Rainbow fringe: prismatic dispersion at the pill edge.
-                                chromaticAberration = 0.5f,
+                                chromaticAberration = if (rainbow) 0.6f else 0f,
                             )
                         },
                         highlight = {
