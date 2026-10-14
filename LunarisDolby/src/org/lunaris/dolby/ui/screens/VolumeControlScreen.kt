@@ -192,6 +192,7 @@ fun VolumeControlScreen() {
                         valueRange = min.toFloat()..max.toFloat(),
                         steps = (max - min - 1).coerceAtLeast(0),
                         valueLabel = { "$it / $max" },
+                        icon = stream.icon,
                         onValueChange = { newValue ->
                             val target = newValue.toInt().coerceIn(min, max)
                             // Optimistic UI update; receiver will correct it if clamped.
