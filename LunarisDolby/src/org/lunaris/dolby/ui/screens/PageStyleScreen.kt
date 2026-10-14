@@ -268,6 +268,13 @@ fun PageStyleScreen(navController: NavController) {
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 ModernSettingSwitch(
+                    title = "Rainbow dispersion",
+                    subtitle = "Prismatic fringe on the liquid-glass pill",
+                    checked = style.rainbow,
+                    onCheckedChange = { checked -> repo.update { it.copy(rainbow = checked) } }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                ModernSettingSwitch(
                     title = "Navbar blur",
                     subtitle = "Live blur behind the navbar (Transparent, Frosted and Liquid styles)",
                     checked = style.navBlur,

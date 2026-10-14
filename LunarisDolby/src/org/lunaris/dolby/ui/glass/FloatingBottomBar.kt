@@ -221,6 +221,8 @@ fun FloatingBottomBar(
     isBlurEnabled: Boolean = true,
     isDark: Boolean = isSystemInDarkTheme(),
     backdrop: Backdrop? = null,
+    /** Prismatic fringe on the pill edge; off = pure refraction. */
+    rainbow: Boolean = true,
     content: @Composable RowScope.((Int) -> Unit) -> Unit
 ) {
     // miuix-blur requires API 33+; otherwise use the opaque fallback.
@@ -236,6 +238,7 @@ fun FloatingBottomBar(
             blurEngaged = blurEngaged,
             isDark = isDark,
             backdrop = backdrop,
+            rainbow = rainbow,
             content = content,
         )
     }
@@ -250,6 +253,7 @@ private fun FloatingBottomBarContent(
     blurEngaged: Boolean,
     isDark: Boolean,
     backdrop: Backdrop?,
+    rainbow: Boolean,
     content: @Composable RowScope.((Int) -> Unit) -> Unit
 ) {
     val pillShape = remember { CircleShape }
@@ -425,6 +429,7 @@ private fun FloatingBottomBarContent(
                                 lens(
                                     refractionHeight = 24.dp.toPx(),
                                     refractionAmount = 24.dp.toPx(),
+                                    chromaticAberration = if (rainbow) 0.6f else 0f,
                                 )
                             },
                             highlight = { baseHighlight!!.value.copy(alpha = 0.75f) },
@@ -477,6 +482,7 @@ private fun FloatingBottomBarContent(
                                 lens(
                                     refractionHeight = 24.dp.toPx(),
                                     refractionAmount = 24.dp.toPx(),
+                                    chromaticAberration = if (rainbow) 0.6f else 0f,
                                 )
                             },
                             onDrawSurface = { drawRect(containerColor) },
