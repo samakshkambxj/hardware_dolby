@@ -7,6 +7,7 @@
 package org.lunaris.dolby.ui.screens
 
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import android.os.Build
@@ -227,11 +228,18 @@ fun MainPagerScreen(
                         // Far jumps cut instead of scrolling: animating
                         // through intermediate pages composes them (and fires
                         // their loads, e.g. the EQ reload) mid-flight, which
-                        // is where the stutter comes from.
+                        // is where the stutter comes from. Adjacent slides
+                        // use a fixed tween so every switch feels identical.
                         if (kotlin.math.abs(target - pagerState.currentPage) > 1) {
                             pagerState.scrollToPage(target)
                         } else {
-                            pagerState.animateScrollToPage(target)
+                            pagerState.animateScrollToPage(
+                                target,
+                                animationSpec = tween(
+                                    durationMillis = 320,
+                                    easing = FastOutSlowInEasing,
+                                ),
+                            )
                         }
                     }
                 },
