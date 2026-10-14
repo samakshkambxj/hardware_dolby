@@ -100,7 +100,10 @@ class EqViewModel(application: Application) : AndroidViewModel(application) {
         val flat = List(DsParam.GEQ_BAND_GAINS.length) { 0 }
         viewModelScope.launch {
             if (_uiState.value.isUserPreset) {
+                // Flatten and keep the stored preset in sync, so the UI
+                // doesn't flip to Custom.
                 controller.setGains(flat)
+                presets.save(_uiState.value.presetName, flat)
             } else {
                 val current = _uiState.value.presets
                     .firstOrNull { it.name == _uiState.value.presetName }

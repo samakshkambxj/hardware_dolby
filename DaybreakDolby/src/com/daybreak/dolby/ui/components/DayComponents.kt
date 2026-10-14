@@ -329,7 +329,7 @@ fun DaySlider(
                 onCommit()
                 true
             }
-            .progressSemantics(value, valueRange, steps),
+            .progressSemantics(value, valueRange),
     ) {
         Box(
             modifier = Modifier

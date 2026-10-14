@@ -6,7 +6,6 @@
 package com.daybreak.dolby.ui.sound
 
 import android.app.Application
-import android.media.AudioAttributes
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
@@ -18,6 +17,7 @@ import com.daybreak.dolby.R
 import com.daybreak.dolby.audio.DolbyController
 import com.daybreak.dolby.audio.DsParam
 import com.daybreak.dolby.data.DolbyKeys
+import com.daybreak.dolby.ui.util.AudioOutputs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -78,7 +78,7 @@ class SoundViewModel(application: Application) : AndroidViewModel(application) {
                 leveler = controller.getBool(
                     DsParam.VOLUME_LEVELER_ENABLE, DolbyKeys.LEVELER, false, profile,
                 ),
-                onSpeaker = isOnSpeaker(),
+                onSpeaker = AudioOutputs.isOnSpeaker(audioManager),
                 outputLabel = outputLabel(),
             )
         }
@@ -127,14 +127,12 @@ class SoundViewModel(application: Application) : AndroidViewModel(application) {
         return context.resources.getStringArray(R.array.profile_entries)[index]
     }
 
-    private fun isOnSpeaker(): Boolean {
-        val type = currentDeviceType()
-        return type == null || type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
-    }
+    private fun isOnSpeaker(): Boolean = AudioOutputs.isOnSpeaker(audioManager)
 
     private fun outputLabel(): String {
         val context = getApplication<Application>()
-        val type = currentDeviceType() ?: return context.getString(R.string.output_speaker)
+        val type = AudioOutputs.deviceType(audioManager)
+            ?: return context.getString(R.string.output_speaker)
         return when (type) {
             AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> context.getString(R.string.output_speaker)
             AudioDeviceInfo.TYPE_WIRED_HEADSET,
@@ -145,21 +143,5 @@ class SoundViewModel(application: Application) : AndroidViewModel(application) {
             AudioDeviceInfo.TYPE_USB_DEVICE -> context.getString(R.string.output_usb)
             else -> context.getString(R.string.output_unknown)
         }
-    }
-
-    private fun currentDeviceType(): Int? {
-        return try {
-            audioManager
-                ?.getDevicesForAttributes(ATTRIBUTES_MEDIA)
-                ?.firstOrNull()?.type
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    companion object {
-        private val ATTRIBUTES_MEDIA = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_MEDIA)
-            .build()
     }
 }
