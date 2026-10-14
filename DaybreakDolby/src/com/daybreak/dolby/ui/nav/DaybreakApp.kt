@@ -8,7 +8,9 @@ package com.daybreak.dolby.ui.nav
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.SpatialAudio
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -28,6 +30,10 @@ import com.daybreak.dolby.ui.equalizer.EqScreen
 import com.daybreak.dolby.ui.equalizer.EqViewModel
 import com.daybreak.dolby.ui.sound.SoundScreen
 import com.daybreak.dolby.ui.sound.SoundViewModel
+import com.daybreak.dolby.ui.spatial.SpatialScreen
+import com.daybreak.dolby.ui.spatial.SpatialViewModel
+import com.daybreak.dolby.ui.volume.VolumeScreen
+import com.daybreak.dolby.ui.volume.VolumeViewModel
 
 private data class Tab(
     val route: String,
@@ -38,12 +44,16 @@ private data class Tab(
 private val TABS = listOf(
     Tab(Destination.Sound.route, R.string.tab_sound, Icons.Filled.Tune),
     Tab(Destination.Equalizer.route, R.string.tab_equalizer, Icons.Filled.GraphicEq),
+    Tab(Destination.Spatial.route, R.string.tab_spatial, Icons.Filled.SpatialAudio),
+    Tab(Destination.Volume.route, R.string.tab_volume, Icons.Filled.VolumeUp),
 )
 
 @Composable
 fun DaybreakApp(
     soundViewModel: SoundViewModel,
     eqViewModel: EqViewModel,
+    spatialViewModel: SpatialViewModel,
+    volumeViewModel: VolumeViewModel,
 ) {
     val navController = rememberNavController()
     Scaffold(
@@ -82,6 +92,12 @@ fun DaybreakApp(
             }
             composable(Destination.Equalizer.route) {
                 EqScreen(viewModel = eqViewModel)
+            }
+            composable(Destination.Spatial.route) {
+                SpatialScreen(viewModel = spatialViewModel)
+            }
+            composable(Destination.Volume.route) {
+                VolumeScreen(viewModel = volumeViewModel)
             }
         }
     }

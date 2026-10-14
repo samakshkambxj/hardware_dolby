@@ -8,6 +8,8 @@
 
     <string name="tab_sound">Sound</string>
     <string name="tab_equalizer">Equalizer</string>
+    <string name="tab_spatial">Spatial</string>
+    <string name="tab_volume">Volume</string>
 
     <string name="eq_preset">Preset</string>
     <string name="eq_custom">Custom</string>
@@ -34,4 +36,22 @@
     <string name="output_bluetooth">Bluetooth audio</string>
     <string name="output_usb">USB audio</string>
     <string name="output_unknown">Audio output</string>
+
+    <string name="spatial_virtualizers">Virtualizers</string>
+    <string name="spatial_speaker">Speaker virtualizer</string>
+    <string name="spatial_headphones">Headphone virtualizer</string>
+    <string name="spatial_headphones_hint">Connect headphones</string>
+    <string name="spatial_stereo">Stereo widening</string>
+    <string name="spatial_voice">Voice</string>
+    <string name="spatial_dialogue">Dialogue enhancer</string>
+    <string name="spatial_reset">Reset to defaults</string>
+    <string name="spatial_reset_title">Reset profile?</string>
+    <string name="spatial_reset_message">Restore defaults for this profile?</string>
+    <string name="spatial_reset_toast">Reset %1$s profile</string>
+
+    <string name="volume_media">Media</string>
+    <string name="volume_ring">Ringtone</string>
+    <string name="volume_notification">Notification</string>
+    <string name="volume_alarm">Alarm</string>
+    <string name="volume_call">Call</string>
 </resources>

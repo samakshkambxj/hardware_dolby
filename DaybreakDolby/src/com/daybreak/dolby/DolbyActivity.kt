@@ -12,12 +12,16 @@ import androidx.activity.viewModels
 import com.daybreak.dolby.ui.equalizer.EqViewModel
 import com.daybreak.dolby.ui.nav.DaybreakApp
 import com.daybreak.dolby.ui.sound.SoundViewModel
+import com.daybreak.dolby.ui.spatial.SpatialViewModel
 import com.daybreak.dolby.ui.theme.DaybreakTheme
+import com.daybreak.dolby.ui.volume.VolumeViewModel
 
 class DolbyActivity : ComponentActivity() {
 
     private val soundViewModel: SoundViewModel by viewModels()
     private val eqViewModel: EqViewModel by viewModels()
+    private val spatialViewModel: SpatialViewModel by viewModels()
+    private val volumeViewModel: VolumeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,6 +30,8 @@ class DolbyActivity : ComponentActivity() {
                 DaybreakApp(
                     soundViewModel = soundViewModel,
                     eqViewModel = eqViewModel,
+                    spatialViewModel = spatialViewModel,
+                    volumeViewModel = volumeViewModel,
                 )
             }
         }
