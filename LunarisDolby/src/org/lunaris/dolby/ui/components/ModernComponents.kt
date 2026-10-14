@@ -624,6 +624,8 @@ fun ModernSettingSlider(
     valueLabel: (Int) -> String = { it.toString() },
     /** Trailing icon drawn inside the inactive end, volume-panel style. */
     icon: ImageVector? = null,
+    /** Warning tint on the active fill and value chip (e.g. safe volume). */
+    warning: Boolean = false,
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
@@ -666,13 +668,15 @@ fun ModernSettingSlider(
             
             Surface(
                 shape = MaterialTheme.shapes.small,
-                color = MaterialTheme.colorScheme.primaryContainer
+                color = if (warning) MaterialTheme.colorScheme.errorContainer
+                else MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
                     text = valueLabel(displayValue),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = if (warning) MaterialTheme.colorScheme.onErrorContainer
+                    else MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                 )
             }
@@ -757,7 +761,8 @@ fun ModernSettingSlider(
                                 else Alignment.CenterEnd
                             )
                             .background(
-                                MaterialTheme.colorScheme.primaryContainer,
+                                if (warning) MaterialTheme.colorScheme.error
+                                else MaterialTheme.colorScheme.primaryContainer,
                                 barShape
                             )
                     )
