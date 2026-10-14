@@ -14,7 +14,6 @@ android_app {
 
     overrides: ["MusicFX", "AudioFX"],
     static_libs: [
-        "SettingsLib",
         "androidx.activity_activity-compose",
         "androidx.compose.foundation_foundation",
         "androidx.compose.material3_material3",

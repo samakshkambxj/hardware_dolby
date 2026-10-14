@@ -11,7 +11,6 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import com.daybreak.dolby.audio.DolbyController
-import com.android.settingslib.drawer.TileUtils
 import kotlinx.coroutines.runBlocking
 
 /** Settings-injected summary: On (profile) / Off. */
@@ -35,7 +34,7 @@ class SummaryProvider : ContentProvider() {
             }
         }
         return Bundle().apply {
-            putString(TileUtils.META_DATA_PREFERENCE_SUMMARY, summary)
+            putString(META_DATA_PREFERENCE_SUMMARY, summary)
         }
     }
 
@@ -65,5 +64,6 @@ class SummaryProvider : ContentProvider() {
 
     companion object {
         private const val KEY_DOLBY = "dolby"
+        private const val META_DATA_PREFERENCE_SUMMARY = "com.android.settings.summary"
     }
 }
