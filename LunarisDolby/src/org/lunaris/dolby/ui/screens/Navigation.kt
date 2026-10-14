@@ -259,6 +259,8 @@ private fun BottomNavOverlay(
                     advancedBadge = advancedBadge,
                     equalizerBadge = equalizerBadge,
                     rainbow = pageStyle.rainbow,
+                    intensity = pageStyle.glassIntensity,
+                    veilAlpha = pageStyle.navTint,
                     onNavigate = onNavigate
                 )
             } else {

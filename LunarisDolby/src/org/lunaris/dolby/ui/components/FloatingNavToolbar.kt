@@ -154,6 +154,7 @@ fun FloatingNavToolbar(
                             blurRadiusPx = pageStyle.navBlurRadius,
                             backdrop = LocalGlassBackdrop.current,
                             rainbow = pageStyle.rainbow,
+                            intensity = pageStyle.glassIntensity,
                             modifier = Modifier.matchParentSize()
                         )
                     } else {

@@ -68,6 +68,10 @@ fun LiquidGlassNavbar(
     equalizerBadge: Boolean = false,
     /** Prismatic fringe on the pill edge. */
     rainbow: Boolean = true,
+    /** Refraction strength 0..1 for the pill lenses. */
+    intensity: Float = 0.6f,
+    /** Veil alpha over the pill container. */
+    veilAlpha: Float = 0.4f,
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
@@ -91,6 +95,8 @@ fun LiquidGlassNavbar(
             tabsCount = GLASS_DESTINATIONS.size,
             backdrop = LocalGlassBackdrop.current,
             rainbow = rainbow,
+            intensity = intensity,
+            veilAlpha = veilAlpha,
         ) { activateTab ->
             GLASS_DESTINATIONS.forEachIndexed { index, destination ->
                 val selected = index == selectedIndex
