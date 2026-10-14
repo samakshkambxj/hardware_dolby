@@ -10,6 +10,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import com.daybreak.dolby.ui.equalizer.EqViewModel
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import com.daybreak.dolby.ui.customize.rememberCustomize
 import com.daybreak.dolby.ui.nav.DaybreakApp
 import com.daybreak.dolby.ui.sound.SoundViewModel
 import com.daybreak.dolby.ui.spatial.SpatialViewModel
@@ -26,7 +29,12 @@ class DolbyActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            DaybreakTheme {
+            val customize by rememberCustomize()
+            DaybreakTheme(
+                dynamicColor = customize.dynamicColor,
+                accent = customize.accent,
+                amoled = customize.amoled,
+            ) {
                 DaybreakApp(
                     soundViewModel = soundViewModel,
                     eqViewModel = eqViewModel,

@@ -24,4 +24,8 @@ sealed interface Destination {
     data object Volume : Destination {
         override val route = "volume"
     }
+
+    data object Customize : Destination {
+        override val route = "customize"
+    }
 }

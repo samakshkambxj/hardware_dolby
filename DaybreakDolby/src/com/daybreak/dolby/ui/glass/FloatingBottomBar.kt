@@ -223,6 +223,8 @@ fun FloatingBottomBar(
     rainbow: Boolean = true,
     /** Refraction strength 0..1 for the pill lenses. */
     intensity: Float = 0.6f,
+    /** Snapshot-style blur radius driving the engine blur. */
+    blurRadius: Float = 20f,
     /** Veil alpha over the pill container. */
     veilAlpha: Float = 0.4f,
     content: @Composable RowScope.((Int) -> Unit) -> Unit
@@ -243,6 +245,7 @@ fun FloatingBottomBar(
             rainbow = rainbow,
             intensity = intensity,
             veilAlpha = veilAlpha,
+            blurRadius = blurRadius,
             content = content,
         )
     }
@@ -260,6 +263,7 @@ private fun FloatingBottomBarContent(
     rainbow: Boolean,
     intensity: Float,
     veilAlpha: Float,
+    blurRadius: Float,
     content: @Composable RowScope.((Int) -> Unit) -> Unit
 ) {
     val pillShape = remember { CircleShape }
@@ -431,7 +435,10 @@ private fun FloatingBottomBarContent(
                             effects = {
                                 padding = maxOf(padding, 40.dp.toPx())
                                 vibrancy()
-                                blur(4.dp.toPx(), 4.dp.toPx())
+                                blur(
+                                    (blurRadius / 5f).dp.toPx(),
+                                    (blurRadius / 5f).dp.toPx(),
+                                )
                                 lens(
                                     refractionHeight = 24.dp.toPx(),
                                     refractionAmount = (8f + 32f * intensity).dp.toPx(),
@@ -484,7 +491,10 @@ private fun FloatingBottomBarContent(
                             shape = { pillShape },
                             effects = {
                                 vibrancy()
-                                blur(4.dp.toPx(), 4.dp.toPx())
+                                blur(
+                                    (blurRadius / 5f).dp.toPx(),
+                                    (blurRadius / 5f).dp.toPx(),
+                                )
                                 lens(
                                     refractionHeight = 24.dp.toPx(),
                                     refractionAmount = (8f + 32f * intensity).dp.toPx(),

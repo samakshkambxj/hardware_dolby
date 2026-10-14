@@ -42,7 +42,7 @@ import com.daybreak.dolby.ui.components.DaySwitchRow
 import com.daybreak.dolby.ui.components.ProfileGrid
 
 @Composable
-fun SoundScreen(viewModel: SoundViewModel) {
+fun SoundScreen(viewModel: SoundViewModel, onCustomize: () -> Unit) {
     val state by viewModel.uiState.collectAsState()
     var ieqDialog by remember { mutableStateOf(false) }
 
@@ -116,6 +116,11 @@ fun SoundScreen(viewModel: SoundViewModel) {
                     checked = state.leveler,
                     enabled = state.enabled,
                     onToggle = { viewModel.setLeveler(it) },
+                )
+                DayRow(
+                    title = stringResource(R.string.sound_customize),
+                    enabled = true,
+                    onClick = onCustomize,
                 )
             }
         }

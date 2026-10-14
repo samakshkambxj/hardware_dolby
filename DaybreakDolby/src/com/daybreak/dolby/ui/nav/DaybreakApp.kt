@@ -22,6 +22,8 @@ import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +40,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.daybreak.dolby.R
+import com.daybreak.dolby.ui.customize.BarDesign
+import com.daybreak.dolby.ui.customize.BarStyle
+import com.daybreak.dolby.ui.customize.CustomizeScreen
+import com.daybreak.dolby.ui.customize.rememberCustomize
 import com.daybreak.dolby.ui.equalizer.EqScreen
 import com.daybreak.dolby.ui.equalizer.EqViewModel
 import com.daybreak.dolby.ui.glass.FloatingBottomBar
@@ -77,9 +83,10 @@ fun DaybreakApp(
     val selectedIndex = TABS.indexOfFirst { tab ->
         entry?.destination?.hierarchy?.any { it.route == tab.route } == true
     }.coerceAtLeast(0)
+    val customize by rememberCustomize()
 
-    // Backdrop root: pager content records into this layer; the pill and
-    // any overlay sample it. The pill lives outside the recorded box.
+    // Backdrop root: tab content records into this layer; the pill and
+    // any overlay sample it. The bar lives outside the recorded box.
     val useBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
     val backdrop = if (useBlur) {
         rememberLayerBackdrop()
@@ -90,50 +97,84 @@ fun DaybreakApp(
     CompositionLocalProvider(LocalGlassBackdrop provides backdrop) {
         Scaffold(
             bottomBar = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.navigationBars)
-                        .padding(start = 24.dp, end = 24.dp, bottom = 12.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    FloatingBottomBar(
-                        selectedIndex = selectedIndex,
-                        onSelected = { index ->
-                            navController.navigate(TABS[index].route) {
-                                popUpTo(Destination.Sound.route)
-                                launchSingleTop = true
-                            }
-                        },
-                        tabsCount = TABS.size,
-                        backdrop = backdrop,
-                    ) { activateTab ->
+                if (customize.barDesign == BarDesign.STOCK) {
+                    NavigationBar {
                         TABS.forEachIndexed { index, tab ->
                             val selected = index == selectedIndex
-                            FloatingBottomBarItem(
+                            NavigationBarItem(
                                 selected = selected,
-                                onClick = { activateTab(index) },
-                            ) {
-                                val contentColor = LocalContentColor.current
-                                CompositionLocalProvider(
-                                    LocalContentColor provides if (selected) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        contentColor
-                                    },
-                                ) {
+                                onClick = {
+                                    navController.navigate(tab.route) {
+                                        popUpTo(Destination.Sound.route)
+                                        launchSingleTop = true
+                                    }
+                                },
+                                icon = {
                                     Icon(
                                         imageVector = tab.icon,
                                         contentDescription = stringResource(tab.labelRes),
-                                        modifier = Modifier.size(24.dp),
                                     )
-                                    Text(
-                                        text = stringResource(tab.labelRes),
-                                        fontSize = 11.sp,
-                                        lineHeight = 14.sp,
-                                        maxLines = 1,
-                                        softWrap = false,
-                                    )
+                                },
+                                label = { Text(stringResource(tab.labelRes)) },
+                            )
+                        }
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .windowInsetsPadding(WindowInsets.navigationBars)
+                            .padding(start = 24.dp, end = 24.dp, bottom = 12.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        FloatingBottomBar(
+                            selectedIndex = selectedIndex,
+                            onSelected = { index ->
+                                navController.navigate(TABS[index].route) {
+                                    popUpTo(Destination.Sound.route)
+                                    launchSingleTop = true
+                                }
+                            },
+                            tabsCount = TABS.size,
+                            backdrop = backdrop,
+                            rainbow = customize.rainbow,
+                            intensity = customize.glassIntensity,
+                            veilAlpha = when (customize.barStyle) {
+                                BarStyle.TRANSPARENT -> 0.25f
+                                BarStyle.FROSTED -> customize.navTint
+                                BarStyle.FILLED -> 1f
+                                BarStyle.TONAL -> 1f
+                                BarStyle.OUTLINED -> 0.15f
+                            },
+                            blurRadius = customize.navBlurRadius,
+                        ) { activateTab ->
+                            TABS.forEachIndexed { index, tab ->
+                                val selected = index == selectedIndex
+                                FloatingBottomBarItem(
+                                    selected = selected,
+                                    onClick = { activateTab(index) },
+                                ) {
+                                    val contentColor = LocalContentColor.current
+                                    CompositionLocalProvider(
+                                        LocalContentColor provides if (selected) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            contentColor
+                                        },
+                                    ) {
+                                        Icon(
+                                            imageVector = tab.icon,
+                                            contentDescription = stringResource(tab.labelRes),
+                                            modifier = Modifier.size(24.dp),
+                                        )
+                                        Text(
+                                            text = stringResource(tab.labelRes),
+                                            fontSize = 11.sp,
+                                            lineHeight = 14.sp,
+                                            maxLines = 1,
+                                            softWrap = false,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -156,7 +197,12 @@ fun DaybreakApp(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     composable(Destination.Sound.route) {
-                        SoundScreen(viewModel = soundViewModel)
+                        SoundScreen(
+                            viewModel = soundViewModel,
+                            onCustomize = {
+                                navController.navigate(Destination.Customize.route)
+                            },
+                        )
                     }
                     composable(Destination.Equalizer.route) {
                         EqScreen(viewModel = eqViewModel)
@@ -166,6 +212,9 @@ fun DaybreakApp(
                     }
                     composable(Destination.Volume.route) {
                         VolumeScreen(viewModel = volumeViewModel)
+                    }
+                    composable(Destination.Customize.route) {
+                        CustomizeScreen()
                     }
                 }
             }

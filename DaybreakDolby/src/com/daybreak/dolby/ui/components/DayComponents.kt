@@ -5,6 +5,7 @@
 
 package com.daybreak.dolby.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -31,6 +32,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardElevation
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -45,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
@@ -61,6 +64,9 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.daybreak.dolby.ui.customize.CardStyle
+import com.daybreak.dolby.ui.customize.Customize
+import com.daybreak.dolby.ui.customize.rememberCustomize
 import kotlin.math.roundToInt
 
 /**
@@ -103,12 +109,15 @@ fun DayCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val customize by rememberCustomize()
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(customize.cornerStyle.radius),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = customize.cardContainer(),
         ),
+        border = customize.cardBorder(),
+        elevation = customize.cardElevation(),
     ) {
         Column(Modifier.padding(vertical = 4.dp)) {
             content()
@@ -361,6 +370,114 @@ fun DaySlider(
                 .size(width = 3.dp, height = barHeight + 12.dp)
                 .background(Color.White.copy(alpha = 0.9f), CircleShape)
         )
+    }
+}
+
+@Composable
+fun Customize.cardContainer(): Color = when (cardStyle) {
+    CardStyle.FILLED -> MaterialTheme.colorScheme.surfaceContainerLow
+    CardStyle.OUTLINED -> MaterialTheme.colorScheme.surface
+    CardStyle.ELEVATED -> MaterialTheme.colorScheme.surfaceContainerLow
+}
+
+@Composable
+fun Customize.cardBorder(): BorderStroke? = when (cardStyle) {
+    CardStyle.OUTLINED ->
+        BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    else -> null
+}
+
+@Composable
+fun Customize.cardElevation(): CardElevation = CardDefaults.cardElevation(
+    defaultElevation = if (cardStyle == CardStyle.ELEVATED) 4.dp else 0.dp,
+)
+
+@Composable
+fun DaySettingSlider(
+    title: String,
+    value: Int,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    valueLabel: (Int) -> String,
+    onCommit: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var pos by remember(value) { mutableFloatStateOf(value.toFloat()) }
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                text = valueLabel(pos.toInt()),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+        DaySlider(
+            value = pos,
+            valueRange = valueRange,
+            steps = steps,
+            onLiveChange = { pos = it },
+            onCommit = { onCommit(pos.toInt()) },
+        )
+    }
+}
+
+@Composable
+fun DayOptionRow(
+    options: List<String>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    itemsPerRow: Int = 3,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        options.chunked(itemsPerRow).forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                row.forEach { option ->
+                    val index = options.indexOf(option)
+                    val selected = index == selectedIndex
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(
+                                if (selected) MaterialTheme.colorScheme.secondaryContainer
+                                else MaterialTheme.colorScheme.surfaceContainerHighest,
+                            )
+                            .clickable(role = Role.Button) { onSelect(index) }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = option,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = if (selected) {
+                                MaterialTheme.colorScheme.onSecondaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                        )
+                    }
+                }
+                repeat(itemsPerRow - row.size) {
+                    Spacer(Modifier.weight(1f))
+                }
+            }
+        }
     }
 }
 

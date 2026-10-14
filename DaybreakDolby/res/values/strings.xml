@@ -30,6 +30,7 @@
     <string name="sound_ieq">Intelligent equalizer</string>
     <string name="sound_bass">Bass enhancer</string>
     <string name="sound_leveler">Volume leveler</string>
+    <string name="sound_customize">Customization</string>
 
     <string name="output_speaker">Speaker</string>
     <string name="output_headphones">Headphones</string>
@@ -48,6 +49,24 @@
     <string name="spatial_reset_title">Reset profile?</string>
     <string name="spatial_reset_message">Restore defaults for this profile?</string>
     <string name="spatial_reset_toast">Reset %1$s profile</string>
+
+    <string name="custom_theme">Theme</string>
+    <string name="custom_dynamic">Dynamic color</string>
+    <string name="custom_dynamic_summary">Follow the wallpaper colors</string>
+    <string name="custom_amoled">AMOLED black</string>
+    <string name="custom_amoled_summary">True-black surfaces in dark mode</string>
+    <string name="custom_accent">Accent</string>
+    <string name="custom_cards">Cards</string>
+    <string name="custom_corners">Corners</string>
+    <string name="custom_card_style">Style</string>
+    <string name="custom_navbar">Navbar</string>
+    <string name="custom_design">Design</string>
+    <string name="custom_style">Style</string>
+    <string name="custom_rainbow">Rainbow dispersion</string>
+    <string name="custom_rainbow_summary">Prismatic fringe on the glass pill</string>
+    <string name="custom_intensity">Glass intensity</string>
+    <string name="custom_tint">Background tint</string>
+    <string name="custom_blur">Blur strength</string>
 
     <string name="volume_media">Media</string>
     <string name="volume_ring">Ringtone</string>
