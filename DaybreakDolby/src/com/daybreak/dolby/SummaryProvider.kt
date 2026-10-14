@@ -59,7 +59,6 @@ class SummaryProvider : ContentProvider() {
         values: ContentValues?,
         selection: String?,
         selectionArgs: Array<String>?,
-        sortOrder: String?,
     ): Int = 0
 
     companion object {
