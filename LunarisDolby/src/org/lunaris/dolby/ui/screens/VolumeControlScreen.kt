@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -31,6 +32,8 @@ import org.lunaris.dolby.ui.components.StyledParticles
 import org.lunaris.dolby.ui.components.ModernSettingSlider
 import org.lunaris.dolby.ui.components.ModernSettingsCard
 import org.lunaris.dolby.ui.components.verticalBouncyEdge
+import org.lunaris.dolby.utils.HapticFeedbackHelper
+import org.lunaris.dolby.utils.rememberHapticFeedback
 
 private data class VolumeStreamInfo(
     val streamType: Int,
@@ -38,10 +41,22 @@ private data class VolumeStreamInfo(
     val icon: ImageVector
 )
 
+/** Media fraction that trips the safe-volume nudge. */
+private const val SAFE_FRACTION = 0.7f
+private const val KEY_SAFE_ACK = "safe_volume_ack"
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun VolumeControlScreen() {
     val context = LocalContext.current
+    val haptic = rememberHapticFeedback()
+    val scope = rememberCoroutineScope()
+
+    // Dismissible safe-volume acknowledgement (shared dolby_prefs).
+    val prefs = remember {
+        context.getSharedPreferences("dolby_prefs", Context.MODE_PRIVATE)
+    }
+    var safeAck by remember { mutableStateOf(prefs.getBoolean(KEY_SAFE_ACK, false)) }
 
     val audioManager = remember {
         context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -186,6 +201,19 @@ fun VolumeControlScreen() {
                     title = stream.title,
                     icon = stream.icon
                 ) {
+                    val isMusic = stream.streamType == AudioManager.STREAM_MUSIC
+                    val fraction = if (max > min) {
+                        (current - min).toFloat() / (max - min).toFloat()
+                    } else 0f
+                    val showSafeNudge = isMusic && !safeAck && fraction >= SAFE_FRACTION
+
+                    // Heavy buzz exactly once per crossing into the red zone.
+                    LaunchedEffect(showSafeNudge) {
+                        if (showSafeNudge) {
+                            haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.HEAVY_CLICK)
+                        }
+                    }
+
                     ModernSettingSlider(
                         title = "Level",
                         value = current,
@@ -193,6 +221,7 @@ fun VolumeControlScreen() {
                         steps = (max - min - 1).coerceAtLeast(0),
                         valueLabel = { "$it / $max" },
                         icon = stream.icon,
+                        warning = showSafeNudge,
                         onValueChange = { newValue ->
                             val target = newValue.toInt().coerceIn(min, max)
                             // Optimistic UI update; receiver will correct it if clamped.
@@ -213,6 +242,34 @@ fun VolumeControlScreen() {
                             }
                         }
                     )
+                    if (showSafeNudge) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(20.dp),
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "High volume — long sessions here can damage hearing",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.weight(1f),
+                            )
+                            TextButton(onClick = {
+                                safeAck = true
+                                prefs.edit().putBoolean(KEY_SAFE_ACK, true).apply()
+                            }) {
+                                Text("Dismiss")
+                            }
+                        }
+                    }
                 }
             }
 
