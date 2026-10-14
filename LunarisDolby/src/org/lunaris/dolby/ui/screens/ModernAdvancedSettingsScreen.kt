@@ -51,12 +51,6 @@ fun ModernAdvancedSettingsScreen(
     val spatialError by viewModel.spatialError.collectAsState()
     val codecs by viewModel.codecInfo.collectAsState()
     val context = LocalContext.current
-    val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
-    RegisterScrollToTop(
-        visible = listState.firstVisibleItemIndex > 3,
-        onTop = { scope.launch { listState.animateScrollToItem(0) } },
-    )
     // Hidden entry to the DAP probe debug screen: 5 taps on the title.
     var probeTaps by remember { mutableIntStateOf(0) }
 
@@ -180,6 +174,12 @@ private fun ModernAdvancedSettingsContent(
     modifier: Modifier = Modifier
 ) {
     var query by remember { mutableStateOf("") }
+    val listState = rememberLazyListState()
+    val scrollScope = rememberCoroutineScope()
+    RegisterScrollToTop(
+        visible = listState.firstVisibleItemIndex > 3,
+        onTop = { scrollScope.launch { listState.animateScrollToItem(0) } },
+    )
     fun match(vararg keywords: String): Boolean {
         val q = query.trim().lowercase()
         if (q.isEmpty()) return true
