@@ -218,11 +218,20 @@ fun MainPagerScreen(
                 equalizerBadge = equalizerBadge,
                 onNavigate = { route ->
                     coroutineScope.launch {
-                        when (route) {
-                            "settings" -> pagerState.animateScrollToPage(0)
-                            "equalizer" -> pagerState.animateScrollToPage(1)
-                            "advanced" -> pagerState.animateScrollToPage(2)
-                            "volume" -> pagerState.animateScrollToPage(3)
+                        val target = when (route) {
+                            "settings" -> 0
+                            "equalizer" -> 1
+                            "advanced" -> 2
+                            else -> 3
+                        }
+                        // Far jumps cut instead of scrolling: animating
+                        // through intermediate pages composes them (and fires
+                        // their loads, e.g. the EQ reload) mid-flight, which
+                        // is where the stutter comes from.
+                        if (kotlin.math.abs(target - pagerState.currentPage) > 1) {
+                            pagerState.scrollToPage(target)
+                        } else {
+                            pagerState.animateScrollToPage(target)
                         }
                     }
                 },
