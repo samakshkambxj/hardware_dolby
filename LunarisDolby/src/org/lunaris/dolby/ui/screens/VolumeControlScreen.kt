@@ -29,7 +29,6 @@ import org.lunaris.dolby.R
 import org.lunaris.dolby.ui.components.StyledParticles
 import org.lunaris.dolby.ui.components.ModernSettingSlider
 import org.lunaris.dolby.ui.components.ModernSettingsCard
-import org.lunaris.dolby.ui.components.rememberPageStyle
 import org.lunaris.dolby.ui.components.verticalBouncyEdge
 
 private data class VolumeStreamInfo(
@@ -42,7 +41,6 @@ private data class VolumeStreamInfo(
 @Composable
 fun VolumeControlScreen() {
     val context = LocalContext.current
-    val pageStyle by rememberPageStyle()
 
     val audioManager = remember {
         context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -185,9 +183,7 @@ fun VolumeControlScreen() {
 
                 ModernSettingsCard(
                     title = stream.title,
-                    icon = stream.icon,
-                    glass = pageStyle.glassHeroCard &&
-                        stream.streamType == AudioManager.STREAM_MUSIC,
+                    icon = stream.icon
                 ) {
                     ModernSettingSlider(
                         title = "Level",

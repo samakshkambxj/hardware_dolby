@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
 import org.lunaris.dolby.data.EasterEggs
-import org.lunaris.dolby.ui.glass.LocalGlassBackdrop
 import org.lunaris.dolby.domain.models.ActiveAudioDevice
 import org.lunaris.dolby.domain.models.AudioDeviceCategory
 import org.lunaris.dolby.domain.models.ProfileSettings
@@ -409,36 +408,9 @@ fun ModernSettingsCard(
     title: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
-    /** Liquid-glass background sampled from the pager backdrop (Volume hero). */
-    glass: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val pageStyle by rememberPageStyle()
-    val glassBackdrop = LocalGlassBackdrop.current
-    val useGlass = glass && glassBackdrop != null &&
-        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU
-    if (useGlass) {
-        Box(modifier = modifier.fillMaxWidth()) {
-            LiquidGlassBackdrop(
-                tint = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.55f),
-                blurRadiusPx = 20f,
-                backdrop = glassBackdrop,
-                shape = pageStyle.cardShape,
-                modifier = Modifier.matchParentSize(),
-            )
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = pageStyle.cardShape,
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.Transparent,
-                ),
-                border = pageStyle.cardBorder(),
-            ) {
-                CardBody(title = title, icon = icon, content = content)
-            }
-        }
-        return
-    }
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = pageStyle.cardShape,
