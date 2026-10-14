@@ -6,6 +6,8 @@
 package com.daybreak.dolby.ui.customize
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.daybreak.dolby.R
 import com.daybreak.dolby.ui.components.DayCard
@@ -157,7 +160,7 @@ fun CustomizeScreen() {
                     valueRange = 0f..100f,
                     steps = 19,
                     valueLabel = { "$it%" },
-                    onCommit = { repo.update { it.copy(glassIntensity = it / 100f) } },
+                    onCommit = { v -> repo.update { it.copy(glassIntensity = v / 100f) } },
                 )
                 DaySettingSlider(
                     title = stringResource(R.string.custom_tint),
@@ -165,7 +168,7 @@ fun CustomizeScreen() {
                     valueRange = 0f..100f,
                     steps = 19,
                     valueLabel = { "$it%" },
-                    onCommit = { repo.update { it.copy(navTint = it / 100f) } },
+                    onCommit = { v -> repo.update { it.copy(navTint = v / 100f) } },
                 )
                 DaySettingSlider(
                     title = stringResource(R.string.custom_blur),
@@ -173,7 +176,7 @@ fun CustomizeScreen() {
                     valueRange = 0f..60f,
                     steps = 14,
                     valueLabel = { "$it" },
-                    onCommit = { repo.update { it.copy(navBlurRadius = it.toFloat()) } },
+                    onCommit = { v -> repo.update { it.copy(navBlurRadius = v.toFloat()) } },
                 )
             }
         }
@@ -231,19 +234,16 @@ private fun AccentGrid(
     }
 }
 
+@Composable
 private fun Modifier.clickableOption(
     selected: Boolean,
     onClick: () -> Unit,
-): Modifier = this.then(
-    androidx.compose.foundation.border(
-        width = if (selected) 3.dp else 0.dp,
-        color = if (selected) MaterialTheme.colorScheme.primary
-        else androidx.compose.ui.graphics.Color.Transparent,
-        shape = MaterialTheme.shapes.medium,
-    ),
-).then(
-    androidx.compose.foundation.clickable(
-        role = androidx.compose.ui.semantics.Role.Button,
-        onClick = onClick,
-    ),
+): Modifier = border(
+    width = if (selected) 3.dp else 0.dp,
+    color = if (selected) MaterialTheme.colorScheme.primary
+    else androidx.compose.ui.graphics.Color.Transparent,
+    shape = MaterialTheme.shapes.medium,
+).clickable(
+    role = Role.Button,
+    onClick = onClick,
 )
