@@ -19,5 +19,7 @@ android_app {
         "androidx.compose.material3_material3",
         "androidx.compose.runtime_runtime",
         "androidx.compose.ui_ui",
+        "kotlinx-coroutines-android",
+        "kotlinx-coroutines-core",
     ],
 }
