@@ -16,4 +16,12 @@ sealed interface Destination {
     data object Equalizer : Destination {
         override val route = "equalizer"
     }
+
+    data object Spatial : Destination {
+        override val route = "spatial"
+    }
+
+    data object Volume : Destination {
+        override val route = "volume"
+    }
 }
