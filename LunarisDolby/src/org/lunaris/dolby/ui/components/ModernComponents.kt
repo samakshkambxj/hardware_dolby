@@ -13,6 +13,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
@@ -27,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -618,7 +621,9 @@ fun ModernSettingSlider(
     valueRange: ClosedFloatingPointRange<Float>,
     steps: Int,
     modifier: Modifier = Modifier,
-    valueLabel: (Int) -> String = { it.toString() }
+    valueLabel: (Int) -> String = { it.toString() },
+    /** Trailing icon drawn inside the inactive end, volume-panel style. */
+    icon: ImageVector? = null,
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
@@ -674,7 +679,16 @@ fun ModernSettingSlider(
         }
         
         Spacer(modifier = Modifier.height(8.dp))
-        
+
+        // Chunky volume-panel bar: full-bleed rounded track with a thin
+        // cursor thumb and an optional icon in the inactive end.
+        val barHeight = 56.dp
+        val barShape = RoundedCornerShape(16.dp)
+        val isLtr =
+            LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Ltr
+        val fraction = ((sliderValue - valueRange.start) /
+            (valueRange.endInclusive - valueRange.start).coerceAtLeast(1e-6f))
+            .coerceIn(0f, 1f)
         Slider(
             value = sliderValue,
             onValueChange = { newValue ->
@@ -701,13 +715,54 @@ fun ModernSettingSlider(
             valueRange = valueRange,
             steps = steps,
             modifier = Modifier.fillMaxWidth(),
-            colors = SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.primary,
-                activeTrackColor = MaterialTheme.colorScheme.primary,
-                activeTickColor = MaterialTheme.colorScheme.onPrimary,
-                inactiveTrackColor = MaterialTheme.colorScheme.secondaryContainer,
-                inactiveTickColor = MaterialTheme.colorScheme.onSecondaryContainer
-            )
+            thumb = {
+                Box(
+                    modifier = Modifier
+                        .size(width = 4.dp, height = barHeight)
+                        .background(Color.White.copy(alpha = 0.9f), CircleShape)
+                )
+            },
+            track = {
+                Box(modifier = Modifier.height(barHeight)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(barHeight)
+                            .background(
+                                MaterialTheme.colorScheme.surfaceContainerHighest,
+                                barShape
+                            )
+                    ) {
+                        icon?.let {
+                            Icon(
+                                imageVector = it,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .align(
+                                        if (isLtr) Alignment.CenterEnd
+                                        else Alignment.CenterStart
+                                    )
+                                    .padding(horizontal = 16.dp)
+                                    .size(24.dp)
+                            )
+                        }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(fraction)
+                            .height(barHeight)
+                            .align(
+                                if (isLtr) Alignment.CenterStart
+                                else Alignment.CenterEnd
+                            )
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer,
+                                barShape
+                            )
+                    )
+                }
+            }
         )
     }
 }
