@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2023-24 Paranoid Android
+     Copyright (C) 2024-2025 Lunaris AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.dolbyatmos"
+    android:sharedUserId="android.uid.system">
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- signature|privileged, auto-granted via platform cert + privapp
+         allowlist, non-revocable. Preferred over SCHEDULE_EXACT_ALARM for
+         this platform-signed priv-app: canScheduleExactAlarms() is always
+         true, sleep timer never silently degrades to inexact. Keep
+         SCHEDULE_EXACT_ALARM for API 31-32 where USE_EXACT_ALARM
+         does not exist. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <!-- Required to drive the framework Spatializer (setEnabled /
+         setHeadTrackerEnabled are gated by this in AudioService).
+         signature|privileged: granted via platform cert + privapp allowlist. -->
+    <uses-permission android:name="android.permission.MODIFY_DEFAULT_AUDIO_EFFECTS" />
+    <!-- Required for the output picker to actually steer routing
+         (setSpeakerphoneOn / setBluetoothA2dpOn / stopBluetoothSco).
+         Normal permission: auto-granted at install. -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- Bluetooth codec info card (active A2DP codec/rate). Runtime
+         permission: requested in-app, pre-granted via privapp allowlist. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- Opt out of the predictive-back SYSTEM animation (window scale/shift).
+         Without this the edge-swipe gesture plays the platform animation
+         while the NavHost pop cuts underneath it, so neither the button nor
+         the gesture path matches. With it, swipes dispatch a plain back to
+         the NavController and the fade transitions in DolbyNavHost run for
+         both paths. OnBackPressedDispatcher (which NavController uses) is
+         unaffected by this flag. -->
+    <application
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:label="@string/dolby_title"
+        android:persistent="true"
+        android:directBootAware="true"
+        android:defaultToDeviceProtectedStorage="true"
+        android:theme="@style/Theme.Dolby"
+        android:enableOnBackInvokedCallback="false">
+
+        <receiver
+            android:name=".BootCompletedReceiver"
+            android:exported="true">
+            <intent-filter android:priority="1000">
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".service.SleepTimerReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="org.dolbyatmos.ACTION_SLEEP_TIMER" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".service.DolbyCommandReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="org.dolbyatmos.action.TOGGLE" />
+                <action android:name="org.dolbyatmos.action.SET_ENABLED" />
+                <action android:name="org.dolbyatmos.action.SET_PROFILE" />
+                <action android:name="org.dolbyatmos.action.APPLY_SCENE" />
+            </intent-filter>
+        </receiver>
+
+        <activity
+            android:name=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.settings.action.IA_SETTINGS" />
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.media.action.DISPLAY_AUDIO_EFFECT_CONTROL_PANEL" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.CATEGORY_CONTENT_MUSIC" />
+            </intent-filter>
+            <meta-data android:name="com.android.settings.category"
+                       android:value="com.android.settings.category.ia.sound" />
+            <meta-data android:name="com.android.settings.summary_uri"
+                       android:value="content://org.dolbyatmos.summary/dolby" />
+        </activity>
+
+        <!-- Alternate launcher icons (Page Style > App icon). The LAUNCHER
+             filter lives only on these aliases so exactly one icon is ever
+             visible; AppIconManager toggles them via PackageManager. -->
+        <activity-alias
+            android:name=".ui.DolbyActivityIconDynamic"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.DolbyActivityIconIndigo"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_indigo"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.DolbyActivityIconMidnight"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_midnight"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.DolbyActivityIconGold"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_gold"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.DolbyActivityIconCrimson"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_crimson"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.DolbyActivityIconTeal"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_teal"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.DolbyActivityIconViolet"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_violet"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.DolbyActivityIconOcean"
+            android:targetActivity=".ui.DolbyActivity"
+            android:label="@string/dolby_title"
+            android:icon="@mipmap/ic_launcher_ocean"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="org.dolbyatmos.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <service
+            android:name=".tile.DolbyTileService"
+            android:icon="@drawable/ic_dolby_qs"
+            android:label="@string/dolby_title"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".tile.SceneCycleTileService"
+            android:icon="@drawable/ic_dolby_qs"
+            android:label="@string/tile_scene_title"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".tile.LevelerTileService"
+            android:icon="@drawable/ic_dolby_qs"
+            android:label="@string/tile_leveler_title"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <provider
+            android:name=".provider.SummaryProvider"
+            android:authorities="org.dolbyatmos.summary">
+        </provider>
+
+        <service
+            android:name=".service.AppProfileMonitorService"
+            android:exported="false"
+            android:enabled="true" />
+
+        <service
+            android:name=".service.DolbyNotificationListener"
+            android:label="@string/dolby_notification_listener_label"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".service.DolbyEffectService"
+            android:exported="false"
+            android:enabled="true"
+            android:stopWithTask="false" />
+
+    </application>
+</manifest>

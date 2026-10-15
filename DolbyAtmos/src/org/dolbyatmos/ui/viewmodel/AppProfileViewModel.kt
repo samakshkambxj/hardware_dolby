@@ -1,0 +1,159 @@
+/*
+ * Copyright (C) 2024-2025 Lunaris AOSP
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+package org.dolbyatmos.ui.viewmodel
+
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import org.dolbyatmos.DolbyConstants
+import org.dolbyatmos.R
+import org.dolbyatmos.data.AppProfileManager
+import org.dolbyatmos.data.SceneRepository
+import org.dolbyatmos.domain.models.AppProfileUiState
+import org.dolbyatmos.utils.ToastHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancelChildren
+
+class AppProfileViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val appProfileManager = AppProfileManager(application)
+    private val sceneRepository = SceneRepository(application)
+    private val context = application
+
+    private val _uiState = MutableStateFlow<AppProfileUiState>(AppProfileUiState.Loading)
+    val uiState: StateFlow<AppProfileUiState> = _uiState.asStateFlow()
+    
+    @Volatile private var isCleared = false
+
+    init {
+        DolbyConstants.dlog(TAG, "ViewModel initialized")
+        loadApps()
+    }
+
+    fun loadApps() {
+        if (isCleared) {
+            DolbyConstants.dlog(TAG, "ViewModel cleared, skipping loadApps")
+            return
+        }
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _uiState.value = AppProfileUiState.Loading
+                val apps = appProfileManager.getInstalledApps()
+                val appsWithProfiles = appProfileManager.getAppsWithProfiles()
+                val appsWithScenes = appProfileManager.getAppsWithScenes()
+                val scenes = sceneRepository.getScenes()
+
+                if (!isCleared) {
+                    _uiState.value = AppProfileUiState.Success(
+                        apps = apps,
+                        appsWithProfiles = appsWithProfiles,
+                        appsWithScenes = appsWithScenes,
+                        scenes = scenes
+                    )
+                }
+            } catch (e: Exception) {
+                if (!isCleared) {
+                    DolbyConstants.dlog(TAG, "Error loading apps: ${e.message}")
+                    _uiState.value = AppProfileUiState.Error(e.message ?: "Unknown error")
+                }
+            }
+        }
+    }
+
+    fun setAppProfile(packageName: String, profile: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (profile == -1) {
+                    appProfileManager.removeAppProfile(packageName)
+                    ToastHelper.showToast(context, "Profile reset to default")
+                } else {
+                    appProfileManager.setAppProfile(packageName, profile)
+                    val profileName = getProfileName(profile)
+                    ToastHelper.showToast(context, "Profile set to: $profileName")
+                }
+                loadApps()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error setting app profile: ${e.message}")
+            }
+        }
+    }
+
+    fun setAppScene(packageName: String, sceneId: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (sceneId == null) {
+                    appProfileManager.removeAppProfile(packageName)
+                    ToastHelper.showToast(context, "Profile reset to default")
+                } else {
+                    appProfileManager.setAppScene(packageName, sceneId)
+                    val name = sceneRepository.getScene(sceneId)?.name ?: sceneId
+                    ToastHelper.showToast(
+                        context,
+                        context.getString(R.string.app_profiles_scene_set, name)
+                    )
+                }
+                loadApps()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error setting app scene: ${e.message}")
+            }
+        }
+    }
+
+    fun sceneName(sceneId: String): String {
+        return sceneRepository.getScene(sceneId)?.name ?: sceneId
+    }
+
+    fun removeAppProfile(packageName: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                appProfileManager.removeAppProfile(packageName)
+                ToastHelper.showToast(context, "Profile removed")
+                loadApps()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error removing app profile: ${e.message}")
+            }
+        }
+    }
+
+    fun clearAllAppProfiles() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                appProfileManager.clearAllAppProfiles()
+                ToastHelper.showToast(context, "All app profiles cleared")
+                loadApps()
+            } catch (e: Exception) {
+                DolbyConstants.dlog(TAG, "Error clearing app profiles: ${e.message}")
+            }
+        }
+    }
+    
+    private fun getProfileName(profile: Int): String {
+        return try {
+            val profiles = context.resources.getStringArray(R.array.dolby_profile_entries)
+            val profileValues = context.resources.getStringArray(R.array.dolby_profile_values)
+            
+            val index = profileValues.indexOfFirst { it.toInt() == profile }
+            if (index >= 0) profiles[index] else "Unknown"
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error getting profile name: ${e.message}")
+            "Unknown"
+        }
+    }
+    
+    override fun onCleared() {
+        DolbyConstants.dlog(TAG, "ViewModel onCleared")
+        isCleared = true
+        viewModelScope.coroutineContext.cancelChildren()
+        super.onCleared()
+    }
+    
+    companion object {
+        private const val TAG = "AppProfileViewModel"
+    }
+}
