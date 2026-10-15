@@ -1,0 +1,117 @@
+/*
+ * Copyright (C) 2024-2025 Lunaris AOSP
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+package org.dolbyatmos.domain.models
+
+enum class BandMode(val value: String, val displayName: String, val bandCount: Int) {
+    TEN_BAND("10", "10 Bands", 10),
+    FIFTEEN_BAND("15", "15 Bands", 15),
+    TWENTY_BAND("20", "20 Bands", 20);
+    
+    companion object {
+        fun fromValue(value: String): BandMode {
+            return values().find { it.value == value } ?: TEN_BAND
+        }
+    }
+}
+
+data class DolbyProfile(
+    val id: Int,
+    val nameResId: Int
+)
+
+data class DolbySettings(
+    val enabled: Boolean = true,
+    val currentProfile: Int = 0,
+    val bassEnhancerEnabled: Boolean = false,
+    val volumeLevelerEnabled: Boolean = false,
+    val volumeLevelerAmount: Int = 7,
+    val bandMode: BandMode = BandMode.TEN_BAND
+)
+
+data class ProfileSettings(
+    val profile: Int,
+    val ieqPreset: Int = 0,
+    val headphoneVirtualizerEnabled: Boolean = false,
+    val speakerVirtualizerEnabled: Boolean = false,
+    val stereoWideningAmount: Int = 32,
+    val dialogueEnhancerEnabled: Boolean = false,
+    val dialogueEnhancerAmount: Int = 6,
+    val bassLevel: Int = 0,
+    val midLevel: Int = 0,
+    val trebleLevel: Int = 0,
+    val bassCurve: Int = 0,
+    /** Tuning Lab values keyed by raw DAP param ID (only HAL-supported IDs). */
+    val labParams: Map<Int, Int> = emptyMap()
+)
+
+data class EqualizerPreset(
+    val name: String,
+    val bandGains: List<BandGain>,
+    val isUserDefined: Boolean = false,
+    val isCustom: Boolean = false,
+    val bandMode: BandMode = BandMode.TEN_BAND
+)
+
+data class BandGain(
+    val frequency: Int,
+    val gain: Int = 0
+)
+
+enum class AudioDeviceCategory {
+    SPEAKER,
+    WIRED,
+    BLUETOOTH,
+    USB,
+    OTHER
+}
+
+data class ActiveAudioDevice(
+    val name: String,
+    val category: AudioDeviceCategory
+) {
+    val isOnSpeaker: Boolean
+        get() = category == AudioDeviceCategory.SPEAKER
+
+    companion object {
+        val Unknown = ActiveAudioDevice("Unknown", AudioDeviceCategory.OTHER)
+    }
+}
+
+/**
+ * One user-meaningful connected sink for the output picker.
+ * [key] matches DeviceStateManager.deviceKey so selection can round-trip
+ * back to the underlying AudioDeviceInfo. [isActive] reflects the current
+ * MediaRouter live-audio route, not the DSP priority pick.
+ */
+data class OutputDevice(
+    val key: String,
+    val name: String,
+    val category: AudioDeviceCategory,
+    val isActive: Boolean
+)
+
+sealed class DolbyUiState {
+    object Loading : DolbyUiState()
+    data class Success(
+        val settings: DolbySettings,
+        val profileSettings: ProfileSettings,
+        val currentPresetName: String,
+        val isOnSpeaker: Boolean,
+        val activeAudioDevice: ActiveAudioDevice
+    ) : DolbyUiState()
+    data class Error(val message: String) : DolbyUiState()
+}
+
+sealed class EqualizerUiState {
+    object Loading : EqualizerUiState()
+    data class Success(
+        val presets: List<EqualizerPreset>,
+        val currentPreset: EqualizerPreset,
+        val bandGains: List<BandGain>,
+        val bandMode: BandMode
+    ) : EqualizerUiState()
+    data class Error(val message: String) : EqualizerUiState()
+}

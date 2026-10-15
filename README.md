@@ -1,7 +1,7 @@
-# Lunaris Dolby for Nothing Phone (3a) Lite
+# DolbyAtmos for Nothing Phone (3a) Lite
 
 Dolby Atmos (DAX3 `3.7.0.8_r1`) port for **Nothing Phone (3a) Lite (Galaxian)**, with the
-Compose-based **Lunaris Dolby** control app as the front-end.
+Compose-based **DolbyAtmos** control app as the front-end.
 
 - Pinned blobs from **Galaxian, Android 17**
 - **Tested only on `Galaxian`** — other devices may work but are unsupported
@@ -17,7 +17,7 @@ Compose-based **Lunaris Dolby** control app as the front-end.
 - DSP volume synchronizer (`DSPVolumeSynchronizer`) and conflict-package remover (`RemovePackagesDolby`)
 - Head-tracker permission + spatializer props preconfigured (`ro.audio.spatializer_enabled`, `ro.audio.headtracking_enabled`, etc.)
 
-### Lunaris Dolby app (Compose rewrite)
+### DolbyAtmos app (Compose rewrite)
 
 Modern 4-tab pager UI: **Settings / Equalizer / Advanced / Volume**, with floating blurred nav toolbar,
 first-run onboarding tutorial, and an About page with version, links, and credits.
@@ -90,14 +90,14 @@ TARGET_INCLUDES_OEM_App := true
 TARGET_INCLUDES_DolbyVision := true
 ```
 
-### 3. Enable the Lunaris Dolby app
+### 3. Enable the DolbyAtmos app
 
 Add the control app to your device makefile so it gets built and installed :-
 
 ```bash
-# LunarisDolby
+# DolbyAtmos
 PRODUCT_PACKAGES += \
-    LunarisDolby
+    DolbyAtmos
 ```
 
 ### 4. Enable spatial audio
@@ -147,13 +147,13 @@ The only change done above is changing := symbol to += so that manifest can't be
 At the end an example commit to properly implement it in your device tree could be :-
 
 * [Galaxian: Integrate Dolby Atmos](https://github.com/samakshkambxj/device_nothing_Galaxian/commit/137e6cec853a2c17be4b1c591504363e9dbc6b77)
-* [Galaxian: Dolby: Enable Lunaris Dolby UI Package](https://github.com/samakshkambxj/device_nothing_Galaxian/commit/fb6b53fda1f0a1e458f605e6df8be68e86385174)
+* [Galaxian: Dolby: Enable DolbyAtmos UI Package](https://github.com/samakshkambxj/device_nothing_Galaxian/commit/fb6b53fda1f0a1e458f605e6df8be68e86385174)
 
 Automation example (adb):
 
 ```bash
-adb shell am broadcast -n org.lunaris.dolby/.service.DolbyCommandReceiver \
-  -a org.lunaris.dolby.action.SET_PROFILE --ei profile 1
+adb shell am broadcast -n org.dolbyatmos/.service.DolbyCommandReceiver \
+  -a org.dolbyatmos.action.SET_PROFILE --ei profile 1
 ```
 
 ## Changelog
@@ -162,8 +162,8 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 ## Credits
 
-* Samakshhhh ([samakshkambxj](https://github.com/samakshkambxj)) — Port Lunaris Dolby for Nothing Phone (3a) Lite (Galaxian) and adds new features
-* Ghost ([Ghosuto](https://github.com/Ghosuto)) — Rewrite Dolby in Compose (Lunaris Dolby)
+* Samakshhhh ([samakshkambxj](https://github.com/samakshkambxj)) — Port DolbyAtmos for Nothing Phone (3a) Lite (Galaxian) and adds new features
+* Ghost ([Ghosuto](https://github.com/Ghosuto)) — Rewrite Dolby in Compose (DolbyAtmos)
 * Anshuman X ([maxxcodebug](https://github.com/maxxcodebug)) — Volume panel
 * Adithya R ([adithya2306](https://github.com/adithya2306)) — AOSPA Dolby Manager (Initial Code)
 * Kenway ([kenway214](https://github.com/kenway214)) — Base & Treble Changes, EQ Tuning

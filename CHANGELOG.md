@@ -61,7 +61,7 @@
 
 ### 2026-09-06
 
-- Initial LunarisDolby import
+- Initial DolbyAtmos import
 - Enable R8 optimization
 - Implement swipe navigation between main screens
 - Implement AutoEQ headphone correction profiles
