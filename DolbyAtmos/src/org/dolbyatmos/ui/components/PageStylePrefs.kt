@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.dolbyatmos.ui.animation.NavAnimationStyle
 
 /**
  * Fixed app branding. NOTHING in PageStyleRepository/PageStyleScreen reads
@@ -87,7 +88,9 @@ data class PageStyle(
     val navBorderWidth: Float = 2f,
     val dynamicColor: Boolean = true,
     val amoledDark: Boolean = false,
-    val accent: AccentChoice = AccentChoice.DEFAULT
+    val accent: AccentChoice = AccentChoice.DEFAULT,
+    /** Navigation transition style (ported from OriginSU). */
+    val navAnimation: NavAnimationStyle = NavAnimationStyle.AOSP
 ) {
     val cardShape: RoundedCornerShape get() = RoundedCornerShape(cornerStyle.radius)
 }
@@ -128,6 +131,7 @@ private const val KEY_NAV_BORDER_WIDTH = "nav_border_width"
 private const val KEY_DYNAMIC_COLOR = "dynamic_color"
 private const val KEY_AMOLED_DARK = "amoled_dark"
 private const val KEY_ACCENT = "accent"
+private const val KEY_NAV_ANIMATION = "nav_animation"
 
 class PageStyleRepository(context: Context) {
     private val prefs: SharedPreferences =
@@ -170,7 +174,8 @@ class PageStyleRepository(context: Context) {
         navBorderWidth = prefs.getFloat(KEY_NAV_BORDER_WIDTH, 2f).coerceIn(0f, 4f),
         dynamicColor = prefs.getBoolean(KEY_DYNAMIC_COLOR, true),
         amoledDark = prefs.getBoolean(KEY_AMOLED_DARK, false),
-        accent = readEnum(KEY_ACCENT, AccentChoice.DEFAULT)
+        accent = readEnum(KEY_ACCENT, AccentChoice.DEFAULT),
+        navAnimation = readEnum(KEY_NAV_ANIMATION, NavAnimationStyle.AOSP)
     )
 
     private inline fun <reified T : Enum<T>> readEnum(key: String, fallback: T): T =
@@ -204,6 +209,7 @@ class PageStyleRepository(context: Context) {
             .putBoolean(KEY_DYNAMIC_COLOR, next.dynamicColor)
             .putBoolean(KEY_AMOLED_DARK, next.amoledDark)
             .putString(KEY_ACCENT, next.accent.name)
+            .putString(KEY_NAV_ANIMATION, next.navAnimation.name)
             .apply()
         _style.value = next
     }

@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.dolbyatmos.R
+import org.dolbyatmos.ui.animation.NavAnimationStyle
 import org.dolbyatmos.ui.components.*
 import org.dolbyatmos.ui.theme.previewColor
 import org.dolbyatmos.utils.AppIconManager
@@ -232,6 +233,22 @@ fun PageStyleScreen(navController: NavController) {
                     selectedIndex = PageCornerStyle.entries.indexOf(style.cornerStyle),
                     onSelect = { index ->
                         repo.update { it.copy(cornerStyle = PageCornerStyle.entries[index]) }
+                    }
+                )
+            }
+
+            ModernSettingsCard(title = "Motion", icon = Icons.Default.Animation) {
+                Text(
+                    "Page transitions",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                StyleOptionRow(
+                    options = listOf("None", "AOSP", "Scale", "Classic"),
+                    selectedIndex = NavAnimationStyle.entries.indexOf(style.navAnimation),
+                    onSelect = { index ->
+                        repo.update { it.copy(navAnimation = NavAnimationStyle.entries[index]) }
                     }
                 )
             }

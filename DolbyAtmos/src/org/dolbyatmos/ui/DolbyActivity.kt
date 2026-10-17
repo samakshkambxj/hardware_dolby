@@ -22,9 +22,11 @@ import org.dolbyatmos.utils.ToastHelper
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.*
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -33,6 +35,9 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import org.dolbyatmos.DolbyConstants
 import org.dolbyatmos.ui.components.PageStyleRepository
+import org.dolbyatmos.ui.overscroll.LocalStretchOverscrollCompensationState
+import org.dolbyatmos.ui.overscroll.StretchOverscrollCompensationState
+import org.dolbyatmos.ui.overscroll.rememberCustomOverscrollFactory
 import org.dolbyatmos.ui.screens.DolbyNavHost
 import org.dolbyatmos.ui.theme.DolbyTheme
 import org.dolbyatmos.ui.viewmodel.DolbyViewModel
@@ -129,15 +134,27 @@ class DolbyActivity : ComponentActivity() {
                 accent = pageStyle.accent,
                 amoled = pageStyle.amoledDark
             ) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    contentColor = MaterialTheme.colorScheme.onSurface
+                // Platform edge-effect overscroll (stretch on 12+, glow below),
+                // vendored from AOSP/OriginSU. Installed once at the root so
+                // every scrollable in the app -- pager pages, settings lists --
+                // shares the same effect and its stretch can be observed by the
+                // liquid-glass backdrop below.
+                val stretchOverscroll = remember { StretchOverscrollCompensationState() }
+                val overscrollFactory = rememberCustomOverscrollFactory(stretchOverscroll)
+                CompositionLocalProvider(
+                    LocalOverscrollFactory provides overscrollFactory,
+                    LocalStretchOverscrollCompensationState provides stretchOverscroll
                 ) {
-                    DolbyNavHost(
-                        dolbyViewModel = dolbyViewModel,
-                        equalizerViewModel = equalizerViewModel
-                    )
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ) {
+                        DolbyNavHost(
+                            dolbyViewModel = dolbyViewModel,
+                            equalizerViewModel = equalizerViewModel
+                        )
+                    }
                 }
             }
         }

@@ -421,7 +421,7 @@ private fun EqualizerCard(
     val pageStyle by rememberPageStyle()
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = pageStyle.cardShape,
+        shape = rememberAnimatedCardShape(),
         colors = CardDefaults.cardColors(
             containerColor = containerColor ?: pageStyle.cardContainer()
         ),
