@@ -6,10 +6,6 @@
 
 package org.dolbyatmos.ui.screens
 
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import android.os.Build
 import android.os.SystemClock
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -48,6 +44,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
+import org.dolbyatmos.ui.animation.navEnterTransition
+import org.dolbyatmos.ui.animation.navExitTransition
+import org.dolbyatmos.ui.animation.navPopEnterTransition
+import org.dolbyatmos.ui.animation.navPopExitTransition
 import org.dolbyatmos.ui.components.FloatingNavToolbar
 import org.dolbyatmos.ui.components.GlassSnackbarOverlay
 import org.dolbyatmos.ui.components.LocalGlassSnackbar
@@ -58,6 +58,7 @@ import org.dolbyatmos.ui.components.LiquidGlassNavbar
 import org.dolbyatmos.ui.components.PageNavbarDesign
 import org.dolbyatmos.ui.components.PageNavbarStyle
 import org.dolbyatmos.ui.components.rememberPageStyle
+import org.dolbyatmos.ui.components.springAnimateToPage
 import org.dolbyatmos.ui.glass.LocalGlassBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
@@ -225,22 +226,11 @@ fun MainPagerScreen(
                             "advanced" -> 2
                             else -> 3
                         }
-                        // Far jumps cut instead of scrolling: animating
-                        // through intermediate pages composes them (and fires
-                        // their loads, e.g. the EQ reload) mid-flight, which
-                        // is where the stutter comes from. Adjacent slides
-                        // use a fixed tween so every switch feels identical.
-                        if (kotlin.math.abs(target - pagerState.currentPage) > 1) {
-                            pagerState.scrollToPage(target)
-                        } else {
-                            pagerState.animateScrollToPage(
-                                target,
-                                animationSpec = tween(
-                                    durationMillis = 320,
-                                    easing = FastOutSlowInEasing,
-                                ),
-                            )
-                        }
+                        // One stiff, near-critically-damped spring for every
+                        // jump (ported from OriginSU): far tabs settle fast
+                        // instead of cutting through intermediate pages, so a
+                        // tab tap and a swipe now feel identical.
+                        pagerState.springAnimateToPage(target)
                     }
                 },
                 modifier = Modifier.align(Alignment.BottomCenter)
@@ -335,21 +325,23 @@ fun DolbyNavHost(
         if (isOnboardingDone(context)) "main_pager" else Screen.Onboarding.route
     }
 
-    // Fade-only transitions on all four directions, identical for the
-    // back-arrow button and the edge-swipe gesture. The manifest opts out
-    // of the predictive-back SYSTEM animation
-    // (enableOnBackInvokedCallback=false), so a swipe dispatches a plain
-    // back to the NavController and these pop transitions actually run —
-    // otherwise the platform window scale/shift plays over the top and the
-    // pop cuts underneath it. OnBackPressedDispatcher (which NavController
-    // uses) is unaffected by that flag.
+    // Transition style is user-selectable (Page Style). Styles are ported from
+    // OriginSU; the default AOSP style is a long, emphasized fade. The manifest
+    // opts out of the predictive-back SYSTEM animation
+    // (enableOnBackInvokedCallback=false), so a swipe dispatches a plain back
+    // to the NavController and these pop transitions actually run -- otherwise
+    // the platform window scale/shift plays over the top and the pop cuts
+    // underneath it. OnBackPressedDispatcher (which NavController uses) is
+    // unaffected by that flag.
+    val pageStyle by rememberPageStyle()
+    val navAnimation = pageStyle.navAnimation
     NavHost(
         navController = navController,
         startDestination = startDestination,
-        enterTransition = { fadeIn(animationSpec = tween(250)) },
-        exitTransition = { fadeOut(animationSpec = tween(200)) },
-        popEnterTransition = { fadeIn(animationSpec = tween(250)) },
-        popExitTransition = { fadeOut(animationSpec = tween(200)) }
+        enterTransition = { navEnterTransition(navAnimation) },
+        exitTransition = { navExitTransition(navAnimation) },
+        popEnterTransition = { navPopEnterTransition(navAnimation) },
+        popExitTransition = { navPopExitTransition(navAnimation) }
     ) {
         composable(Screen.Onboarding.route) {
             OnboardingScreen(

@@ -175,7 +175,7 @@ fun ActiveAudioDeviceCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = pageStyle.cardShape,
+        shape = rememberAnimatedCardShape(),
         colors = CardDefaults.cardColors(
             // Opaque on purpose: the floating particle layer renders behind
             // this card, and any alpha lets particles bleed through it.
@@ -237,7 +237,7 @@ fun DolbyMainCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = pageStyle.cardShape,
+        shape = rememberAnimatedCardShape(),
         colors = CardDefaults.cardColors(
             containerColor = pageStyle.cardContainer()
         ),
@@ -430,7 +430,7 @@ fun ModernSettingsCard(
     val pageStyle by rememberPageStyle()
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = pageStyle.cardShape,
+        shape = rememberAnimatedCardShape(),
         colors = CardDefaults.cardColors(
             containerColor = pageStyle.cardContainer()
         ),

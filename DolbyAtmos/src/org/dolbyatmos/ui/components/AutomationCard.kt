@@ -75,7 +75,7 @@ fun AutomationCard(
     )
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = pageStyle.cardShape,
+        shape = rememberAnimatedCardShape(),
         colors = CardDefaults.cardColors(
             containerColor = pageStyle.cardContainer()
         ),

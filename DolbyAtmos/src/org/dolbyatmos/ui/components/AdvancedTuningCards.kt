@@ -68,7 +68,7 @@ fun ExperimentalCard(
     val open = expanded || forceExpand
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = pageStyle.cardShape,
+        shape = rememberAnimatedCardShape(),
         colors = CardDefaults.cardColors(
             containerColor = pageStyle.cardContainer()
         ),
@@ -302,7 +302,7 @@ fun CodecInfoCard(
     val open = expanded || forceExpand
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = pageStyle.cardShape,
+        shape = rememberAnimatedCardShape(),
         colors = CardDefaults.cardColors(
             containerColor = pageStyle.cardContainer()
         ),
