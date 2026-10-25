@@ -77,12 +77,11 @@ import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import org.dolbyatmos.ui.viewmodel.DolbyViewModel
 import org.dolbyatmos.utils.HapticFeedbackHelper
-import org.dolbyatmos.utils.ToastHelper
 import org.dolbyatmos.utils.rememberHapticFeedback
 
 private enum class PreviewKind {
     LOGO,
-    SCENE_CHIPS,
+    APP_CHIPS,
     EQ_ANIMATED,
     PRO_CHIPS,
 }
@@ -115,10 +114,10 @@ fun OnboardingScreen(
             preview = PreviewKind.LOGO,
         ),
         OnboardingPage(
-            icon = Icons.Default.Interests,
-            titleRes = R.string.onboarding_scenes_title,
-            bodyRes = R.string.onboarding_scenes_body,
-            preview = PreviewKind.SCENE_CHIPS,
+            icon = Icons.Default.Apps,
+            titleRes = R.string.onboarding_apps_title,
+            bodyRes = R.string.onboarding_apps_body,
+            preview = PreviewKind.APP_CHIPS,
         ),
         OnboardingPage(
             icon = Icons.Default.GraphicEq,
@@ -264,28 +263,6 @@ fun OnboardingScreen(
                                                 )
                                             }
                                         }
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        // Starter nudge: hear a difference in 10 seconds.
-                                        OutlinedButton(
-                                            onClick = {
-                                                tap()
-                                                viewModel.applySceneById("builtin_movie_night")
-                                                ToastHelper.showToast(
-                                                    context,
-                                                    context.getString(R.string.scene_applied)
-                                                )
-                                            },
-                                            shape = MaterialTheme.shapes.large,
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Movie,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(stringResource(R.string.onboarding_try_scene))
-                                        }
                                     }
                                 }
                             }
@@ -407,11 +384,11 @@ private fun PageVisual(page: OnboardingPage) {
         PreviewKind.LOGO -> {
             DolbyLogo(modifier = Modifier.size(112.dp))
         }
-        PreviewKind.SCENE_CHIPS -> {
+        PreviewKind.APP_CHIPS -> {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 HeroIcon(page = page)
                 Spacer(modifier = Modifier.height(20.dp))
-                PreviewChips(labels = listOf("Movie Night", "Gaming", "Bass Boost"))
+                PreviewChips(labels = listOf("Music", "Podcasts", "Games"))
             }
         }
         PreviewKind.EQ_ANIMATED -> {
@@ -442,7 +419,7 @@ private fun PageVisual(page: OnboardingPage) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 HeroIcon(page = page)
                 Spacer(modifier = Modifier.height(20.dp))
-                PreviewChips(labels = listOf("Spatial", "Sleep timer", "Per-app"))
+                PreviewChips(labels = listOf("AutoEQ", "Sleep timer", "Per-app"))
             }
         }
     }

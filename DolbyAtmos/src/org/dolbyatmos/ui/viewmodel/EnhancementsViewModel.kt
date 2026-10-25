@@ -31,9 +31,8 @@ data class EnhancementsUiState(
 
 /**
  * Framework sound-enhancement effects (bass boost, virtualizer, reverb,
- * loudness) on the global output mix. Owns [FrameworkEnhancementsEngine]
- * the same way [DynamicsEqualizerViewModel] owns its engine: created
- * once, restored from disk, released with the ViewModel.
+ * loudness) on the global output mix. Owns [FrameworkEnhancementsEngine],
+ * created once, restored from disk, and released with the ViewModel.
  */
 class EnhancementsViewModel(application: Application) : AndroidViewModel(application) {
 

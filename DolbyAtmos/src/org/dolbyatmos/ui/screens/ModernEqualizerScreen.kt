@@ -51,7 +51,6 @@ import org.dolbyatmos.data.EasterEggs
 import org.dolbyatmos.data.autoeq.*
 import org.dolbyatmos.ui.components.*
 import org.dolbyatmos.ui.viewmodel.EqualizerViewModel
-import org.dolbyatmos.ui.viewmodel.DynamicsEqualizerViewModel
 import org.dolbyatmos.domain.models.*
 import org.dolbyatmos.utils.*
 
@@ -76,136 +75,159 @@ fun ModernEqualizerScreen(
     var viewMode by remember { mutableStateOf(EqualizerViewMode.CURVE) }
     val snackbarHost = LocalGlassSnackbar.current ?: remember { SnackbarHostState() }
 
+    val currentPresetName = (uiState as? EqualizerUiState.Success)?.currentPreset?.name
+    var showOverflow by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                // Keep action icons off the screen edge (M3 only insets 4.dp).
-                modifier = Modifier.padding(end = 8.dp),
-                title = { 
-                    Text(
-                        stringResource(R.string.dolby_preset),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ) 
-                },
+            StudioHeader(
+                eyebrow = "Shape",
+                title = stringResource(R.string.dolby_preset),
+                subtitle = currentPresetName,
                 actions = {
-                    IconButton(onClick = { showSaveDialog = true }) {
-                        Icon(
-                            Icons.Default.Save, 
-                            contentDescription = "Save",
-                            tint = MaterialTheme.colorScheme.onSurface
+                    StudioIconButton(
+                        icon = Icons.Default.Save,
+                        contentDescription = "Save preset",
+                        onClick = { showSaveDialog = true }
+                    )
+                    StudioIconButton(
+                        icon = Icons.Default.Headphones,
+                        contentDescription = "AutoEQ",
+                        onClick = { showAutoEqDialog = true }
+                    )
+                    Box {
+                        StudioIconButton(
+                            icon = Icons.Default.MoreVert,
+                            contentDescription = "More",
+                            onClick = { showOverflow = true }
                         )
-                    }
-                    IconButton(onClick = { showResetDialog = true }) {
-                        Icon(
-                            Icons.Default.RestartAlt, 
-                            contentDescription = "Reset",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    IconButton(onClick = { navController.navigate("import_export") }) {
-                        Icon(
-                            Icons.Default.ImportExport, 
-                            contentDescription = "Import/Export",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    IconButton(onClick = { showAutoEqDialog = true }) {
-                        Icon(
-                            Icons.Default.Headphones,
-                            contentDescription = "AutoEQ",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    IconButton(onClick = { navController.navigate("hearing_test") }) {
-                        Icon(
-                            Icons.Default.Hearing,
-                            contentDescription = "Hearing test",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    if (uiState is EqualizerUiState.Success) {
-                        val state = uiState as EqualizerUiState.Success
-                        if (state.currentPreset.isUserDefined) {
-                            IconButton(onClick = {
-                                val deleted = state.currentPreset
-                                viewModel.deletePreset(deleted)
-                                scope.launch {
-                                    val res = snackbarHost.showSnackbar(
-                                        message = context.getString(R.string.preset_deleted),
-                                        actionLabel = context.getString(R.string.undo),
-                                        withDismissAction = true
-                                    )
-                                    if (res == SnackbarResult.ActionPerformed) {
-                                        viewModel.restorePreset(deleted)
-                                    }
+                        DropdownMenu(
+                            expanded = showOverflow,
+                            onDismissRequest = { showOverflow = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Reset gains") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.RestartAlt, contentDescription = null)
+                                },
+                                onClick = {
+                                    showOverflow = false
+                                    showResetDialog = true
                                 }
-                            }) {
-                                Icon(
-                                    Icons.Default.Delete, 
-                                    contentDescription = "Delete",
-                                    tint = MaterialTheme.colorScheme.error
-                                )
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Import / export") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.ImportExport, contentDescription = null)
+                                },
+                                onClick = {
+                                    showOverflow = false
+                                    navController.navigate("import_export")
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Hearing test") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Hearing, contentDescription = null)
+                                },
+                                onClick = {
+                                    showOverflow = false
+                                    navController.navigate("hearing_test")
+                                }
+                            )
+                            if (uiState is EqualizerUiState.Success) {
+                                val state = uiState as EqualizerUiState.Success
+                                if (state.currentPreset.isUserDefined) {
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                "Delete preset",
+                                                color = MaterialTheme.colorScheme.error
+                                            )
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                Icons.Default.Delete,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.error
+                                            )
+                                        },
+                                        onClick = {
+                                            showOverflow = false
+                                            val deleted = state.currentPreset
+                                            viewModel.deletePreset(deleted)
+                                            scope.launch {
+                                                val res = snackbarHost.showSnackbar(
+                                                    message = context.getString(
+                                                        R.string.preset_deleted
+                                                    ),
+                                                    actionLabel = context.getString(R.string.undo),
+                                                    withDismissAction = true
+                                                )
+                                                if (res == SnackbarResult.ActionPerformed) {
+                                                    viewModel.restorePreset(deleted)
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                }
             )
         },
-        containerColor = MaterialTheme.colorScheme.surfaceContainer
+        containerColor = Color.Transparent
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
-        StyledParticles(modifier = Modifier.padding(paddingValues))
-        when (val state = uiState) {
-            is EqualizerUiState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
-            }
-            is EqualizerUiState.Success -> {
-                ModernEqualizerContent(
-                    state = state,
-                    viewModel = viewModel,
-                    viewMode = viewMode,
-                    onViewModeChange = { viewMode = it },
-                    modifier = Modifier.padding(paddingValues)
-                )
-            }
-            is EqualizerUiState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+            StudioAmbientBackground()
+            StyledParticles(modifier = Modifier.padding(paddingValues))
+            when (val state = uiState) {
+                is EqualizerUiState.Loading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Error,
-                            contentDescription = null,
-                            modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                        Text(
-                            text = state.message,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+                is EqualizerUiState.Success -> {
+                    ModernEqualizerContent(
+                        state = state,
+                        viewModel = viewModel,
+                        viewMode = viewMode,
+                        onViewModeChange = { viewMode = it },
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                }
+                is EqualizerUiState.Error -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Error,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                            Text(
+                                text = state.message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                 }
             }
-        }
         }
     }
 
@@ -279,9 +301,15 @@ private fun ModernEqualizerContent(
             .fillMaxSize()
             .verticalBouncyEdge()
             .verticalScroll(scrollState)
-            .padding(16.dp),
+            .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 0.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        StudioSectionHeader(
+            title = "Presets",
+            eyebrow = "Library",
+            subtitle = "Start from a curve, then make it yours."
+        )
+
         EqualizerCard {
             ModernPresetSelector(
                 presets = state.presets,
@@ -289,7 +317,7 @@ private fun ModernEqualizerContent(
                 onPresetSelected = { viewModel.setPreset(it) }
             )
         }
-        
+
         BandModeSelector(
             currentMode = state.bandMode,
             onModeChange = { viewModel.setBandMode(it) }
@@ -401,9 +429,7 @@ private fun ModernEqualizerContent(
             enabled = canEdit
         )
 
-        DynamicsProcessingSection()
-
-        Spacer(modifier = Modifier.height(70.dp))
+        Spacer(modifier = Modifier.height(124.dp))
     }
 }
 
@@ -1690,354 +1716,4 @@ private fun AutoEqSelectionDialog(
         titleContentColor = MaterialTheme.colorScheme.onSurface,
         textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
     )
-}
-
-private fun formatDynamicsFrequency(hz: Float): String {
-    return if (hz >= 1000f) {
-        val khz = hz / 1000f
-        if (khz == khz.toInt().toFloat()) "${khz.toInt()} kHz" else "$khz kHz"
-    } else {
-        "${hz.toInt()} Hz"
-    }
-}
-
-/**
- * One collapsible dynamics band: a pill row showing the band name plus a
- * live value summary, expanding to reveal its sliders. Collapsed by
- * default so the Bands/MBC tabs stay compact; expansion survives
- * rotation via [saveKey].
- */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun CollapsibleDynamicsBand(
-    title: String,
-    summary: String,
-    saveKey: String,
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    var expanded by rememberSaveable(saveKey) { mutableStateOf(false) }
-    val chevronAngle by animateFloatAsState(
-        targetValue = if (expanded) 180f else 0f,
-        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
-        label = "band_chevron"
-    )
-
-    Surface(
-        onClick = { expanded = !expanded },
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        color = if (expanded)
-            MaterialTheme.colorScheme.secondaryContainer
-        else
-            MaterialTheme.colorScheme.surfaceContainerHigh,
-        contentColor = if (expanded)
-            MaterialTheme.colorScheme.onSecondaryContainer
-        else
-            MaterialTheme.colorScheme.onSurface,
-        border = tileSelectionBorder(expanded)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = summary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (expanded)
-                            MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f)
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Icon(
-                    imageVector = Icons.Default.ExpandMore,
-                    contentDescription = if (expanded) "Collapse" else "Expand",
-                    modifier = Modifier
-                        .size(24.dp)
-                        .graphicsLayer { rotationZ = chevronAngle }
-                )
-            }
-            AnimatedVisibility(
-                visible = expanded,
-                enter = expandVertically(
-                    animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
-                ) + fadeIn(
-                    animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
-                ),
-                exit = shrinkVertically(
-                    animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
-                ) + fadeOut(
-                    animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
-                )
-            ) {
-                Column {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    content()
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DynamicsProcessingSection(
-    dynamicsVm: DynamicsEqualizerViewModel = viewModel()
-) {
-    val state by dynamicsVm.uiState.collectAsState()
-    val spectrum by dynamicsVm.spectrum.collectAsState()
-    var selectedTab by remember { mutableIntStateOf(0) }
-    var showSaveDialog by remember { mutableStateOf(false) }
-    var presetName by remember { mutableStateOf("") }
-    val tabs = listOf("Bands", "MBC", "Limiter")
-
-    EqualizerCard {
-        Column(modifier = Modifier.padding(20.dp)) {
-            EqualizerSectionHeader(
-                icon = Icons.Default.GraphicEq,
-                title = "Dynamics processing",
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            Text(
-                text = "Independent pre-EQ, multiband compressor and limiter",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            ModernSettingSwitch(
-                title = "Enable dynamics",
-                subtitle = "Runs alongside the Dolby effect",
-                checked = state.enabled,
-                onCheckedChange = { dynamicsVm.setEnabled(it) }
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            SpectrumView(bars = spectrum, modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(12.dp))
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(state.presetNames, key = { it }) { name ->
-                    AssistChip(
-                        onClick = { dynamicsVm.loadPreset(name) },
-                        label = { Text(name) },
-                        shape = CircleShape,
-                        trailingIcon = {
-                            IconButton(onClick = { dynamicsVm.deletePreset(name) }) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = "Delete $name",
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-                    )
-                }
-                item {
-                    IconButton(onClick = { showSaveDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "Save preset")
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            SecondaryTabRow(selectedTabIndex = selectedTab) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        text = { Text(title) }
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            when (selectedTab) {
-                0 -> {
-                    ModernSettingSlider(
-                        title = "Preamp",
-                        value = state.preampDb.toInt(),
-                        valueRange = -20f..20f,
-                        steps = 39,
-                        onValueChange = { dynamicsVm.setPreamp(it) },
-                        valueLabel = { "$it dB" }
-                    )
-                    state.bandFrequencies.forEachIndexed { index, freq ->
-                        val gain = state.bandGains.getOrElse(index) { 0f }.toInt()
-                        Spacer(modifier = Modifier.height(8.dp))
-                        key("dynamics_eq_band_$index") {
-                            CollapsibleDynamicsBand(
-                                title = formatDynamicsFrequency(freq),
-                                summary = "$gain dB",
-                                saveKey = "dynamics_eq_band_$index"
-                            ) {
-                                ModernSettingSlider(
-                                    title = "Gain",
-                                    value = gain,
-                                    valueRange = -20f..20f,
-                                    steps = 39,
-                                    onValueChange = { dynamicsVm.setBandGain(index, it) },
-                                    valueLabel = { "$it dB" }
-                                )
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedButton(
-                        onClick = { dynamicsVm.resetBands() },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Reset bands")
-                    }
-                }
-                1 -> {
-                    ModernSettingSwitch(
-                        title = "Multiband compressor",
-                        subtitle = "3-band dynamics control (Low / Mid / High)",
-                        checked = state.mbcEnabled,
-                        onCheckedChange = { dynamicsVm.setMbcEnabled(it) }
-                    )
-                    if (state.mbcEnabled) {
-                        state.mbcBands.forEachIndexed { index, band ->
-                            Spacer(modifier = Modifier.height(8.dp))
-                            key("dynamics_mbc_band_$index") {
-                                CollapsibleDynamicsBand(
-                                    title = "${band.label} band",
-                                    summary = "${band.threshold.toInt()} dB · ${band.ratio.toInt()}:1",
-                                    saveKey = "dynamics_mbc_band_$index"
-                                ) {
-                                    ModernSettingSlider(
-                                        title = "Threshold",
-                                        value = band.threshold.toInt(),
-                                        valueRange = -60f..0f,
-                                        steps = 59,
-                                        onValueChange = { dynamicsVm.setMbcThreshold(index, it) },
-                                        valueLabel = { "$it dB" }
-                                    )
-                                    ModernSettingSlider(
-                                        title = "Ratio",
-                                        value = band.ratio.toInt(),
-                                        valueRange = 1f..20f,
-                                        steps = 18,
-                                        onValueChange = { dynamicsVm.setMbcRatio(index, it) },
-                                        valueLabel = { "${it}:1" }
-                                    )
-                                    ModernSettingSlider(
-                                        title = "Attack",
-                                        value = band.attackMs.toInt(),
-                                        valueRange = 1f..200f,
-                                        steps = 198,
-                                        onValueChange = { dynamicsVm.setMbcAttack(index, it) },
-                                        valueLabel = { "$it ms" }
-                                    )
-                                    ModernSettingSlider(
-                                        title = "Release",
-                                        value = band.releaseMs.toInt(),
-                                        valueRange = 10f..1000f,
-                                        steps = 98,
-                                        onValueChange = { dynamicsVm.setMbcRelease(index, it) },
-                                        valueLabel = { "$it ms" }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    if (state.mbcEnabled) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        OutlinedButton(
-                            onClick = { dynamicsVm.resetMbc() },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Reset MBC")
-                        }
-                    }
-                }
-                2 -> {
-                    ModernSettingSwitch(
-                        title = "Limiter",
-                        subtitle = "Final-stage output limiter, prevents clipping",
-                        checked = state.limiterEnabled,
-                        onCheckedChange = { dynamicsVm.setLimiterEnabled(it) }
-                    )
-                    if (state.limiterEnabled) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        ModernSettingSlider(
-                            title = "Threshold",
-                            value = state.limiterThreshold.toInt(),
-                            valueRange = -30f..0f,
-                            steps = 29,
-                            onValueChange = { dynamicsVm.setLimiterThreshold(it) },
-                            valueLabel = { "$it dB" }
-                        )
-                        ModernSettingSlider(
-                            title = "Ratio",
-                            value = state.limiterRatio.toInt(),
-                            valueRange = 1f..20f,
-                            steps = 18,
-                            onValueChange = { dynamicsVm.setLimiterRatio(it) },
-                            valueLabel = { "${it}:1" }
-                        )
-                        ModernSettingSlider(
-                            title = "Release",
-                            value = state.limiterRelease.toInt(),
-                            valueRange = 1f..1000f,
-                            steps = 98,
-                            onValueChange = { dynamicsVm.setLimiterRelease(it) },
-                            valueLabel = { "$it ms" }
-                        )
-                        ModernSettingSlider(
-                            title = "Post gain",
-                            value = state.limiterPostGain.toInt(),
-                            valueRange = -20f..20f,
-                            steps = 39,
-                            onValueChange = { dynamicsVm.setLimiterPostGain(it) },
-                            valueLabel = { "$it dB" }
-                        )
-                    }
-                    if (state.limiterEnabled) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        OutlinedButton(
-                            onClick = { dynamicsVm.resetLimiter() },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Reset limiter")
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (showSaveDialog) {
-        AlertDialog(
-            onDismissRequest = { showSaveDialog = false },
-            title = {
-                ApplyDialogWindowBlur()
-                Text("Save preset")
-            },
-            text = {
-                OutlinedTextField(
-                    value = presetName,
-                    onValueChange = { presetName = it },
-                    label = { Text("Preset name") }
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    dynamicsVm.savePreset(presetName)
-                    presetName = ""
-                    showSaveDialog = false
-                }) { Text("Save") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showSaveDialog = false }) { Text("Cancel") }
-            }
-        )
-    }
 }

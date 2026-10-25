@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -46,8 +47,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import org.dolbyatmos.R
@@ -171,18 +174,17 @@ fun ActiveAudioDeviceCard(
         AudioDeviceCategory.USB -> stringResource(R.string.audio_output_usb)
         AudioDeviceCategory.OTHER -> stringResource(R.string.audio_output_unknown)
     }
-    val pageStyle by rememberPageStyle()
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = rememberAnimatedCardShape(),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
-            // Opaque on purpose: the floating particle layer renders behind
-            // this card, and any alpha lets particles bleed through it.
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        border = pageStyle.cardBorder(),
-        elevation = pageStyle.cardElevation()
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
+        )
     ) {
         Row(
             modifier = Modifier
@@ -193,28 +195,44 @@ fun ActiveAudioDeviceCard(
             AudioDeviceIcon(
                 category = device.category,
                 active = true,
-                size = 52.dp
+                size = 46.dp
             )
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.audio_output_active_device),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f)
+                    text = "Output",
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.2.sp),
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = device.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = categoryLabel,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+            ) {
+                Text(
+                    text = stringResource(R.string.output_active),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                 )
             }
         }
@@ -225,6 +243,7 @@ fun ActiveAudioDeviceCard(
 @Composable
 fun DolbyMainCard(
     enabled: Boolean,
+    live: Boolean = false,
     onEnabledChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     onEasterEggUnlocked: () -> Unit = {}
@@ -233,176 +252,163 @@ fun DolbyMainCard(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var logoTaps by remember { mutableStateOf(0) }
-    val pageStyle by rememberPageStyle()
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = rememberAnimatedCardShape(),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
-            containerColor = pageStyle.cardContainer()
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        border = pageStyle.cardBorder(),
-        elevation = pageStyle.cardElevation()
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+        )
     ) {
-        Column {
-            // Banner wash behind the logo (Customization > Header banner).
-            // The waveform overlay below is independent of the style.
-            val bannerModifier = Modifier
-                .fillMaxWidth()
-                .height(150.dp)
-                .then(
-                    when (pageStyle.bannerStyle) {
-                        PageBannerStyle.GRADIENT -> Modifier.background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primaryContainer,
-                                    MaterialTheme.colorScheme.secondaryContainer,
-                                    pageStyle.cardContainer()
-                                )
-                            )
-                        )
-                        PageBannerStyle.FLAT -> Modifier.background(
-                            MaterialTheme.colorScheme.primaryContainer
-                        )
-                        PageBannerStyle.VIBRANT -> Modifier.background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primaryContainer,
-                                    MaterialTheme.colorScheme.tertiaryContainer,
-                                    MaterialTheme.colorScheme.secondaryContainer
-                                )
-                            )
-                        )
-                        PageBannerStyle.FADE -> Modifier.background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primaryContainer,
-                                    pageStyle.cardContainer()
-                                )
-                            )
-                        )
-                        PageBannerStyle.MINIMAL -> Modifier.background(
-                            pageStyle.cardContainer()
-                        )
-                    }
-                )
+        Box {
             Box(
-                modifier = bannerModifier,
-                contentAlignment = Alignment.Center
-            ) {
-                if (pageStyle.showBannerWaveform) {
-                    AnimatedWaveformBanner(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(112.dp),
-                        barColor = MaterialTheme.colorScheme.primary,
-                        accentColor = MaterialTheme.colorScheme.tertiary,
-                        barCount = 56,
-                        animated = enabled
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primaryContainer,
+                                MaterialTheme.colorScheme.secondaryContainer,
+                                MaterialTheme.colorScheme.tertiaryContainer
+                            ),
+                            start = Offset(0f, 0f),
+                            end = Offset(1250f, 900f)
+                        )
                     )
-                }
+            )
 
-                DolbyLogo(
-                    modifier = Modifier
-                        .height(60.dp)
-                        .squishable(enabled = true, scaleDown = 0.9f)
-                        .clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }
-                        ) {
-                            logoTaps = EasterEggs.recordLogoTap(context)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    StudioStatusPill(
+                        text = stringResource(
                             when {
-                                logoTaps >= EasterEggs.LOGO_TAP_TARGET -> {
-                                    logoTaps = 0
-                                    // unlock() is idempotent; the celebration replays
-                                    // on every completion even when already owned.
-                                    EasterEggs.unlock(context, EasterEggs.BADGE_PERSISTENT)
-                                    scope.launch {
-                                        haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.DOUBLE_CLICK)
+                                live -> R.string.studio_live
+                                enabled -> R.string.studio_ready
+                                else -> R.string.studio_off
+                            }
+                        ),
+                        active = enabled
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    DolbyLogo(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .squishable(enabled = true, scaleDown = 0.9f)
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                logoTaps = EasterEggs.recordLogoTap(context)
+                                when {
+                                    logoTaps >= EasterEggs.LOGO_TAP_TARGET -> {
+                                        logoTaps = 0
+                                        EasterEggs.unlock(
+                                            context,
+                                            EasterEggs.BADGE_PERSISTENT
+                                        )
+                                        scope.launch {
+                                            haptic.performHaptic(
+                                                HapticFeedbackHelper.HapticIntensity.DOUBLE_CLICK
+                                            )
+                                        }
+                                        ToastHelper.showToast(
+                                            context,
+                                            context.getString(R.string.egg_logo_unlocked)
+                                        )
+                                        onEasterEggUnlocked()
                                     }
-                                    ToastHelper.showToast(
-                                        context,
-                                        context.getString(R.string.egg_logo_unlocked)
-                                    )
-                                    onEasterEggUnlocked()
-                                }
-                                logoTaps == 3 -> {
-                                    ToastHelper.showToast(
+                                    logoTaps == 3 -> ToastHelper.showToast(
                                         context,
                                         context.getString(R.string.egg_logo_tease_1)
                                     )
-                                }
-                                logoTaps == 5 -> {
-                                    ToastHelper.showToast(
+                                    logoTaps == 5 -> ToastHelper.showToast(
                                         context,
                                         context.getString(R.string.egg_logo_tease_2)
                                     )
                                 }
                             }
-                        }
-                )
-            }
+                    )
+                }
 
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.dolby_enable),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (enabled) stringResource(R.string.dolby_on) 
-                                  else stringResource(R.string.dolby_off),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
+                Spacer(modifier = Modifier.height(30.dp))
+
+                Text(
+                    text = stringResource(R.string.dolby_title),
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = stringResource(
+                        if (enabled) R.string.studio_tagline_on
+                        else R.string.studio_tagline_off
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(26.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ToggleButton(
                         checked = enabled,
-                        onCheckedChange = { 
+                        onCheckedChange = {
                             scope.launch {
-                                haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.CLICK)
+                                haptic.performHaptic(
+                                    HapticFeedbackHelper.HapticIntensity.CLICK
+                                )
                             }
                             onEnabledChange(it)
                         },
-                        thumbContent = {
-                            Crossfade(
-                                targetState = enabled,
-                                animationSpec = MaterialTheme.motionScheme.slowEffectsSpec(),
-                                label = "switch_icon"
-                            ) { isChecked ->
-                                if (isChecked) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Check,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Close,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                        }
-                    )
+                        modifier = Modifier.height(52.dp),
+                        shapes = ToggleButtonDefaults.shapes(),
+                        contentPadding = PaddingValues(
+                            horizontal = 22.dp,
+                            vertical = 12.dp
+                        )
+                    ) {
+                        Icon(
+                            imageVector = if (enabled) Icons.Rounded.GraphicEq
+                            else Icons.Rounded.PowerSettingsNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(
+                                if (enabled) R.string.dolby_on else R.string.dolby_off
+                            ),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    if (enabled) {
+                        AnimatedEqualizerIconDynamic(
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            size = 52.dp,
+                            barCount = 7
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModernProfileSelector(
     currentProfile: Int,
@@ -645,8 +651,8 @@ fun ModernSettingSlider(
     var sliderValue by remember { mutableFloatStateOf(value.toFloat()) }
     var lastHapticValue by remember { mutableIntStateOf(value) }
     // Drag-local thumb: ViewModel writes (HAL + loadSettings on IO, or
-    // Dynamics engine + disk persist) return asynchronously and would
-    // otherwise keep arriving after release, dragging the thumb after lift.
+    // disk persist) return asynchronously and would otherwise keep
+    // arriving after release, dragging the thumb after lift.
     // So the thumb only follows the finger while dragging; the confirmed
     // value is committed once on release and re-synced afterwards.
     var isDragging by remember { mutableStateOf(false) }

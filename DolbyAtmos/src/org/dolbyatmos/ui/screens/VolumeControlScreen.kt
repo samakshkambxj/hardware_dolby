@@ -12,13 +12,44 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
 import android.os.Build
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,10 +58,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import org.dolbyatmos.R
-import org.dolbyatmos.ui.components.StyledParticles
 import org.dolbyatmos.ui.components.ModernSettingSlider
 import org.dolbyatmos.ui.components.ModernSettingsCard
+import org.dolbyatmos.ui.components.StudioAmbientBackground
+import org.dolbyatmos.ui.components.StudioCard
+import org.dolbyatmos.ui.components.StudioHeader
+import org.dolbyatmos.ui.components.StudioSectionHeader
+import org.dolbyatmos.ui.components.StyledParticles
 import org.dolbyatmos.ui.components.verticalBouncyEdge
 import org.dolbyatmos.utils.HapticFeedbackHelper
 import org.dolbyatmos.utils.rememberHapticFeedback
@@ -107,6 +143,17 @@ fun VolumeControlScreen() {
         volumes = readVolumes()
     }
 
+    fun setVolume(streamType: Int, value: Int) {
+        volumes = volumes.toMutableMap().apply { put(streamType, value) }
+        try {
+            audioManager.setStreamVolume(streamType, value, 0)
+        } catch (_: SecurityException) {
+            refreshVolumes()
+        } catch (_: Exception) {
+            refreshVolumes()
+        }
+    }
+
     // Reflect hardware volume keys / system volume panel changes while visible.
     DisposableEffect(context) {
         refreshVolumes()
@@ -138,145 +185,225 @@ fun VolumeControlScreen() {
         }
     }
 
+    val mediaStream = streams.first()
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                // Keep action icons off the screen edge (M3 only insets 4.dp).
-                modifier = Modifier.padding(end = 8.dp),
-                title = {
-                    Text(
-                        stringResource(R.string.volume),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+            StudioHeader(
+                eyebrow = "Mixer",
+                title = stringResource(R.string.volume),
+                subtitle = "Independent levels for every stream"
             )
         },
-        containerColor = MaterialTheme.colorScheme.surfaceContainer
+        containerColor = Color.Transparent
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
-        StyledParticles(modifier = Modifier.padding(paddingValues))
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalBouncyEdge()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(
-                items = streams,
-                key = { it.streamType }
-            ) { stream ->
-                val max = remember(stream.streamType) {
-                    try {
-                        audioManager.getStreamMaxVolume(stream.streamType)
-                    } catch (_: Exception) {
-                        15
-                    }
+            StudioAmbientBackground()
+            StyledParticles(modifier = Modifier.padding(paddingValues))
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalBouncyEdge()
+                    .padding(paddingValues),
+                contentPadding = PaddingValues(
+                    start = 20.dp,
+                    end = 20.dp,
+                    top = 8.dp,
+                    bottom = 124.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
+                item(key = "media_header") {
+                    StudioSectionHeader(
+                        title = "Now playing",
+                        eyebrow = "Media",
+                        subtitle = "The level everything else is tuned around."
+                    )
                 }
-                val min = remember(stream.streamType) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+
+                item(key = "media_hero") {
+                    val max = remember(mediaStream.streamType) {
                         try {
-                            audioManager.getStreamMinVolume(stream.streamType)
+                            audioManager.getStreamMaxVolume(mediaStream.streamType)
                         } catch (_: Exception) {
+                            15
+                        }
+                    }
+                    val min = remember(mediaStream.streamType) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            try {
+                                audioManager.getStreamMinVolume(mediaStream.streamType)
+                            } catch (_: Exception) {
+                                0
+                            }
+                        } else {
                             0
                         }
-                    } else {
-                        0
                     }
-                }
-                val current = (volumes[stream.streamType]
-                    ?: try {
-                        audioManager.getStreamVolume(stream.streamType)
-                    } catch (_: Exception) {
-                        min
-                    }).coerceIn(min, max)
-
-                ModernSettingsCard(
-                    title = stream.title,
-                    icon = stream.icon
-                ) {
-                    val isMusic = stream.streamType == AudioManager.STREAM_MUSIC
+                    val current = (volumes[mediaStream.streamType]
+                        ?: min).coerceIn(min, max)
                     val fraction = if (max > min) {
                         (current - min).toFloat() / (max - min).toFloat()
                     } else 0f
-                    val showSafeNudge = isMusic && !safeAck && fraction >= SAFE_FRACTION
+                    val showSafeNudge = !safeAck && fraction >= SAFE_FRACTION
+                    val percent = (fraction * 100f).toInt()
 
-                    // Heavy buzz exactly once per crossing into the red zone.
                     LaunchedEffect(showSafeNudge) {
                         if (showSafeNudge) {
                             haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.HEAVY_CLICK)
                         }
                     }
 
-                    ModernSettingSlider(
-                        title = "Level",
-                        value = current,
-                        valueRange = min.toFloat()..max.toFloat(),
-                        steps = (max - min - 1).coerceAtLeast(0),
-                        valueLabel = { "$it / $max" },
-                        icon = stream.icon,
-                        warning = showSafeNudge,
-                        onValueChange = { newValue ->
-                            val target = newValue.toInt().coerceIn(min, max)
-                            // Optimistic UI update; receiver will correct it if clamped.
-                            volumes = volumes.toMutableMap().apply {
-                                put(stream.streamType, target)
+                    StudioCard {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                modifier = Modifier.size(44.dp),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = mediaStream.icon,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
                             }
-                            try {
-                                audioManager.setStreamVolume(
-                                    stream.streamType,
-                                    target,
-                                    0
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = mediaStream.title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
-                            } catch (_: SecurityException) {
-                                // DND / policy restricted stream; re-read actual value.
-                                refreshVolumes()
-                            } catch (_: Exception) {
-                                refreshVolumes()
+                                Text(
+                                    text = if (showSafeNudge) "Loud — watch your ears"
+                                    else "System media stream",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
-                        }
-                    )
-                    if (showSafeNudge) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(20.dp),
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "High volume — long sessions here can damage hearing",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.weight(1f),
+                                text = "$percent%",
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
                             )
-                            TextButton(onClick = {
-                                safeAck = true
-                                prefs.edit().putBoolean(KEY_SAFE_ACK, true).apply()
-                            }) {
-                                Text("Dismiss")
+                        }
+
+                        Spacer(modifier = Modifier.height(18.dp))
+
+                        ModernSettingSlider(
+                            title = "Level",
+                            value = current,
+                            valueRange = min.toFloat()..max.toFloat(),
+                            steps = (max - min - 1).coerceAtLeast(0),
+                            valueLabel = { "$it / $max" },
+                            icon = mediaStream.icon,
+                            warning = showSafeNudge,
+                            onValueChange = { newValue ->
+                                val target = newValue.toInt().coerceIn(min, max)
+                                scope.launch {
+                                    haptic.performHaptic(
+                                        HapticFeedbackHelper.HapticIntensity.CLICK
+                                    )
+                                }
+                                setVolume(mediaStream.streamType, target)
+                            }
+                        )
+
+                        if (showSafeNudge) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "High volume — long sessions here can damage hearing",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                TextButton(onClick = {
+                                    safeAck = true
+                                    prefs.edit().putBoolean(KEY_SAFE_ACK, true).apply()
+                                }) {
+                                    Text("Dismiss")
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            item {
-                Spacer(modifier = Modifier.height(70.dp))
+                item(key = "other_header") {
+                    StudioSectionHeader(
+                        title = "Other streams",
+                        eyebrow = "System"
+                    )
+                }
+
+                items(
+                    items = streams.drop(1),
+                    key = { it.streamType }
+                ) { stream ->
+                    val max = remember(stream.streamType) {
+                        try {
+                            audioManager.getStreamMaxVolume(stream.streamType)
+                        } catch (_: Exception) {
+                            15
+                        }
+                    }
+                    val min = remember(stream.streamType) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            try {
+                                audioManager.getStreamMinVolume(stream.streamType)
+                            } catch (_: Exception) {
+                                0
+                            }
+                        } else {
+                            0
+                        }
+                    }
+                    val current = (volumes[stream.streamType]
+                        ?: try {
+                            audioManager.getStreamVolume(stream.streamType)
+                        } catch (_: Exception) {
+                            min
+                        }).coerceIn(min, max)
+
+                    ModernSettingsCard(
+                        title = stream.title,
+                        icon = stream.icon
+                    ) {
+                        ModernSettingSlider(
+                            title = "Level",
+                            value = current,
+                            valueRange = min.toFloat()..max.toFloat(),
+                            steps = (max - min - 1).coerceAtLeast(0),
+                            valueLabel = { "$it / $max" },
+                            icon = stream.icon,
+                            onValueChange = { newValue ->
+                                val target = newValue.toInt().coerceIn(min, max)
+                                setVolume(stream.streamType, target)
+                            }
+                        )
+                    }
+                }
+
+                item(key = "bottom_spacer") {
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
-        }
         }
     }
 }

@@ -24,11 +24,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Audiotrack
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -48,7 +45,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.dolbyatmos.DolbyConstants
 import org.dolbyatmos.R
-import org.dolbyatmos.data.DolbyCodecSupport
 
 /**
  * Collapsed-by-default holder for the raw-DAP controls below. Lives last
@@ -282,152 +278,4 @@ fun ReverbHeightContent(
         )
     }
     return true
-}
-
-/**
- * Read-only Dolby decoder capabilities from the live MediaCodecList
- * (wired via media_codecs_dolby_audio.xml): AC-3 / E-AC-3 / E-AC-3 JOC
- * (Atmos) / AC-4. Collapsed by default like [ExperimentalCard] so the
- * static list doesn't push everyday cards down; auto-expands while the
- * Advanced search filter is active.
- */
-@Composable
-fun CodecInfoCard(
-    codecs: List<DolbyCodecSupport>?,
-    modifier: Modifier = Modifier,
-    forceExpand: Boolean = false
-) {
-    val pageStyle by rememberPageStyle()
-    var expanded by remember { mutableStateOf(false) }
-    val open = expanded || forceExpand
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = rememberAnimatedCardShape(),
-        colors = CardDefaults.cardColors(
-            containerColor = pageStyle.cardContainer()
-        ),
-        border = pageStyle.cardBorder(),
-        elevation = pageStyle.cardElevation()
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) { expanded = !expanded },
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                SettingsCardIcon(icon = Icons.Default.Audiotrack)
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.codecs_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.codecs_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Icon(
-                    imageVector = if (open) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            AnimatedVisibility(
-                visible = open,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                Column {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    if (codecs == null) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 24.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            SpinningDolbyLogo()
-                        }
-                    } else {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            codecs.forEach { codec ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = if (codec.supported)
-                                            Icons.Default.CheckCircle
-                                        else
-                                            Icons.Default.RemoveCircle,
-                                        contentDescription = null,
-                                        tint = if (codec.supported)
-                                            MaterialTheme.colorScheme.primary
-                                        else
-                                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = codec.label,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Medium,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Text(
-                                            text = codec.decoderName ?: codec.mime,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Text(
-                                            text = stringResource(
-                                                if (codec.supported)
-                                                    R.string.codecs_supported
-                                                else
-                                                    R.string.codecs_missing
-                                            ),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = if (codec.supported)
-                                                MaterialTheme.colorScheme.primary
-                                            else
-                                                MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        codec.maxChannels?.let { channels ->
-                                            Text(
-                                                text = stringResource(
-                                                    R.string.codecs_channels, channels
-                                                ),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "audio/ac3 · audio/eac3 · audio/eac3-joc · audio/ac4",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-            }
-        }
-    }
 }

@@ -10,9 +10,7 @@ import org.json.JSONObject
 
 /**
  * Persists the framework-enhancements state (bass boost, virtualizer,
- * reverb, loudness) so it survives app/process restarts. Separate from
- * [DynamicsStateStore] and the named dynamics presets on purpose: those
- * predate FX and their JSON shape stays untouched.
+ * reverb, loudness) so it survives app/process restarts.
  */
 data class EnhancementsStateData(
     val bassEnabled: Boolean = false,

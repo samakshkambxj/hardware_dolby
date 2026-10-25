@@ -18,10 +18,9 @@ import android.util.Log
  *
  * Each effect type is instantiated at most once here — nothing else in
  * the app creates these framework types (the Dolby virtualizers are
- * vendor DAP parameters, and DynamicsProcessing lives in
- * [DynamicsEqualizerEngine]), so there is no duplicate-instance
- * conflict on the session. They stack with Dolby/Dynamics processing
- * by design; the UI says so.
+ * vendor DAP parameters), so there is no duplicate-instance conflict on
+ * the session. They stack with Dolby processing by design; the UI says
+ * so.
  */
 class FrameworkEnhancementsEngine(
     private val sessionId: Int = 0

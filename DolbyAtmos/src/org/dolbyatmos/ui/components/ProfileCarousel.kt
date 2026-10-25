@@ -98,14 +98,6 @@ fun ProfileCarousel(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = stringResource(R.string.dolby_profile_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier

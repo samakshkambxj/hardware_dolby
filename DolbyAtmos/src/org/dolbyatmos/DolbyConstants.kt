@@ -34,7 +34,6 @@ object DolbyConstants {
     const val PREF_DEVICE_STATE_MEMORY = "device_state_memory_enabled"
     
     const val PREF_FILE_PRESETS = "presets"
-    const val PREF_FILE_SCENES = "dolby_scenes"
     const val PREF_SLEEP_TIMER_DEADLINE = "sleep_timer_deadline"
     const val PREF_BALANCE = "dolby_balance"
 
@@ -74,7 +73,7 @@ object DolbyConstants {
     /**
      * Fallback sweep range when none of [LAB_DAP_PARAM_IDS] answers (some
      * DAP revisions put their extras at other IDs). Same 100–130 window
-     * the DAP probe debug screen sweeps. Known [DsParam] IDs are excluded
+     * the Tuning Lab sweeps. Known [DsParam] IDs are excluded
      * — they have real UI elsewhere and must never show up as raw sliders.
      */
     val LAB_SWEEP_RANGE = 100..130
@@ -82,9 +81,9 @@ object DolbyConstants {
 
     /**
      * Tuning Lab IDs promoted to the experimental Reverb & Height card.
-     * Candidates only — no public semantics exist for gap IDs, so if the
-     * DAP probe names a different live ID on your HAL, remap here and the
-     * card follows. IDs the HAL rejects are hidden automatically.
+     * Candidates only — no public semantics exist for gap IDs, so if your
+     * HAL exposes a different live ID, remap here and the card follows.
+     * IDs the HAL rejects are hidden automatically.
      */
     const val REVERB_PARAM_ID = 114
     const val HEIGHT_PARAM_ID = 115

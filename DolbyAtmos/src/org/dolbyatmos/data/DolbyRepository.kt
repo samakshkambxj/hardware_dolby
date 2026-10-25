@@ -1212,17 +1212,6 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
         }
     }
 
-    /**
-     * Read-only probe of an arbitrary DAP parameter ID. Success carries the
-     * HAL-reported value (which still needs a sanity listen — some HALs
-     * return 0 for unknown IDs instead of failing). Must be called off the
-     * main thread.
-     */
-    fun probeDapParam(paramId: Int, profile: Int): Result<Int> = runCatching {
-        checkEffect()
-        dolbyEffect.getRawDapParameter(paramId, profile)
-    }
-
     fun resetProfile(profile: Int) {
         if (isReleased) return
         

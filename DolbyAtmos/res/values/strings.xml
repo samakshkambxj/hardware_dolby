@@ -227,27 +227,6 @@
     <string name="output_switch_failed">Couldn\'t switch audio output</string>
     <string name="volume">Volume</string>
 
-    <!-- Scenes -->
-    <string name="scenes">Scenes</string>
-    <string name="scene_save_current">Save current</string>
-    <string name="scene_save_title">Save scene</string>
-    <string name="scene_name_hint">Scene name</string>
-    <string name="scene_delete_title">Delete scene?</string>
-    <string name="scene_delete_message">Delete "%1$s"?</string>
-    <string name="scene_applied">Scene applied</string>
-    <string name="scene_builtin_movie">Movie Night</string>
-    <string name="scene_builtin_bass">Bass Boost</string>
-    <string name="scene_builtin_podcast">Podcast</string>
-    <string name="scene_builtin_gaming">Gaming</string>
-    <string name="scene_builtin_music">Music Session</string>
-    <string name="scene_builtin_night">Late Night</string>
-    <string name="scene_builtin_vocal">Voice Clarity</string>
-    <string name="scene_builtin_outdoor">Outdoor Speaker</string>
-    <string name="scene_reset">Reset scenes</string>
-    <string name="scene_reset_title">Reset scenes?</string>
-    <string name="scene_reset_message">Delete all custom scenes? Built-in scenes will be kept.</string>
-    <string name="save">Save</string>
-
     <!-- Sleep timer -->
     <string name="sleep_timer">Sleep timer</string>
     <string name="sleep_timer_off">Off</string>
@@ -269,46 +248,30 @@
     <string name="tuning_lab">Tuning Lab</string>
     <string name="tuning_lab_summary">Experimental raw DAP controls — only params your HAL answers to are shown</string>
     <string name="tuning_lab_param">DAP param %1$d</string>
-    <string name="tuning_lab_footer">These IDs have no public meaning — change one at a time and listen. Values persist per profile and are included in scenes. Reset restores HAL defaults.</string>
+    <string name="tuning_lab_footer">These IDs have no public meaning — change one at a time and listen. Values persist per profile. Reset restores HAL defaults.</string>
     <string name="tuning_lab_reset">Reset Lab values</string>
     <string name="tuning_lab_empty">No experimental params answered on this HAL (IDs 100–130 swept)</string>
-
-    <!-- Dolby codecs -->
-    <string name="codecs_title">Dolby decoders</string>
-    <string name="codecs_summary">Wired through media_codecs_dolby_audio.xml — live from MediaCodecList</string>
-    <string name="codecs_supported">Supported</string>
-    <string name="codecs_missing">Missing</string>
-    <string name="codecs_channels">Up to %1$d ch</string>
 
     <!-- Reverb & height (experimental candidates) -->
     <string name="reverb_height_title">Reverb &amp; height (experimental)</string>
     <string name="reverb_height_summary">Candidate raw DAP controls — shown only if your HAL answers</string>
-    <string name="reverb_height_footer">Candidate IDs (see DAP probe): change one at a time and listen. If a slider does nothing, your HAL ignores that ID — remap in DolbyConstants.</string>
+    <string name="reverb_height_footer">Candidate IDs: change one at a time and listen. If a slider does nothing, your HAL ignores that ID — remap in DolbyConstants.</string>
     <string name="reverb_candidate">Reverb candidate (DAP %1$d)</string>
     <string name="height_candidate">Height candidate (DAP %1$d)</string>
 
-    <!-- Per-app scenes -->
-    <string name="app_profiles_scene_header">Scenes</string>
-    <string name="app_profiles_scene_set">Scene set to: %1$s</string>
-
-    <!-- Scene import/export -->
-    <string name="scene_export">Copy scene</string>
-    <string name="scene_export_copied">Scene copied to clipboard</string>
-    <string name="scene_import">Import from clipboard</string>
-    <string name="scene_import_done">Imported %1$d scene(s)</string>
-    <string name="scene_import_failed">Couldn\'t import scenes from clipboard</string>
-
     <!-- Undo -->
     <string name="undo">Undo</string>
-    <string name="scene_deleted">Scene deleted</string>
     <string name="preset_deleted">Preset deleted</string>
     <string name="reset_undone">Restored</string>
 
     <!-- Live playback dot -->
     <string name="dolby_live_dot">Audio playing through Dolby</string>
-
-    <!-- Onboarding starter scene -->
-    <string name="onboarding_try_scene">Try Movie Night</string>
+    <string name="studio_live">Live · audio playing</string>
+    <string name="studio_ready">Ready</string>
+    <string name="studio_off">Off</string>
+    <string name="studio_tagline_on">Immersive audio is shaping everything you play.</string>
+    <string name="studio_tagline_off">Turn Dolby on to hear the difference.</string>
+    <string name="studio_eyebrow">Dolby Studio</string>
 
     <!-- Advanced search -->
     <string name="advanced_search_hint">Filter settings…</string>
@@ -318,41 +281,8 @@
     <string name="profile_reset_done">Profile reset</string>
     <string name="profile_customized">Customized</string>
 
-    <!-- Automation -->
-    <string name="automation">Automation</string>
-    <string name="automation_summary">Control Dolby from Tasker, MacroDroid or scripts via broadcast</string>
-    <string name="automation_copied">Copied to clipboard</string>
-    <string name="automation_hint_toggle">No extras — flips the master switch</string>
-    <string name="automation_hint_enabled">Boolean extra "enabled"</string>
-    <string name="automation_hint_profile">Int extra "profile" (0–6)</string>
-    <string name="automation_hint_scene">String extra "scene_id"</string>
-
-    <!-- Dynamics processing -->
-    <string name="dynamics_spectrum">Live spectrum</string>
-
     <!-- Quick Settings tiles -->
-    <string name="tile_scene_title">Dolby Scene</string>
     <string name="tile_leveler_title">Volume Leveler</string>
-
-    <!-- Spatial audio (framework Spatializer) -->
-    <string name="spatial_title">Spatial audio</string>
-    <string name="spatial_enable">Spatial audio</string>
-    <string name="spatial_enable_summary">System spatializer effect (wired / BT / speaker where supported)</string>
-    <string name="spatial_headtracking">Head tracking</string>
-    <string name="spatial_headtracking_summary">Follow head movement when a tracked device is connected</string>
-    <string name="spatial_unsupported">Not available on this device or output</string>
-    <string name="spatial_unavailable">Spatializer unavailable on current output</string>
-    <string name="spatial_change_failed">System rejected the spatial audio change</string>
-
-    <!-- Per-device scenes -->
-    <string name="device_scene_title">Per-device scenes</string>
-    <string name="device_scene_summary">Auto-apply a scene when an audio device connects</string>
-    <string name="device_scene_current_device">Current device: %1$s</string>
-    <string name="device_scene_choose">Choose scene</string>
-    <string name="device_scene_none">No scene</string>
-    <string name="device_scene_assign">Assign to this device</string>
-    <string name="device_scene_clear">Clear</string>
-    <string name="device_scene_assigned">%1$s → %2$s</string>
 
     <!-- First-run tutorial -->
     <string name="onboarding_skip">Skip</string>
@@ -360,13 +290,13 @@
     <string name="onboarding_next">Next</string>
     <string name="onboarding_get_started">Get started</string>
     <string name="onboarding_welcome_title">Meet DolbyAtmos</string>
-    <string name="onboarding_welcome_body">System-wide Dolby Atmos with profiles, scenes and a full equalizer — tuned for your phone.</string>
-    <string name="onboarding_scenes_title">One-tap scenes</string>
-    <string name="onboarding_scenes_body">Movies, music, games and more. Scenes can even auto-apply when a device connects.</string>
+    <string name="onboarding_welcome_body">System-wide Dolby Atmos with profiles and a full equalizer — tuned for your phone.</string>
+    <string name="onboarding_apps_title">Tuned per app</string>
+    <string name="onboarding_apps_body">Give music, podcasts and games their own profile automatically when they come to the foreground.</string>
     <string name="onboarding_eq_title">Serious equalizer</string>
-    <string name="onboarding_eq_body">10 to 20 bands, AutoEQ headphone correction, plus dynamics processing with a live spectrum.</string>
+    <string name="onboarding_eq_body">10 to 20 bands and AutoEQ headphone correction, with a curve you can shape directly.</string>
     <string name="onboarding_pro_title">Pro tools included</string>
-    <string name="onboarding_pro_body">Spatial audio, channel balance, sleep timer, per-app profiles and Quick Settings tiles.</string>
+    <string name="onboarding_pro_body">Channel balance, sleep timer, per-app profiles and Quick Settings tiles.</string>
     <string name="onboarding_page_counter">%1$d of %2$d</string>
     <string name="onboarding_replay_title">Replay tutorial</string>
     <string name="onboarding_replay_subtitle">See the first-run tour again</string>

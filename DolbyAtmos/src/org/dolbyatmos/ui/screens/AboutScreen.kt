@@ -159,8 +159,8 @@ fun AboutScreen(
                         text = "DolbyAtmos is a system audio control app that drives the " +
                             "on-device Dolby (DAP/DMS) effect: profiles, intelligent " +
                             "equalizer, bass / mid / treble enhancement, surround " +
-                            "virtualizer, dialogue enhancement, volume leveling, " +
-                            "multiband dynamics and per-app audio profiles.",
+                            "virtualizer, dialogue enhancement, volume leveling " +
+                            "and per-app audio profiles.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

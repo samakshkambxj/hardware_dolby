@@ -16,9 +16,7 @@ data class AppInfo(
     val packageName: String,
     val appName: String,
     val icon: Drawable?,
-    val assignedProfile: Int = -1,
-    /** Scene id assigned to this app, or null. Mutually exclusive with [assignedProfile]. */
-    val assignedSceneId: String? = null
+    val assignedProfile: Int = -1
 )
 
 class AppProfileManager(private val context: Context) {
@@ -34,7 +32,6 @@ class AppProfileManager(private val context: Context) {
             
             val resolveInfos = packageManager.queryIntentActivities(mainIntent, 0)
             val assignedProfiles = getAppsWithProfiles()
-            val assignedScenes = getAppsWithScenes()
 
             resolveInfos
                 .distinctBy { it.activityInfo.packageName }
@@ -44,8 +41,7 @@ class AppProfileManager(private val context: Context) {
                         packageName = packageName,
                         appName = resolveInfo.loadLabel(packageManager).toString(),
                         icon = resolveInfo.loadIcon(packageManager),
-                        assignedProfile = assignedProfiles[packageName] ?: -1,
-                        assignedSceneId = assignedScenes[packageName]
+                        assignedProfile = assignedProfiles[packageName] ?: -1
                     )
                 }
                 .sortedBy { it.appName }
@@ -72,37 +68,7 @@ class AppProfileManager(private val context: Context) {
         }.toMap()
     }
 
-    /**
-     * Scene assignments share the same prefs file: a String value marks a
-     * scene id, an Int value marks a profile. One key holds one kind, so
-     * assigning a scene overwrites a profile and vice versa.
-     */
-    fun getAppScene(packageName: String): String? {
-        return (prefs.all[packageName] as? String)
-            ?.takeIf { it.startsWith(SCENE_PREFIX) }
-            ?.removePrefix(SCENE_PREFIX)
-            ?.takeIf { it.isNotEmpty() }
-    }
-
-    fun setAppScene(packageName: String, sceneId: String) {
-        prefs.edit().putString(packageName, SCENE_PREFIX + sceneId).apply()
-    }
-
-    fun getAppsWithScenes(): Map<String, String> {
-        return prefs.all.mapNotNull { (key, value) ->
-            val id = (value as? String)
-                ?.takeIf { it.startsWith(SCENE_PREFIX) }
-                ?.removePrefix(SCENE_PREFIX)
-                ?.takeIf { it.isNotEmpty() }
-            if (id != null) key to id else null
-        }.toMap()
-    }
-    
     fun clearAllAppProfiles() {
         prefs.edit().clear().apply()
-    }
-
-    companion object {
-        private const val SCENE_PREFIX = "scene:"
     }
 }

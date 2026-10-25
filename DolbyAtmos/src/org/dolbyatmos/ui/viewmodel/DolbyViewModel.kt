@@ -11,11 +11,8 @@ import androidx.lifecycle.viewModelScope
 import org.dolbyatmos.DolbyConstants
 import org.dolbyatmos.R
 import org.dolbyatmos.data.DolbyRepository
-import org.dolbyatmos.data.DeviceStateManager
-import org.dolbyatmos.data.SceneRepository
 import org.dolbyatmos.data.SleepTimerManager
 import org.dolbyatmos.data.SleepTimerState
-import org.dolbyatmos.data.SpatializerManager
 import org.dolbyatmos.domain.models.*
 import org.dolbyatmos.service.DolbyEffectService
 import kotlinx.coroutines.Dispatchers
@@ -29,29 +26,11 @@ import kotlinx.coroutines.cancelChildren
 class DolbyViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = DolbyRepository(application)
-    private val sceneRepository = SceneRepository(application)
-    private val deviceStateManager = DeviceStateManager(application)
     private val sleepTimer = SleepTimerManager(application)
-    private val spatializerManager = SpatializerManager(application)
-
-    val spatializerSupported: StateFlow<Boolean> = spatializerManager.isSupported
-    val spatializerAvailable: StateFlow<Boolean> = spatializerManager.isAvailable
-    val spatializerEnabled: StateFlow<Boolean> = spatializerManager.isEnabled
-    val headTrackingAvailable: StateFlow<Boolean> = spatializerManager.isHeadTrackingAvailable
-    val headTrackingEnabled: StateFlow<Boolean> = spatializerManager.isHeadTrackingEnabled
-
-    private val _spatialError = MutableStateFlow<String?>(null)
-    val spatialError: StateFlow<String?> = _spatialError.asStateFlow()
 
     private val _uiState = MutableStateFlow<DolbyUiState>(DolbyUiState.Loading)
     val uiState: StateFlow<DolbyUiState> = _uiState.asStateFlow()
     val currentProfile: StateFlow<Int> = repository.currentProfile
-
-    private val _scenes = MutableStateFlow<List<Scene>>(emptyList())
-    val scenes: StateFlow<List<Scene>> = _scenes.asStateFlow()
-
-    private val _deviceScenes = MutableStateFlow<Map<String, String>>(emptyMap())
-    val deviceScenes: StateFlow<Map<String, String>> = _deviceScenes.asStateFlow()
 
     private val _sleepState = MutableStateFlow(SleepTimerState())
     val sleepState: StateFlow<SleepTimerState> = _sleepState.asStateFlow()
@@ -74,12 +53,8 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     init {
         DolbyConstants.dlog(TAG, "ViewModel initialized")
         loadSettings()
-        refreshScenes()
-        refreshDeviceScenes()
         refreshSleepState()
         refreshBalance()
-        refreshSpatializer()
-        refreshCodecInfo()
         observeAudioOutputState()
         observeProfileChanges()
     }
@@ -91,58 +66,9 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
                 if (!isCleared) {
                     DolbyConstants.dlog(TAG, "Audio output changed: ${it.name} (${it.category})")
                     loadSettings()
-                    refreshSpatializer()
                 }
             }
         }
-    }
-
-    fun refreshSpatializer() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                spatializerManager.refresh()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error refreshing spatializer: ${e.message}")
-            }
-        }
-    }
-
-    fun setSpatialAudioEnabled(enabled: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val ok = spatializerManager.setEnabled(enabled)
-                spatializerManager.refresh()
-                if (!ok) {
-                    _spatialError.value =
-                        getApplication<Application>().getString(R.string.spatial_change_failed)
-                }
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error setting spatial audio: ${e.message}")
-                _spatialError.value =
-                    getApplication<Application>().getString(R.string.spatial_change_failed)
-            }
-        }
-    }
-
-    fun setHeadTrackingEnabled(enabled: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val ok = spatializerManager.setHeadTrackingEnabled(enabled)
-                spatializerManager.refresh()
-                if (!ok) {
-                    _spatialError.value =
-                        getApplication<Application>().getString(R.string.spatial_change_failed)
-                }
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error setting head tracking: ${e.message}")
-                _spatialError.value =
-                    getApplication<Application>().getString(R.string.spatial_change_failed)
-            }
-        }
-    }
-
-    fun clearSpatialError() {
-        _spatialError.value = null
     }
 
     private fun observeProfileChanges() {
@@ -446,27 +372,6 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private val _codecInfo =
-        MutableStateFlow<List<org.dolbyatmos.data.DolbyCodecSupport>?>(null)
-    val codecInfo: StateFlow<List<org.dolbyatmos.data.DolbyCodecSupport>?> =
-        _codecInfo.asStateFlow()
-
-    fun refreshCodecInfo() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                _codecInfo.value = org.dolbyatmos.data.DolbyCodecInfo.query()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error querying codec info: ${e.message}")
-            }
-        }
-    }
-
-    /** Debug-only: read an arbitrary DAP parameter ID. See DAP probe screen. */
-    suspend fun probeDapParam(paramId: Int, profile: Int): Result<Int> =
-        kotlinx.coroutines.withContext(Dispatchers.IO) {
-            repository.probeDapParam(paramId, profile)
-        }
-
     fun resetAllProfiles() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -513,157 +418,6 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
                 .toSet()
         } catch (e: Exception) {
             DolbyConstants.dlog(TAG, "Error refreshing dirty profiles: ${e.message}")
-        }
-    }
-
-    fun restoreScene(scene: Scene) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                sceneRepository.restoreScene(scene)
-                refreshScenes()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error restoring scene: ${e.message}")
-            }
-        }
-    }
-
-    /** One-tap starter (onboarding nudge): applies a built-in scene by id. */
-    fun applySceneById(sceneId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val scene = sceneRepository.getScene(sceneId) ?: return@launch
-                sceneRepository.applyScene(scene, repository)
-                loadSettings()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error applying scene $sceneId: ${e.message}")
-            }
-        }
-    }
-
-    fun refreshScenes() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                _scenes.value = sceneRepository.getScenes()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error loading scenes: ${e.message}")
-            }
-        }
-    }
-
-    fun applyScene(scene: Scene) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                sceneRepository.applyScene(scene, repository)
-                loadSettings()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error applying scene: ${e.message}")
-            }
-        }
-    }
-
-    fun saveScene(name: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                sceneRepository.saveCurrentAsScene(name, repository)
-                refreshScenes()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error saving scene: ${e.message}")
-            }
-        }
-    }
-
-    fun deleteScene(id: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                sceneRepository.deleteScene(id)
-                refreshScenes()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error deleting scene: ${e.message}")
-            }
-        }
-    }
-
-    /** Synchronous prefs read — safe to call for clipboard export. */
-    fun exportSceneJson(id: String): String? {
-        return try {
-            sceneRepository.exportSceneJson(id)
-        } catch (e: Exception) {
-            DolbyConstants.dlog(TAG, "Error exporting scene: ${e.message}")
-            null
-        }
-    }
-
-    fun importScenes(jsonText: String, onDone: (Int) -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val count = try {
-                sceneRepository.importScenesJson(jsonText)
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error importing scenes: ${e.message}")
-                0
-            }
-            if (count > 0) {
-                try {
-                    _scenes.value = sceneRepository.getScenes()
-                } catch (e: Exception) {
-                    DolbyConstants.dlog(TAG, "Error reloading scenes: ${e.message}")
-                }
-            }
-            kotlinx.coroutines.withContext(Dispatchers.Main) {
-                onDone(count)
-            }
-        }
-    }
-
-    fun resetScenes() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                sceneRepository.deleteAllCustomScenes()
-                refreshScenes()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error resetting scenes: ${e.message}")
-            }
-        }
-    }
-
-    fun refreshDeviceScenes() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                _deviceScenes.value = deviceStateManager.getDeviceSceneMap()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error loading device scenes: ${e.message}")
-            }
-        }
-    }
-
-    fun currentDeviceKey(): String? {
-        return try {
-            repository.currentDeviceKey()
-        } catch (e: Exception) {
-            DolbyConstants.dlog(TAG, "Error getting device key: ${e.message}")
-            null
-        }
-    }
-
-    fun assignDeviceScene(sceneId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val key = repository.currentDeviceKey() ?: return@launch
-                deviceStateManager.saveDeviceScene(key, sceneId)
-                refreshDeviceScenes()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error assigning device scene: ${e.message}")
-            }
-        }
-    }
-
-    fun clearDeviceScene(deviceKey: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                deviceStateManager.clearDeviceScene(deviceKey)
-                refreshDeviceScenes()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error clearing device scene: ${e.message}")
-            }
         }
     }
 
@@ -762,7 +516,6 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         DolbyConstants.dlog(TAG, "ViewModel onCleared")
         isCleared = true
-        spatializerManager.destroy()
         viewModelScope.coroutineContext.cancelChildren()
         audioOutputStateJob?.cancel()
         audioOutputStateJob = null

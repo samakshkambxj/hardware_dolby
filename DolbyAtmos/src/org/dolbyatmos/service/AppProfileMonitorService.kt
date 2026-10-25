@@ -20,7 +20,6 @@ import org.dolbyatmos.DolbyConstants
 import org.dolbyatmos.R
 import org.dolbyatmos.data.AppProfileManager
 import org.dolbyatmos.data.DolbyRepository
-import org.dolbyatmos.data.SceneRepository
 import org.dolbyatmos.utils.ToastHelper
 import java.util.concurrent.atomic.AtomicReference
 
@@ -179,38 +178,14 @@ class AppProfileMonitorService : Service() {
                             }
                             
                             val assignedProfile = appProfileManager.getAppProfile(packageName)
-                            val assignedSceneId = appProfileManager.getAppScene(packageName)
                             val showToasts = prefs.getBoolean("app_profile_show_toasts", true)
 
-                            // A scene assignment wins over a profile: it
-                            // carries the full enhancer snapshot, not just
-                            // the profile id.
-                            val scene = assignedSceneId?.let {
-                                SceneRepository(this@AppProfileMonitorService).getScene(it)
-                            }
-                            if (scene != null) {
-                                DolbyConstants.dlog(TAG, "Applying scene ${scene.id} for $packageName")
-                                lastProfileChangeTime = System.currentTimeMillis()
-                                SceneRepository(this@AppProfileMonitorService)
-                                    .applyScene(scene, dolbyRepository)
-
-                                if (showToasts) {
-                                    val appName = getAppName(packageName)
-                                    ToastHelper.showToast(
-                                        this@AppProfileMonitorService,
-                                        "Dolby: ${scene.name} ($appName)"
-                                    )
-                                }
-                            } else {
-                                if (assignedSceneId != null) {
-                                    DolbyConstants.dlog(TAG, "Scene $assignedSceneId gone, falling back to profile logic")
-                                }
-                                if (assignedProfile >= 0) {
-                                    DolbyConstants.dlog(TAG, "Switching to profile $assignedProfile for $packageName")
+                            if (assignedProfile >= 0) {
+                                DolbyConstants.dlog(TAG, "Switching to profile $assignedProfile for $packageName")
                                 lastProfileChangeTime = System.currentTimeMillis()
                                 dolbyRepository.setCurrentProfile(assignedProfile)
                                 DolbyConstants.dlog(TAG, "App profile active - original profile remains: $originalProfile")
-                                
+
                                 if (showToasts) {
                                     val profileName = getProfileName(assignedProfile)
                                     val appName = getAppName(packageName)
@@ -222,7 +197,7 @@ class AppProfileMonitorService : Service() {
                             } else {
                                 if (hasOriginalProfile && originalProfile >= 0) {
                                     val currentProfile = prefs.getString(DolbyConstants.PREF_PROFILE, "0")?.toIntOrNull() ?: 0
-                                    
+
                                     if (currentProfile != originalProfile) {
                                         DolbyConstants.dlog(TAG, "Restoring original profile $originalProfile for $packageName (current: $currentProfile)")
                                         lastProfileChangeTime = System.currentTimeMillis()
@@ -233,7 +208,6 @@ class AppProfileMonitorService : Service() {
                                 } else {
                                     DolbyConstants.dlog(TAG, "No original profile to restore (hasOriginal=$hasOriginalProfile, profile=$originalProfile)")
                                 }
-                            }
                             }
                         } catch (e: Exception) {
                             Log.e(TAG, "Error switching profile", e)

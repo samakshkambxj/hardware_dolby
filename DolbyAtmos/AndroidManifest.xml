@@ -23,17 +23,10 @@
          does not exist. -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
-    <!-- Required to drive the framework Spatializer (setEnabled /
-         setHeadTrackerEnabled are gated by this in AudioService).
-         signature|privileged: granted via platform cert + privapp allowlist. -->
-    <uses-permission android:name="android.permission.MODIFY_DEFAULT_AUDIO_EFFECTS" />
     <!-- Required for the output picker to actually steer routing
          (setSpeakerphoneOn / setBluetoothA2dpOn / stopBluetoothSco).
          Normal permission: auto-granted at install. -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <!-- Bluetooth codec info card (active A2DP codec/rate). Runtime
-         permission: requested in-app, pre-granted via privapp allowlist. -->
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
     <!-- Opt out of the predictive-back SYSTEM animation (window scale/shift).
          Without this the edge-swipe gesture plays the platform animation
@@ -66,17 +59,6 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="org.dolbyatmos.ACTION_SLEEP_TIMER" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name=".service.DolbyCommandReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="org.dolbyatmos.action.TOGGLE" />
-                <action android:name="org.dolbyatmos.action.SET_ENABLED" />
-                <action android:name="org.dolbyatmos.action.SET_PROFILE" />
-                <action android:name="org.dolbyatmos.action.APPLY_SCENE" />
             </intent-filter>
         </receiver>
 
@@ -220,17 +202,6 @@
             android:name=".tile.DolbyTileService"
             android:icon="@drawable/ic_dolby_qs"
             android:label="@string/dolby_title"
-            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE"/>
-            </intent-filter>
-        </service>
-
-        <service
-            android:name=".tile.SceneCycleTileService"
-            android:icon="@drawable/ic_dolby_qs"
-            android:label="@string/tile_scene_title"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
