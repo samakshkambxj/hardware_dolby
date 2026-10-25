@@ -13,6 +13,5 @@ allow hal_aidl_dms_server hal_aidl_dms_service:service_manager { add find };
 allow hal_aidl_dms_default vendor_data_file:dir rw_dir_perms;
 allow hal_aidl_dms_default vendor_data_file:file create_file_perms;
 init_daemon_domain(hal_aidl_dms_default)
-set_prop(hal_aidl_dms_default, vendor_audio_prop)
 binder_use(hal_aidl_dms_server)
 hal_server_domain(hal_aidl_dms_default, hal_aidl_dms)

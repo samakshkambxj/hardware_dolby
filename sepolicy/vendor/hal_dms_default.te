@@ -17,5 +17,3 @@ binder_call(hal_dms_default, platform_app_36)
 binder_call(hal_dms_default, system_server)
 
 hal_server_domain(hal_dms_default, hal_dms)
-
-#set_prop(hal_dms_default, vendor_audio_prop)
