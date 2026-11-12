@@ -1,0 +1,12 @@
+### How to use?
+
+1. Clone this repo to packages/apps/DolbyUI
+
+2. To build add `device.mk` in device tree:
+
+```
+## Dolby
+PRODUCT_PACKAGES += \
+    DolbyAtmos
+```
+
