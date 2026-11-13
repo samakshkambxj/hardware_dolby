@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2023-24 Paranoid Android
+ * Copyright (C) 2026 samakshkambxj
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,10 +8,16 @@
 package co.aospa.dolby
 
 import android.media.audiofx.AudioEffect
-import co.aospa.dolby.DolbyConstants.Companion.dlog
+import co.aospa.dolby.DolbyConstants.dlog
 import co.aospa.dolby.DolbyConstants.DsParam
 import java.util.UUID
 
+/**
+ * Thin JNI-facing wrapper around the DAX3 "DAP" audio effect.
+ *
+ * The byte layout must stay byte-for-byte compatible with the OEM
+ * libswdap implementation: every value is little-endian int32.
+ */
 class DolbyAudioEffect(priority: Int, audioSession: Int) :
     AudioEffect(EFFECT_TYPE_NULL, EFFECT_TYPE_DAP, priority, audioSession) {
 
@@ -76,10 +83,10 @@ class DolbyAudioEffect(priority: Int, audioSession: Int) :
     }
 
     fun getDapParameterBool(param: DsParam, profile: Int = this.profile): Boolean =
-        getDapParameter(param, profile)[0] == 1
+        getDapParameter(param, profile).firstOrNull() == 1
 
     fun getDapParameterInt(param: DsParam, profile: Int = this.profile): Int =
-        getDapParameter(param, profile)[0]
+        getDapParameter(param, profile).firstOrNull() ?: 0
 
     companion object {
         private const val TAG = "DolbyAudioEffect"
@@ -92,7 +99,7 @@ class DolbyAudioEffect(priority: Int, audioSession: Int) :
         private const val EFFECT_PARAM_GET_PROFILE_PARAMETER = 0x1000005
         private const val EFFECT_PARAM_RESET_PROFILE_SETTINGS = 0xC000000
 
-        private fun int32ToByteArray(value: Int, dst: ByteArray, index: Int) {
+        fun int32ToByteArray(value: Int, dst: ByteArray, index: Int) {
             var idx = index
             dst[idx++] = (value and 0xff).toByte()
             dst[idx++] = ((value ushr 8) and 0xff).toByte()
@@ -100,14 +107,15 @@ class DolbyAudioEffect(priority: Int, audioSession: Int) :
             dst[idx] = ((value ushr 24) and 0xff).toByte()
         }
 
-        private fun byteArrayToInt32(ba: ByteArray): Int {
+        fun byteArrayToInt32(ba: ByteArray): Int {
+            if (ba.size < 4) return 0
             return ((ba[3].toInt() and 0xff) shl 24) or
                 ((ba[2].toInt() and 0xff) shl 16) or
                 ((ba[1].toInt() and 0xff) shl 8) or
                 (ba[0].toInt() and 0xff)
         }
 
-        private fun int32ArrayToByteArray(src: IntArray, dst: ByteArray, index: Int) {
+        fun int32ArrayToByteArray(src: IntArray, dst: ByteArray, index: Int) {
             var idx = index
             for (x in src) {
                 dst[idx++] = (x and 0xff).toByte()
@@ -117,7 +125,7 @@ class DolbyAudioEffect(priority: Int, audioSession: Int) :
             }
         }
 
-        private fun byteArrayToInt32Array(ba: ByteArray, dstLength: Int): IntArray {
+        fun byteArrayToInt32Array(ba: ByteArray, dstLength: Int): IntArray {
             val srcLength = ba.size shr 2
             val dst = IntArray(dstLength.coerceAtMost(srcLength))
             for (i in dst.indices) {

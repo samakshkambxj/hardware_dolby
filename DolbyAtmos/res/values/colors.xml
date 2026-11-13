@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 samakshkambxj
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <color name="ic_launcher_background">@android:color/system_accent1_400</color>
+    <!-- Alternate launcher backgrounds (Page Style > App icon). -->
+    <color name="icon_bg_indigo">#3639B4</color>
+    <color name="icon_bg_midnight">#131318</color>
+    <color name="icon_bg_gold">#7A5900</color>
+    <color name="icon_bg_crimson">#9C2227</color>
+    <color name="icon_bg_teal">#006B5D</color>
+    <color name="icon_bg_violet">#5B3FA8</color>
+    <color name="icon_bg_ocean">#005FA3</color>
+</resources>

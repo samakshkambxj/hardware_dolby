@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2017-2021 The LineageOS Project
 //           (C) 2023-24 Paranoid Android
+//           (C) 2026 samakshkambxj
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -17,14 +18,34 @@ android_app {
 
     overrides: ["MusicFX", "AudioFX"],
     static_libs: [
-        "SettingsLib",
-        "SpaLib",
         "androidx.activity_activity-compose",
+        "androidx.compose.animation_animation",
+        "androidx.compose.foundation_foundation",
         "androidx.compose.material3_material3",
+        "androidx.compose.material_material-icons-extended",
         "androidx.compose.runtime_runtime",
-        "androidx.preference_preference",
-        "org.lineageos.settings.resources",
+        "androidx.compose.ui_ui",
+        "androidx.lifecycle_lifecycle-runtime-compose",
+        "androidx.lifecycle_lifecycle-viewmodel-compose",
+        "kotlinx-coroutines-android",
+        "kotlinx-coroutines-core",
     ],
+
+    required: [
+        "preinstalled-packages-platform-dolby.xml",
+        "privapp-permissions-dolby.xml",
+    ],
+
+    optimize: {
+        enabled: true,
+    },
+}
+
+prebuilt_etc {
+    name: "privapp-permissions-dolby.xml",
+    src: "privapp-permissions-dolby.xml",
+    sub_dir: "permissions",
+    system_ext_specific: true,
 }
 
 prebuilt_etc {

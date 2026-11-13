@@ -1,8 +1,33 @@
-### How to use?
+<!--
+     Copyright (C) 2026 samakshkambxj
+     SPDX-License-Identifier: Apache-2.0
+-->
 
-1. Clone this repo to packages/apps/DolbyUI
+Dolby Atmos UI
+==============
 
-2. To build add `device.mk` in device tree:
+A Jetpack Compose front-end for the Dolby Atmos DAX3 effect. The package stays
+`co.aospa.dolby`, so Settings injection, the Quick Settings tile, the summary
+provider and existing preference files keep working.
+
+Screens
+-------
+
+* **Home** – master switch, profile chips, quick toggles (bass, volume leveler,
+  dialogue, virtualizer), an equalizer preview and a shortcut to the advanced
+  settings.
+* **Equalizer** – draggable 10-band graphic equalizer (backed by the 20 DAP
+  bands), built-in presets and user preset management (save, rename, delete).
+* **Advanced** – immersion (speaker/headphone virtualizer, stereo widening),
+  clarity (intelligent EQ, dialogue enhancer), bass/mid/treble tuning curves and
+  dynamics (volume leveler), plus a per-profile reset.
+
+How to use
+----------
+
+1. Clone this repo to `packages/apps/DolbyUI`.
+
+2. Add the package to your device makefile:
 
 ```
 ## Dolby
@@ -10,3 +35,4 @@ PRODUCT_PACKAGES += \
     DolbyAtmos
 ```
 
+The app is platform-signed, privileged and installed on `system_ext`.

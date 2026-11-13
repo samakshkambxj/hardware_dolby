@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2019 The Android Open Source Project
  *           (C) 2023-24 Paranoid Android
+ * Copyright (C) 2026 samakshkambxj
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -12,9 +13,9 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
-import com.android.settingslib.drawer.TileUtils.META_DATA_PREFERENCE_SUMMARY
 
 private const val KEY_DOLBY = "dolby"
+private const val KEY_SUMMARY = "android.settings.summary"
 
 /** Provide preference summary for injected items. */
 class SummaryProvider : ContentProvider() {
@@ -25,7 +26,7 @@ class SummaryProvider : ContentProvider() {
                 KEY_DOLBY -> getDolbySummary()
                 else -> return null
             }
-        return Bundle().apply { putString(META_DATA_PREFERENCE_SUMMARY, summary) }
+        return Bundle().apply { putString(KEY_SUMMARY, summary) }
     }
 
     override fun onCreate(): Boolean = true
@@ -52,8 +53,10 @@ class SummaryProvider : ContentProvider() {
     ): Int = 0
 
     private fun getDolbySummary(): String {
-        val context = context!!
+        val context = context ?: return ""
         val dolbyController = DolbyController.getInstance(context)
+        // The provider may be the first component to run in this process.
+        dolbyController.ensureInitialized()
         if (!dolbyController.dsOn) {
             return context.getString(R.string.dolby_off)
         }

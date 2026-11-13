@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
      Copyright (C) 2023-24 Paranoid Android
+     Copyright (C) 2026 samakshkambxj
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
@@ -99,6 +100,18 @@
         <item>1</item>
         <item>2</item>
         <item>3</item>
+    </string-array>
+
+    <string-array name="dolby_bass_curve_entries">
+        <item>@string/dolby_bass_curve_balanced</item>
+        <item>@string/dolby_bass_curve_sub_boost</item>
+        <item>@string/dolby_bass_curve_punch</item>
+    </string-array>
+
+    <string-array name="dolby_bass_curve_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
     </string-array>
 
 </resources>

@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 samakshkambxj
+     SPDX-License-Identifier: Apache-2.0
+-->
+
 <permissions>
-    <privapp-permissions package="org.lunaris.dolby">
+    <privapp-permissions package="co.aospa.dolby">
         <permission name="android.permission.PACKAGE_USAGE_STATS"/>
     </privapp-permissions>
 </permissions>
