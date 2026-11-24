@@ -77,6 +77,21 @@ class EqualizerViewModel(private val repository: EqualizerRepository) : ViewMode
             .launchIn(viewModelScope)
     }
 
+    /**
+     * Re-reads the gains for the currently active Dolby profile. Called when the profile changes
+     * on the Home tab, and after a profile reset, so the equalizer never keeps stale values.
+     */
+    fun reload() {
+        repository.updateProfile()
+        if (!presetRestored) return
+        viewModelScope.launch {
+            val bandGains = repository.getBandGains()
+            _preset.value =
+                _presets.value.find { bandGains == it.bandGains }
+                    ?: Preset(name = "Custom", bandGains = bandGains)
+        }
+    }
+
     fun reset() {
         dlog(TAG, "reset()")
         if (_preset.value.isUserDefined) {

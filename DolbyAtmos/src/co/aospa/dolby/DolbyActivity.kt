@@ -1,28 +1,11 @@
 /*
- * Copyright (C) 2023-24 Paranoid Android
+ * Copyright (C) 2023-26 Paranoid Android
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 package co.aospa.dolby
 
-import android.os.Bundle
-import co.aospa.dolby.preference.DolbySettingsFragment
-import com.android.settingslib.collapsingtoolbar.CollapsingToolbarBaseActivity
+import co.aospa.dolby.ui.DolbyBaseActivity
 
-private const val TAG = "DolbyActivity"
-
-class DolbyActivity : CollapsingToolbarBaseActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        supportFragmentManager
-            .beginTransaction()
-            .replace(
-                com.android.settingslib.collapsingtoolbar.R.id.content_frame,
-                DolbySettingsFragment(),
-                TAG,
-            )
-            .commit()
-    }
-}
+class DolbyActivity : DolbyBaseActivity()

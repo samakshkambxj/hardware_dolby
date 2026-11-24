@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 samakshkambxj
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- Dynamic launcher background: follows the system accent. -->
+    <color name="ic_launcher_background">@android:color/system_accent1_400</color>
+</resources>

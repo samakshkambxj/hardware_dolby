@@ -25,9 +25,25 @@ class EqualizerRepository(private val context: Context) {
 
     // Preset is saved as a string of comma separated gains in SharedPreferences
     // and is unique to each profile ID
-    private val profile = dolbyController.profile
-    private val profileSharedPrefs by lazy {
+    private var profile = runCatching { dolbyController.profile }.getOrDefault(0)
+    private var profileSharedPrefs =
         context.getSharedPreferences("profile_$profile", Context.MODE_PRIVATE)
+
+    /**
+     * Follows the active Dolby profile. The Home tab can change the profile while this repository
+     * is alive, so the backing preference file has to be re-resolved instead of captured once.
+     *
+     * Re-resolving is unconditional because a profile reset deletes the file while keeping the
+     * same profile id; an early return would leave this repository pointing at the deleted file.
+     */
+    fun updateProfile() {
+        // Reading the profile goes through the effect, which can lose control while the activity
+        // is in the background. Keep the last known profile instead of crashing the UI.
+        val newProfile = runCatching { dolbyController.profile }.getOrDefault(profile)
+        if (profile != newProfile) dlog(TAG, "updateProfile: $profile -> $newProfile")
+        profile = newProfile
+        profileSharedPrefs =
+            context.getSharedPreferences("profile_$newProfile", Context.MODE_PRIVATE)
     }
 
     private val presetsSharedPrefs by lazy {

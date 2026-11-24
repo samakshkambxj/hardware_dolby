@@ -1,0 +1,1129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dolby Atmos — Compose UI mockup</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(120% 80% at 50% 0%, #1a1e18 0%, #0d0f0c 60%);
+    color: #e8ebe2;
+    min-height: 100vh;
+    padding: 36px 24px 64px;
+  }
+  header { text-align: center; margin-bottom: 34px; }
+  header h1 { font-size: 20px; margin: 0 0 6px; letter-spacing: -.2px; }
+  header p { margin: 0; font-size: 13px; color: #98a08e; }
+
+  .stage { display: flex; gap: 56px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+
+  .phone { margin: 0; }
+  .frame {
+    width: 388px; height: 828px; padding: 12px;
+    border-radius: 46px;
+    background: linear-gradient(160deg, #2a2e26, #14170f);
+    box-shadow: 0 30px 70px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+  .screen {
+    position: relative; width: 364px; height: 804px;
+    border-radius: 36px; overflow: hidden;
+    background: var(--bg); color: var(--on-surface);
+    transition: background .25s, color .25s;
+  }
+  .phone figcaption { text-align: center; font-size: 12px; color: #98a08e; margin-top: 14px; letter-spacing: .3px; }
+
+  /* ---------------- theme tokens ---------------- */
+  .light {
+    --bg: #F8F9FF;
+    --surface: #FFFFFF;
+    --surface-container-low: #F3F5FC;
+    --surface-container: #ECEEF5;
+    --surface-container-high: #E1E4ED;
+    --surface-container-highest: #D8DCE7;
+    --on-surface: #191C20;
+    --on-surface-variant: #44474F;
+    --outline: #74777F;
+    --outline-variant: #C4C7D0;
+    --primary: #2F5DBB;
+    --on-primary: #FFFFFF;
+    --primary-container: #D9E2FF;
+    --on-primary-container: #001A41;
+    --pill: #FFFFFF;
+    --switch-off: #B8BCC7;
+    --thumb: #FFFFFF;
+    --error: #BA1A1A;
+    --icon-bg: #FFFFFF;
+    --nav-border: rgba(25, 28, 32, .10);
+    --nav-shadow: 0 14px 32px rgba(24, 35, 66, .18), 0 2px 6px rgba(24, 35, 66, .08);
+    --card-shadow: 0 1px 2px rgba(25, 28, 32, .05);
+    --chart: #2F5DBB;
+  }
+  .dark {
+    --bg: #111318;
+    --surface: #191C20;
+    --surface-container-low: #191C20;
+    --surface-container: #1D2024;
+    --surface-container-high: #282A2F;
+    --surface-container-highest: #33363B;
+    --on-surface: #E3E2E9;
+    --on-surface-variant: #C3C6CF;
+    --outline: #8E9099;
+    --outline-variant: #42464F;
+    --primary: #ADC6FF;
+    --on-primary: #002E69;
+    --primary-container: #17417F;
+    --on-primary-container: #D9E2FF;
+    --pill: #282A2F;
+    --switch-off: #464A54;
+    --thumb: #E3E2E9;
+    --error: #FFB4AB;
+    --icon-bg: #191C20;
+    --nav-border: rgba(255, 255, 255, .08);
+    --nav-shadow: 0 16px 40px rgba(0, 0, 0, .55), 0 2px 8px rgba(0, 0, 0, .35);
+    --card-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+    --chart: #ADC6FF;
+  }
+
+  /* ---------------- status bar ---------------- */
+  .statusbar {
+    position: absolute; inset: 0 0 auto 0; height: 38px; z-index: 6;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; font-size: 12.5px; font-weight: 650; letter-spacing: .2px;
+    pointer-events: none;
+  }
+  .statusbar svg { display: block; }
+
+  /* ---------------- pages ---------------- */
+  .page {
+    position: absolute; inset: 0; overflow-y: auto; scrollbar-width: none;
+    padding: 42px 20px 110px;
+    opacity: 0; pointer-events: none; transition: opacity .18s ease;
+  }
+  .page::-webkit-scrollbar { display: none; }
+  .page.active { opacity: 1; pointer-events: auto; }
+
+  /* ---------------- app bar ---------------- */
+  .appbar {
+    display: flex; align-items: center; gap: 0;
+    padding: 6px 0 2px;
+    position: relative;
+  }
+  .appbar h1 {
+    flex: 1; margin: 0; font-size: 28px; font-weight: 500;
+    letter-spacing: -.5px; color: var(--on-surface);
+  }
+  .appbar.eq h1 { font-size: 21px; letter-spacing: -.2px; }
+  .appbar-menu {
+    flex: none; width: 40px; height: 40px; border: 0; border-radius: 50%;
+    display: grid; place-items: center; cursor: pointer;
+    background: transparent; color: var(--on-surface-variant);
+  }
+  .appbar-menu:hover { background: var(--surface-container-high); }
+  .menu-wrap { position: relative; }
+  .menu {
+    position: absolute; right: 0; top: 42px; z-index: 20; min-width: 190px;
+    display: none; flex-direction: column; padding: 6px 0;
+    border-radius: 14px; background: var(--surface-container-high);
+    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  }
+  .menu.open { display: flex; }
+  .menu button {
+    border: 0; background: transparent; color: var(--on-surface);
+    font: inherit; font-size: 13px; text-align: left;
+    padding: 11px 16px; cursor: pointer;
+  }
+  .menu button:hover { background: var(--surface-container-highest); }
+  .menu button:disabled { color: var(--on-surface-variant); opacity: .5; cursor: default; }
+
+  /* ---------------- hero: AOSP master switch ---------------- */
+  .hero {
+    position: relative; border-radius: 28px;
+    padding: 18px; margin-top: 6px;
+    background: var(--surface-container);
+    color: var(--on-surface);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hero-top { display: flex; align-items: center; gap: 14px; }
+  .hero-logo {
+    flex: none; width: 44px; height: 44px; border-radius: 14px;
+    display: grid; place-items: center;
+    background: var(--primary-container); color: var(--on-primary-container);
+  }
+  .hero-logo svg { width: 26px; height: 20px; }
+  .hero-copy { flex: 1; min-width: 0; }
+  .hero-copy h2 {
+    margin: 0 0 3px; font-size: 16.5px; line-height: 1.2;
+    letter-spacing: -.015em; font-weight: 600; color: inherit;
+  }
+  .hero-copy p { margin: 0; font-size: 12.5px; color: var(--on-surface-variant); }
+
+  /* Material 3 switch */
+  .sw {
+    position: relative; flex: none; width: 52px; height: 32px; border: 0; border-radius: 16px;
+    background: var(--switch-off); cursor: pointer; padding: 0;
+    transition: background .25s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sw .knob {
+    position: absolute; top: 8px; left: 8px; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--outline); color: transparent;
+    display: grid; place-items: center;
+    transition: top .25s cubic-bezier(.34,1.4,.64,1), left .25s cubic-bezier(.34,1.4,.64,1),
+                width .25s cubic-bezier(.34,1.4,.64,1), height .25s cubic-bezier(.34,1.4,.64,1),
+                transform .25s cubic-bezier(.34,1.4,.64,1), background .25s, color .25s;
+  }
+  .sw .knob svg { width: 15px; height: 15px; }
+  .sw.on { background: var(--primary); }
+  .sw.on .knob {
+    top: 4px; left: 4px; width: 24px; height: 24px;
+    transform: translateX(20px);
+    background: var(--on-primary); color: var(--primary);
+  }
+  .sw.off-disabled { opacity: .38; pointer-events: none; }
+
+  .hero-chips { display: flex; gap: 8px; margin-top: 16px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 11px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 600;
+    background: var(--pill); color: var(--on-surface);
+    white-space: nowrap; min-width: 0;
+  }
+  .chip.accent { background: var(--primary-container); color: var(--on-primary-container); }
+  .chip svg { flex: none; }
+  .chip .label { overflow: hidden; text-overflow: ellipsis; }
+  .chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); flex: none; }
+  .chip .dot.off { background: var(--outline); }
+
+  .dimmable { transition: opacity .25s ease; }
+  .dimmable.off { opacity: .38; pointer-events: none; }
+
+  /* ---------------- generic card + labels ---------------- */
+  .card { background: var(--surface-container); border-radius: 28px; }
+  .section-label {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    margin: 24px 4px 10px; font-size: 13.5px; font-weight: 600; letter-spacing: .1px;
+  }
+  .section-label .meta {
+    font-size: 11px; font-weight: 500; color: var(--on-surface-variant);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ---------------- carousel ---------------- */
+  .carousel { padding: 12px; margin-top: 18px; }
+  .carousel-title { text-align: center; font-size: 15px; font-weight: 600; margin: 0 0 12px; }
+  .pager {
+    position: relative; height: 140px; perspective: 900px; overflow: hidden;
+  }
+  .pcard {
+    position: absolute; left: 50%; top: 0; width: 172px; height: 140px; margin-left: -86px;
+    border: 0; padding: 0; border-radius: 32px; overflow: hidden; cursor: pointer;
+    background: var(--surface-container-high);
+    color: var(--on-surface-variant); font: inherit; text-align: center;
+    transform-origin: 50% 50%;
+    transition: transform .34s cubic-bezier(.22,.85,.25,1), opacity .34s ease,
+                background .25s ease, color .25s ease, box-shadow .34s;
+    box-shadow: 0 0 0 rgba(0,0,0,0);
+  }
+  .pcard.sel {
+    background: var(--primary-container); color: var(--on-primary-container);
+    box-shadow: 0 3px 8px rgba(0,0,0,.18);
+  }
+  .pcard .p-body {
+    position: relative; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .pcard .p-icon {
+    width: 56px; height: 56px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--surface-container-highest);
+    color: var(--on-surface-variant);
+    transition: transform .3s cubic-bezier(.34,1.5,.64,1), background .25s, color .25s;
+  }
+  .pcard.sel .p-icon { background: var(--primary); color: var(--on-primary); }
+  .pcard .p-icon svg { width: 28px; height: 28px; }
+  .pcard.sel .p-icon { animation: floaty 1.6s ease-in-out infinite alternate; }
+  @keyframes floaty {
+    from { transform: translateY(0) rotate(-3deg); }
+    to   { transform: translateY(-4px) rotate(3deg); }
+  }
+  .pcard .p-name { margin-top: 10px; font-size: 14px; font-weight: 600; letter-spacing: -.1px; }
+  .pcard .p-underline {
+    margin-top: 6px; width: 24px; height: 2px; border-radius: 2px; background: var(--primary);
+    opacity: 0; transform: scaleX(.4); transition: opacity .25s, transform .25s;
+  }
+  .pcard.sel .p-underline { opacity: 1; transform: scaleX(1); }
+  .pcard .p-check {
+    position: absolute; top: 10px; right: 10px; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--primary); color: var(--on-primary); display: grid; place-items: center;
+    opacity: 0; transform: scale(.5); transition: opacity .25s, transform .28s cubic-bezier(.34,1.5,.64,1);
+  }
+  .pcard .p-check svg { width: 15px; height: 15px; }
+  .pcard.sel .p-check { opacity: 1; transform: scale(1); }
+
+  .dots { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 12px; height: 6px; }
+  .dots i { width: 6px; height: 6px; border-radius: 999px; background: var(--outline-variant); transition: width .28s cubic-bezier(.22,.85,.25,1), background .28s; cursor: pointer; }
+  .dots i.on { width: 24px; background: var(--primary); }
+
+  /* ---------------- grouped rows (2px gaps) ---------------- */
+  .group { display: flex; flex-direction: column; gap: 2px; border-radius: 28px; overflow: hidden; }
+  .row {
+    display: flex; align-items: center; gap: 13px; width: 100%; min-height: 60px;
+    padding: 10px 15px; border: 0; font: inherit; color: inherit; text-align: left;
+    background: var(--surface-container); cursor: pointer;
+  }
+  button.row:active, .row:active { background: var(--surface-container-high); }
+  .row.disabled { opacity: .38; pointer-events: none; }
+  .row-icon {
+    flex: none; width: 38px; height: 38px; border-radius: 13px;
+    display: grid; place-items: center; background: var(--icon-bg); color: var(--on-surface-variant);
+  }
+  .row-icon svg { width: 20px; height: 20px; }
+  .row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .row-text b {
+    font-size: 14.5px; font-weight: 500; letter-spacing: -.004em; line-height: 1.25;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .row-text small {
+    font-size: 11.5px; color: var(--on-surface-variant); line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .value-pill {
+    flex: none; padding: 5px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 500;
+    background: var(--pill); color: var(--on-surface); box-shadow: 0 1px 2px rgba(0,0,0,.14);
+    white-space: nowrap;
+  }
+  .chev { flex: none; color: var(--on-surface-variant); display: grid; place-items: center; }
+  .chev svg { width: 19px; height: 19px; }
+  .spark { flex: none; width: 58px; height: 24px; color: var(--primary); }
+
+  /* intelligent equalizer block */
+  .ieq { display: block; padding: 12px 15px 14px; background: var(--surface-container); }
+  .ieq-head { display: flex; align-items: center; gap: 13px; }
+  .ieq-options { display: flex; gap: 7px; margin-top: 12px; }
+  .ieq-opt {
+    flex: 1; min-width: 0; border: 1px solid transparent; border-radius: 16px;
+    padding: 8px 0 7px; cursor: pointer; font: inherit; text-align: center;
+    background: var(--surface); color: var(--on-surface-variant);
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .ieq-opt svg { width: 22px; height: 22px; }
+  .ieq-opt span { font-size: 9.5px; font-weight: 500; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ieq-opt.sel {
+    background: var(--primary-container); color: var(--on-primary-container);
+    border-color: color-mix(in srgb, var(--primary) 34%, transparent);
+  }
+  .ieq-opt.sel svg { color: var(--primary); }
+
+  /* reset button */
+  .reset-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; height: 48px; margin-top: 8px; border: 0; border-radius: 999px;
+    background: transparent; color: var(--error); font: inherit;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .reset-btn svg { width: 19px; height: 19px; }
+  .reset-btn:hover { background: color-mix(in srgb, var(--error) 8%, transparent); }
+
+  /* ---------------- equalizer page ---------------- */
+  .presets {
+    display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+    padding: 12px 0 2px; margin: 0 -20px; padding-left: 20px; padding-right: 20px;
+  }
+  .presets::-webkit-scrollbar { display: none; }
+  .preset {
+    flex: none; height: 34px; padding: 0 14px; border-radius: 999px; border: 0;
+    font: inherit; font-size: 12.5px; font-weight: 500; white-space: nowrap; cursor: pointer;
+    background: var(--surface-container); color: var(--on-surface-variant);
+    transition: background .2s, color .2s;
+  }
+  .preset.active { background: var(--primary); color: var(--on-primary); }
+  .preset.new {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: transparent; color: var(--on-surface-variant);
+    border: 1px solid var(--outline-variant);
+  }
+  .preset.new svg { width: 15px; height: 15px; }
+
+  .eq-card { margin-top: 16px; padding: 16px; }
+  .card-head { display: flex; align-items: center; gap: 12px; }
+  .card-head span:first-child { flex: 1; font-size: 13.5px; font-weight: 600; }
+  .meta-pill {
+    flex: none; padding: 5px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 600;
+    background: var(--surface); color: var(--on-surface-variant);
+    box-shadow: 0 1px 2px rgba(0,0,0,.14); max-width: 60%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .chart-wrap { display: flex; gap: 6px; margin-top: 6px; }
+  .y-axis {
+    flex: none; width: 24px; height: 132px;
+    display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end;
+  }
+  .y-axis span, .x-axis span { font-size: 8px; color: var(--on-surface-variant); line-height: 1; }
+  .curve { flex: 1; height: 132px; overflow: visible; }
+  .x-axis { display: flex; justify-content: space-between; margin: 4px 0 0 30px; }
+
+  .bands { display: flex; gap: 4px; justify-content: space-between; margin-top: 12px; }
+  .band { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+  .band-val { font-size: 9px; font-weight: 600; color: var(--on-surface-variant); height: 11px; }
+  .band-track {
+    position: relative; width: 100%; max-width: 18px; height: 120px; border-radius: 999px;
+    background: var(--surface-container-high); cursor: ns-resize; touch-action: none; overflow: hidden;
+  }
+  .band-track::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px;
+    background: var(--outline-variant); opacity: .55;
+  }
+  .band-fill { position: absolute; left: 0; right: 0; background: var(--primary); border-radius: 999px; }
+  .band-thumb {
+    position: absolute; left: 50%; width: 16px; height: 7px; margin-bottom: -3px;
+    border-radius: 999px; background: var(--thumb); box-shadow: 0 1px 3px rgba(0,0,0,.35);
+    transform: translateX(-50%);
+  }
+  .band-freq { font-size: 8.5px; color: var(--on-surface-variant); opacity: .85; }
+
+  .btn-filled {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; height: 50px; margin-top: 16px; border: 0; border-radius: 999px;
+    background: var(--primary); color: var(--on-primary);
+    font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer;
+  }
+  .btn-filled svg { width: 18px; height: 18px; }
+  .hint {
+    margin: 8px 4px 0; text-align: center; font-size: 10.5px;
+    color: var(--on-surface-variant); line-height: 1.45;
+  }
+
+  /* ---------------- single-choice dialog ---------------- */
+  .scrim {
+    position: absolute; inset: 0; z-index: 30;
+    display: none; align-items: center; justify-content: center;
+    padding: 24px; background: rgba(0,0,0,.42);
+  }
+  .scrim.open { display: flex; }
+  .dialog {
+    width: 100%; max-width: 300px;
+    background: var(--surface-container-high); color: var(--on-surface);
+    border-radius: 28px; padding: 24px 20px 12px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.45);
+    animation: dialogIn .18s cubic-bezier(.2,0,0,1);
+  }
+  @keyframes dialogIn {
+    from { transform: scale(.94); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .dialog-title { margin: 0 0 12px; font-size: 20px; font-weight: 500; letter-spacing: -.2px; }
+  .dialog-options { display: flex; flex-direction: column; gap: 2px; }
+  .dialog-option {
+    display: flex; align-items: center; gap: 12px;
+    border: 0; border-radius: 12px; background: transparent; color: inherit;
+    font: inherit; font-size: 15px; text-align: left; padding: 10px 8px; cursor: pointer;
+  }
+  .dialog-option:hover { background: var(--surface-container-highest); }
+  .radio {
+    flex: none; width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid var(--on-surface-variant);
+    display: grid; place-items: center;
+    transition: border-color .2s;
+  }
+  .radio i { width: 10px; height: 10px; border-radius: 50%; background: transparent; transition: background .2s; }
+  .dialog-option.sel .radio { border-color: var(--primary); }
+  .dialog-option.sel .radio i { background: var(--primary); }
+  .dialog-actions { display: flex; justify-content: flex-end; padding-top: 8px; }
+  .dialog-cancel {
+    border: 0; background: transparent; color: var(--primary);
+    font: inherit; font-size: 14px; font-weight: 600; padding: 10px 12px;
+    border-radius: 999px; cursor: pointer;
+  }
+  .dialog-cancel:hover { background: color-mix(in srgb, var(--primary) 8%, transparent); }
+
+  /* ---------------- floating navbar ---------------- */
+  .nav {
+    position: absolute; left: 0; right: 0; bottom: 16px; margin: 0 auto; z-index: 10;
+    width: min(300px, calc(100% - 32px)); height: 66px;
+    display: flex; align-items: center; gap: 6px; padding: 6px;
+    border-radius: 33px;
+    background: var(--surface-container);
+    border: 1px solid var(--nav-border);
+    box-shadow: var(--nav-shadow);
+  }
+  .nav-item {
+    flex: 1; height: 100%; border: 0; padding: 0; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; color: var(--on-surface-variant); font: inherit; cursor: pointer;
+    transition: background .25s ease, color .25s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-item.active { background: var(--primary-container); color: var(--on-primary-container); }
+  .nav-icon { display: grid; place-items: center; transition: transform .3s cubic-bezier(.34,1.5,.64,1); }
+  .nav-item:not(.active) .nav-icon { transform: scale(.9); }
+  .nav-icon svg { display: block; }
+  .nav-icon .filled { display: none; }
+  .nav-item.active .nav-icon .outline { display: none; }
+  .nav-item.active .nav-icon .filled { display: block; }
+
+  .nav-item.active .icon-home { animation: navbob 1.6s ease-in-out infinite alternate, navtilt 2.1s linear infinite alternate; }
+  @keyframes navbob { from { transform: translateY(0) scale(1); } to { transform: translateY(-2.5px) scale(1); } }
+  @keyframes navtilt { from { rotate: -4deg; } to { rotate: 4deg; } }
+
+  .nav-label {
+    max-width: 0; margin-left: 0; opacity: 0; overflow: hidden; white-space: nowrap;
+    font-size: 12.5px; font-weight: 600; letter-spacing: -.1px;
+    transition: max-width .3s cubic-bezier(.22,.85,.25,1), margin-left .3s cubic-bezier(.22,.85,.25,1), opacity .18s ease;
+  }
+  .nav-item.active .nav-label { max-width: 110px; margin-left: 7px; opacity: 1; }
+
+  .eq-bars { display: flex; align-items: flex-end; justify-content: center; gap: 2px; width: 21px; height: 19px; }
+  .eq-bars i {
+    width: 3px; border-radius: 2px; background: currentColor;
+    animation: eqbar 900ms ease-in-out infinite alternate;
+  }
+  .eq-bars i:nth-child(1) { height: 32%; animation-duration: 820ms; }
+  .eq-bars i:nth-child(2) { height: 62%; animation-duration: 940ms; animation-delay: -160ms; }
+  .eq-bars i:nth-child(3) { height: 100%; animation-duration: 760ms; animation-delay: -320ms; }
+  .eq-bars i:nth-child(4) { height: 66%; animation-duration: 880ms; animation-delay: -90ms; }
+  .eq-bars i:nth-child(5) { height: 38%; animation-duration: 1000ms; animation-delay: -240ms; }
+  @keyframes eqbar { from { transform: scaleY(.35); } to { transform: scaleY(1); } }
+
+  @media (max-width: 900px) {
+    .stage { gap: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Dolby Atmos — Compose UI</h1>
+  <p>Matches the app: AOSP master-switch hero, profile carousel, 2px-gap rows, M3 switch, floating tab bar. Click anything — tap the device name to swap speaker/headphones.</p>
+</header>
+
+<div class="stage">
+  <figure class="phone light">
+    <div class="frame"><div class="screen" data-tab="home"></div></div>
+    <figcaption>Light · Home</figcaption>
+  </figure>
+  <figure class="phone dark">
+    <div class="frame"><div class="screen" data-tab="home"></div></div>
+    <figcaption>Dark · Home</figcaption>
+  </figure>
+  <figure class="phone dark">
+    <div class="frame"><div class="screen" data-tab="eq"></div></div>
+    <figcaption>Dark · Graphic equalizer</figcaption>
+  </figure>
+</div>
+
+<template id="app">
+  <div class="statusbar">
+    <span>9:41</span>
+    <span style="display:flex;align-items:center;gap:5px">
+      <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><rect x="0" y="7" width="2.4" height="4" rx=".6"/><rect x="4" y="5" width="2.4" height="6" rx=".6"/><rect x="8" y="2.5" width="2.4" height="8.5" rx=".6"/><rect x="12" y="0" width="2.4" height="11" rx=".6" opacity=".35"/></svg>
+      <svg width="15" height="11" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.2l2.1-2.4a3.1 3.1 0 00-4.2 0zM8 6.2c1.6 0 3.1.6 4.2 1.7l1.4-1.6A9 9 0 008 3.8a9 9 0 00-5.6 2.5l1.4 1.6A6 6 0 018 6.2zM8 .8a12 12 0 00-8.3 3.3l1.4 1.6A10 10 0 018 2.8a10 10 0 006.9 2.9l1.4-1.6A12 12 0 008 .8z"/></svg>
+      <svg width="23" height="11" viewBox="0 0 24 12" fill="none"><rect x=".6" y=".6" width="20" height="10.8" rx="3" stroke="currentColor" stroke-opacity=".45"/><rect x="2.2" y="2.2" width="15" height="7.6" rx="1.8" fill="currentColor"/><path d="M22 4v4a2.4 2.4 0 000-4z" fill="currentColor" fill-opacity=".45"/></svg>
+    </span>
+  </div>
+
+  <div class="page active" data-page="home">
+    <div class="appbar">
+      <h1>Dolby Atmos</h1>
+      <div class="menu-wrap">
+        <button class="appbar-menu" type="button" data-menu aria-label="More options">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="19" r="1.9"/></svg>
+        </button>
+        <div class="menu">
+          <button type="button" data-goto-eq>Graphic equalizer</button>
+          <button type="button" data-reset>Reset to defaults</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-top">
+        <span class="hero-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 4.02C2.28 4.07 3.58 3.99 4.83 4.21 8.84 4.91 11.41 8.35 11.05 12.34 10.71 16.07 7.37 18.95 3.35 18.97 2.57 18.97 1.78 18.94 1 18.93V4.02Z"/><path d="M23 4.09v14.79c-3.5.42-6.6-.19-8.66-3.19-1.82-2.65-1.88-5.47-.12-8.17C16.24 4.39 19.4 3.72 23 4.09Z"/></svg>
+        </span>
+        <div class="hero-copy">
+          <h2>Use Dolby Atmos</h2>
+          <p>Immersive audio</p>
+        </div>
+        <button class="sw on" type="button" role="switch" aria-checked="true" aria-label="Use Dolby Atmos">
+          <span class="knob">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+          </span>
+        </button>
+      </div>
+      <div class="hero-chips">
+        <span class="chip"><span class="dot"></span><span class="js-status">On</span></span>
+        <span class="chip accent"><span class="label js-profile">Dynamic</span></span>
+        <span class="chip">
+          <svg class="js-device-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14 L4 12 A8 8 0 0 1 20 12 L20 14 M3 13 L7 13 L7 20 L3 20 Z M17 13 L21 13 L21 20 L17 20 Z"/></svg>
+          <span class="label js-device">Headphones</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="dimmable">
+      <section class="card carousel">
+        <div class="carousel-title">Choose a profile</div>
+        <div class="pager"></div>
+        <div class="dots"></div>
+      </section>
+
+      <div class="section-label"><span>Sound</span><span class="meta js-profile">Dynamic</span></div>
+      <div class="group">
+        <div class="ieq">
+          <div class="ieq-head">
+            <span class="row-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4.5 10 L7.9 10 L7.9 20 L4.5 20 Z M10.3 4 L13.7 4 L13.7 20 L10.3 20 Z M16.1 7 L19.5 7 L19.5 20 L16.1 20 Z"/></svg>
+            </span>
+            <span class="row-text">
+              <b>Intelligent equalizer</b>
+              <small class="js-ieq">Balanced</small>
+            </span>
+          </div>
+          <div class="ieq-options"></div>
+        </div>
+
+        <button class="row" type="button" data-goto-eq>
+          <span class="row-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 L6 12 L8 7 L12 19 L15 10 L17 14 L21 14"/></svg>
+          </span>
+          <span class="row-text"><b>Graphic equalizer</b><small class="js-preset-sub">Flat (off) · 10 bands</small></span>
+          <svg class="spark js-spark" viewBox="0 0 58 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+          <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L16 12 L9 19"/></svg></span>
+        </button>
+
+        <div class="row">
+          <span class="row-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10 L4 14 L7 14 L12 18 L12 6 L7 10 Z M16 9.5 A4 4 0 0 1 16 14.5 M18.5 7 A7 7 0 0 1 18.5 17"/></svg>
+          </span>
+          <span class="row-text"><b>Bass enhancer</b><small>Adds weight to low frequencies</small></span>
+          <button class="sw on" type="button" role="switch" aria-checked="true" aria-label="Bass enhancer"><span class="knob"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg></span></button>
+        </div>
+
+        <button class="row" type="button" data-choice="dialogue">
+          <span class="row-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11 A7 7 0 0 1 13 18 L8 18 L4 21 L4 14.5 A6.5 6.5 0 0 1 3 11 A7 7 0 0 1 10 4 L13 4 A7 7 0 0 1 20 11 Z M8 10 L15 10 M8 13.5 L12 13.5"/></svg>
+          </span>
+          <span class="row-text"><b>Dialogue enhancer</b><small>Lifts voices over the mix</small></span>
+          <span class="value-pill js-dialogue">Medium</span>
+          <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L16 12 L9 19"/></svg></span>
+        </button>
+
+        <div class="row">
+          <span class="row-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10 L4 14 L7 14 L12 18 L12 6 L7 10 Z M15 9.5 L17 9.5 M16 8.5 L16 10.5 M18.5 12 L20 12 M19.2 11.2 L19.2 12.8"/></svg>
+          </span>
+          <span class="row-text"><b>Volume leveler</b><small>Evens out quiet and loud scenes</small></span>
+          <button class="sw on" type="button" role="switch" aria-checked="true" aria-label="Volume leveler"><span class="knob"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg></span></button>
+        </div>
+      </div>
+
+      <div class="section-label"><span>Devices</span><span class="meta js-device">Headphones</span></div>
+      <div class="group">
+        <div class="row">
+          <span class="row-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2.5 L15 2.5 A3 3 0 0 1 18 5.5 L18 18.5 A3 3 0 0 1 15 21.5 L9 21.5 A3 3 0 0 1 6 18.5 L6 5.5 A3 3 0 0 1 9 2.5 Z M10 18.5 L14 18.5"/></svg>
+          </span>
+          <span class="row-text"><b>Speaker virtualization</b><small>Widens the built-in speakers</small></span>
+          <button class="sw" type="button" role="switch" aria-checked="false" aria-label="Speaker virtualization"><span class="knob"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg></span></button>
+        </div>
+        <div class="row js-hp-row">
+          <span class="row-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14 L4 12 A8 8 0 0 1 20 12 L20 14 M3 13 L7 13 L7 20 L3 20 Z M17 13 L21 13 L21 20 L17 20 Z"/></svg>
+          </span>
+          <span class="row-text"><b>Headphone virtualization</b><small class="js-hp-sub">Spatial audio for headphones</small></span>
+          <button class="sw on" type="button" role="switch" aria-checked="true" aria-label="Headphone virtualization"><span class="knob"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg></span></button>
+        </div>
+        <button class="row js-stereo-row" type="button" data-choice="stereo">
+          <span class="row-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 L6 12 M18 12 L21 12 M8 12 A4 4 0 0 1 16 12 A4 4 0 0 1 8 12 Z M6 6 L18 18"/></svg>
+          </span>
+          <span class="row-text"><b>Stereo widening</b><small class="js-stereo-sub">Widens the stereo field</small></span>
+          <span class="value-pill js-stereo">Medium</span>
+          <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L16 12 L9 19"/></svg></span>
+        </button>
+      </div>
+
+      <button class="reset-btn" type="button" data-reset>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        Reset to defaults
+      </button>
+    </div>
+  </div>
+
+  <div class="page" data-page="eq">
+    <div class="appbar eq">
+      <h1>Graphic equalizer</h1>
+      <button class="appbar-menu" type="button" aria-label="New preset">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M4 12h16"/></svg>
+      </button>
+      <button class="appbar-menu" type="button" aria-label="Reset gains">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+      </button>
+    </div>
+
+    <div class="presets"></div>
+
+    <section class="card eq-card">
+      <div class="card-head"><span>Response</span><span class="meta-pill js-preset-name">Flat (off)</span></div>
+      <div class="chart-wrap">
+        <div class="y-axis"><span>+10</span><span>0</span><span>-10</span></div>
+        <svg class="curve" viewBox="0 0 300 132" preserveAspectRatio="none">
+          <g stroke="var(--outline-variant)" stroke-width="1" opacity=".6">
+            <line x1="0" y1="22.5" x2="300" y2="22.5"/>
+            <line x1="0" y1="44.25" x2="300" y2="44.25"/>
+            <line x1="0" y1="87.75" x2="300" y2="87.75"/>
+            <line x1="0" y1="109.5" x2="300" y2="109.5"/>
+          </g>
+          <line x1="0" y1="66" x2="300" y2="66" stroke="var(--outline)" stroke-width="1" stroke-dasharray="6 8" opacity=".8"/>
+          <path class="curve-fill" fill="var(--chart)" fill-opacity=".16" d=""/>
+          <path class="curve-line" fill="none" stroke="var(--chart)" vector-effect="non-scaling-stroke" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d=""/>
+          <g class="curve-dots"></g>
+        </svg>
+      </div>
+      <div class="x-axis">
+        <span>32</span><span>64</span><span>125</span><span>250</span><span>500</span>
+        <span>1k</span><span>2k</span><span>4k</span><span>8k</span><span>16k</span>
+      </div>
+    </section>
+
+    <section class="card eq-card">
+      <div class="card-head"><span>Bands</span><span class="meta-pill">±10 dB</span></div>
+      <div class="bands"></div>
+    </section>
+
+    <button class="btn-filled" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l3 3v13H5z"/><path d="M9 4v5h6V4M9 20v-5h6v5"/></svg>
+      Save as new preset
+    </button>
+
+    <p class="hint">Changes apply to <span class="js-profile">Dynamic</span> immediately · long-press a preset to rename</p>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-item active" type="button" data-goto="home">
+      <span class="nav-icon icon-home">
+        <svg class="outline" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.7 L12 4 L20 10.7 L20 20 C20 20.55 19.55 21 19 21 L14.6 21 L14.6 15.4 L9.4 15.4 L9.4 21 L5 21 C4.45 21 4 20.55 4 20 Z"/></svg>
+        <svg class="filled" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.2 L3.3 10.6 C3.1 10.8 3 11 3 11.3 L3 20 C3 21.1 3.9 22 5 22 L9.7 22 L9.7 16.3 L14.3 16.3 L14.3 22 L19 22 C20.1 22 21 21.1 21 20 L21 11.3 C21 11 20.9 10.8 20.7 10.6 Z"/></svg>
+      </span>
+      <span class="nav-label">Home</span>
+    </button>
+    <button class="nav-item" type="button" data-goto="eq">
+      <span class="nav-icon"><span class="eq-bars"><i></i><i></i><i></i><i></i><i></i></span></span>
+      <span class="nav-label">Equalizer</span>
+    </button>
+  </nav>
+
+  <div class="scrim" role="presentation">
+    <div class="dialog" role="dialog" aria-modal="true">
+      <h3 class="dialog-title"></h3>
+      <div class="dialog-options" role="radiogroup"></div>
+      <div class="dialog-actions">
+        <button class="dialog-cancel" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>';
+
+const ICON = {
+  dynamic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L13.9 8.1 L19 10 L13.9 11.9 L12 17 L10.1 11.9 L5 10 L10.1 8.1 Z M19 16 L19.7 17.8 L21.5 18.5 L19.7 19.2 L19 21 L18.3 19.2 L16.5 18.5 L18.3 17.8 Z"/></svg>',
+  movie: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5 L18 5 A3 3 0 0 1 21 8 L21 16 A3 3 0 0 1 18 19 L6 19 A3 3 0 0 1 3 16 L3 8 A3 3 0 0 1 6 5 Z M3 9 L21 9 M7 5 L7 9 M12 5 L12 9 M17 5 L17 9 M8 13 L16 13 M8 16 L13 16"/></svg>',
+  music: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18 L9 6 L20 4 L20 16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>',
+  spatial: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14 L4 12 A8 8 0 0 1 20 12 L20 14 M3 13 L7 13 L7 20 L3 20 Z M17 13 L21 13 L21 20 L17 20 Z M8 21 L16 21"/></svg>',
+  custom: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6 L5 11 M5 17 L5 18 M12 4 L12 7 M12 13 L12 20 M19 5 L19 14 M19 20 L19 20"/><circle cx="5" cy="14" r="2.2"/><circle cx="12" cy="10" r="2.2"/><circle cx="19" cy="17" r="2.2"/></svg>',
+  ieqOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10 L4 14 L7 14 L12 18 L12 6 L7 10 Z M16 10 L20 14 M20 10 L16 14"/></svg>',
+  ieqBalanced: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10 L4 14 L7 14 L12 18 L12 6 L7 10 Z M16 9.5 A4 4 0 0 1 16 14.5"/></svg>',
+  ieqWarm: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10 L4 14 L7 14 L12 18 L12 6 L7 10 Z M16 9.5 A4 4 0 0 1 16 14.5 M18.5 7 A7 7 0 0 1 18.5 17"/></svg>',
+  ieqDetailed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10 L4 14 L7 14 L12 18 L12 6 L7 10 Z M15.5 10 A3 3 0 0 1 15.5 14 M18 7.5 A6.5 6.5 0 0 1 18 16.5 M20.5 5 A10 10 0 0 1 20.5 19"/></svg>',
+  phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2.5 L15 2.5 A3 3 0 0 1 18 5.5 L18 18.5 A3 3 0 0 1 15 21.5 L9 21.5 A3 3 0 0 1 6 18.5 L6 5.5 A3 3 0 0 1 9 2.5 Z M10 18.5 L14 18.5"/></svg>',
+  headphones: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14 L4 12 A8 8 0 0 1 20 12 L20 14 M3 13 L7 13 L7 20 L3 20 Z M17 13 L21 13 L21 20 L17 20 Z"/></svg>'
+};
+
+const PROFILES = [
+  { name: 'Dynamic', icon: 'dynamic' },
+  { name: 'Movie/Video', icon: 'movie' },
+  { name: 'Music', icon: 'music' },
+  { name: 'SpatialAudio', icon: 'spatial' },
+  { name: 'Custom', icon: 'custom' }
+];
+
+const IEQ = [
+  { name: 'Off', icon: 'ieqOff' },
+  { name: 'Balanced', icon: 'ieqBalanced' },
+  { name: 'Warm', icon: 'ieqWarm' },
+  { name: 'Detailed', icon: 'ieqDetailed' }
+];
+
+const DIALOGUE = ['Off', 'Low', 'Medium', 'High', 'Max'];
+const STEREO = ['Low', 'Medium', 'High', 'Max'];
+
+const FREQS = ['32', '64', '125', '250', '500', '1k', '2k', '4k', '8k', '16k'];
+
+const PRESETS = {
+  'Flat (off)': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  Rock: [5, 3, 1, -1, -1, 0, 2, 3, 4, 4],
+  Jazz: [3, 2, 1, 2, -1, -1, 0, 1, 2, 3],
+  Pop: [-1, 1, 3, 4, 3, 0, -1, -1, 0, 1],
+  Classical: [4, 3, 2, 1, 0, 0, 0, 1, 2, 3],
+  'Hip Hop': [6, 5, 3, 1, 0, -1, 0, 1, 2, 2],
+  Blues: [4, 3, 1, -1, -2, 0, 1, 2, 2, 3],
+  Electronic: [4, 3, 1, 0, -1, 1, 2, 3, 4, 5],
+  Metal: [5, 4, 2, 0, -1, -1, 1, 3, 4, 4]
+};
+
+const template = document.getElementById('app');
+
+function node(html) {
+  const t = document.createElement('template');
+  t.innerHTML = html.trim();
+  return t.content.firstElementChild;
+}
+
+function chartPath(vals) {
+  const w = 300, pad = 0, step = (w - pad * 2) / (vals.length - 1);
+  const pts = vals.map((v, i) => [pad + i * step, 66 - v * 4.35]);
+  let d = `M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x1, y1] = pts[i], [x2, y2] = pts[i + 1], mx = (x1 + x2) / 2;
+    d += ` C ${mx.toFixed(1)} ${y1.toFixed(1)}, ${mx.toFixed(1)} ${y2.toFixed(1)}, ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+  }
+  return { d, pts };
+}
+
+function initFrame(screen) {
+  screen.appendChild(template.content.cloneNode(true));
+
+  const state = {
+    profile: 0,
+    ieq: 1,
+    preset: 'Flat (off)',
+    bands: PRESETS['Flat (off)'].slice(),
+    dialogue: 2,
+    stereo: 1,
+    enabled: true,
+    speaker: false
+  };
+
+  const navItems = [...screen.querySelectorAll('.nav-item')];
+  const pages = [...screen.querySelectorAll('.page')];
+
+  function setTab(tab) {
+    navItems.forEach(b => b.classList.toggle('active', b.dataset.goto === tab));
+    pages.forEach(p => p.classList.toggle('active', p.dataset.page === tab));
+  }
+
+  navItems.forEach(b => b.addEventListener('click', () => setTab(b.dataset.goto)));
+  screen.querySelectorAll('[data-goto-eq]').forEach(b => b.addEventListener('click', () => setTab('eq')));
+
+  /* ---------- overflow menu ---------- */
+  const menuBtn = screen.querySelector('[data-menu]');
+  const menu = screen.querySelector('.menu');
+  menuBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    menu.classList.toggle('open');
+  });
+  screen.addEventListener('click', () => menu.classList.remove('open'));
+
+  /* ---------- carousel ---------- */
+  const pager = screen.querySelector('.pager');
+  const dots = screen.querySelector('.dots');
+
+  const cards = PROFILES.map((p, i) => {
+    const c = node(`<button class="pcard" type="button">
+        <span class="p-body">
+          <span class="p-icon">${ICON[p.icon]}</span>
+          <span class="p-name">${p.name}</span>
+          <span class="p-underline"></span>
+        </span>
+        <span class="p-check">${CHECK}</span>
+      </button>`);
+    c.addEventListener('click', () => { state.profile = i; layoutCarousel(); });
+    pager.appendChild(c);
+    return c;
+  });
+
+  const dotEls = PROFILES.map((p, i) => {
+    const d = node('<i></i>');
+    d.addEventListener('click', () => { state.profile = i; layoutCarousel(); });
+    dots.appendChild(d);
+    return d;
+  });
+
+  function layoutCarousel() {
+    cards.forEach((c, i) => {
+      const o = i - state.profile;
+      const abs = Math.abs(o);
+      c.classList.toggle('sel', o === 0);
+      c.style.transform =
+        `translateX(${o * 180}px) rotateY(${-o * 14}deg) scale(${1 - 0.2 * Math.min(abs, 1)})`;
+      c.style.opacity = String(o === 0 ? 1 : Math.max(0, 0.5 - 0.22 * (abs - 1)));
+      c.style.zIndex = String(10 - Math.min(abs, 3));
+      c.style.pointerEvents = abs > 2 ? 'none' : 'auto';
+    });
+    dotEls.forEach((d, i) => d.classList.toggle('on', i === state.profile));
+    const name = PROFILES[state.profile].name;
+    screen.querySelectorAll('.js-profile').forEach(n => { n.textContent = name; });
+  }
+
+  /* ---------- intelligent equalizer ---------- */
+  const ieqBox = screen.querySelector('.ieq-options');
+  const ieqEls = IEQ.map((opt, i) => {
+    const b = node(`<button class="ieq-opt" type="button">${ICON[opt.icon]}<span>${opt.name}</span></button>`);
+    b.addEventListener('click', () => { state.ieq = i; renderIeq(); });
+    ieqBox.appendChild(b);
+    return b;
+  });
+
+  function renderIeq() {
+    ieqEls.forEach((b, i) => b.classList.toggle('sel', i === state.ieq));
+    screen.querySelector('.js-ieq').textContent = IEQ[state.ieq].name;
+  }
+
+  /* ---------- single-choice dialogs ---------- */
+  const scrim = screen.querySelector('.scrim');
+  const dialogTitle = screen.querySelector('.dialog-title');
+  const dialogOptions = screen.querySelector('.dialog-options');
+
+  function closeChoice() {
+    scrim.classList.remove('open');
+  }
+
+  function openChoice(title, options, selected, onPick) {
+    dialogTitle.textContent = title;
+    dialogOptions.innerHTML = '';
+    options.forEach((label, index) => {
+      const picked = index === selected;
+      const b = node(`<button class="dialog-option${picked ? ' sel' : ''}" type="button" role="radio" aria-checked="${picked}">
+          <span class="radio"><i></i></span>
+          <span>${label}</span>
+        </button>`);
+      b.addEventListener('click', () => {
+        onPick(index);
+        closeChoice();
+      });
+      dialogOptions.appendChild(b);
+    });
+    scrim.classList.add('open');
+  }
+
+  screen.querySelector('.dialog-cancel').addEventListener('click', closeChoice);
+  scrim.addEventListener('click', e => {
+    if (e.target === scrim) closeChoice();
+  });
+
+  screen.querySelector('[data-choice="dialogue"]').addEventListener('click', () => {
+    openChoice('Dialogue enhancer', DIALOGUE, state.dialogue, index => {
+      state.dialogue = index;
+      screen.querySelector('.js-dialogue').textContent = DIALOGUE[index];
+    });
+  });
+
+  screen.querySelector('[data-choice="stereo"]').addEventListener('click', () => {
+    openChoice('Stereo widening', STEREO, state.stereo, index => {
+      state.stereo = index;
+      screen.querySelector('.js-stereo').textContent = STEREO[index];
+    });
+  });
+
+  /* ---------- bands + curve ---------- */
+  const bandsBox = screen.querySelector('.bands');
+  const curveLine = screen.querySelector('.curve-line');
+  const curveFill = screen.querySelector('.curve-fill');
+  const curveDots = screen.querySelector('.curve-dots');
+  const spark = screen.querySelector('.js-spark');
+  const presetSub = screen.querySelector('.js-preset-sub');
+  const presetName = screen.querySelector('.js-preset-name');
+
+  const bandEls = state.bands.map((_, i) => {
+    const b = node(`<div class="band">
+        <span class="band-val">0</span>
+        <div class="band-track"><div class="band-fill"></div><div class="band-thumb"></div></div>
+        <span class="band-freq">${FREQS[i]}</span>
+      </div>`);
+    const track = b.querySelector('.band-track');
+    let dragging = false;
+
+    const apply = (e) => {
+      const r = track.getBoundingClientRect();
+      const ratio = 1 - (e.clientY - r.top) / r.height;
+      const v = Math.max(-10, Math.min(10, Math.round(ratio * 20 - 10)));
+      state.bands[i] = v;
+      state.preset = null;
+      renderBands();
+      renderChart();
+      renderSpark();
+      renderPresets();
+      renderPresetLabels();
+    };
+
+    track.addEventListener('pointerdown', e => {
+      dragging = true;
+      track.setPointerCapture(e.pointerId);
+      apply(e);
+    });
+    track.addEventListener('pointermove', e => { if (dragging) apply(e); });
+    track.addEventListener('pointerup', () => { dragging = false; });
+    track.addEventListener('pointercancel', () => { dragging = false; });
+
+    bandsBox.appendChild(b);
+    return b;
+  });
+
+  function renderBands() {
+    bandEls.forEach((b, i) => {
+      const v = state.bands[i];
+      b.querySelector('.band-val').textContent = v > 0 ? '+' + v : String(v);
+      const fill = b.querySelector('.band-fill');
+      const thumb = b.querySelector('.band-thumb');
+      if (v >= 0) {
+        fill.style.top = (50 - v * 5) + '%';
+        fill.style.height = (v * 5) + '%';
+      } else {
+        fill.style.top = '50%';
+        fill.style.height = (-v * 5) + '%';
+      }
+      thumb.style.bottom = (50 + v * 5) + '%';
+    });
+  }
+
+  function renderChart() {
+    const { d, pts } = chartPath(state.bands);
+    curveLine.setAttribute('d', d);
+    curveFill.setAttribute('d', d + ' L 300 132 L 0 132 Z');
+    curveDots.innerHTML = pts.map(([x, y]) =>
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.4" fill="var(--surface-container)" stroke="var(--chart)" stroke-width="2"/>`
+    ).join('');
+  }
+
+  function renderSpark() {
+    const vals = state.bands;
+    const step = 58 / (vals.length - 1);
+    const pts = vals.map((v, i) => `${(i * step).toFixed(1)},${(12 - v * 0.95).toFixed(1)}`);
+    spark.innerHTML = `<polyline points="${pts.join(' ')}"/>`;
+  }
+
+  function renderPresetLabels() {
+    const label = state.preset || 'Custom';
+    presetName.textContent = label;
+    presetSub.textContent = label + ' · 10 bands';
+  }
+
+  /* ---------- presets ---------- */
+  const presetBox = screen.querySelector('.presets');
+  const presetNames = Object.keys(PRESETS);
+  const presetEls = presetNames.map(name => {
+    const b = node(`<button class="preset" type="button">${name}</button>`);
+    b.addEventListener('click', () => {
+      state.preset = name;
+      state.bands = PRESETS[name].slice();
+      renderBands();
+      renderChart();
+      renderSpark();
+      renderPresets();
+      renderPresetLabels();
+    });
+    presetBox.appendChild(b);
+    return b;
+  });
+  presetBox.appendChild(node('<button class="preset new" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New</button>'));
+
+  function renderPresets() {
+    presetEls.forEach((b, i) => b.classList.toggle('active', presetNames[i] === state.preset));
+  }
+
+  /* ---------- master switch ---------- */
+  const hero = screen.querySelector('.hero');
+  const heroSwitch = screen.querySelector('.hero .sw');
+  const status = screen.querySelector('.js-status');
+  const statusDot = screen.querySelector('.chip .dot');
+  const dimmable = screen.querySelector('.dimmable');
+  const menuReset = screen.querySelector('.menu [data-reset]');
+
+  function renderEnabled() {
+    heroSwitch.classList.toggle('on', state.enabled);
+    heroSwitch.setAttribute('aria-checked', String(state.enabled));
+    dimmable.classList.toggle('off', !state.enabled);
+    status.textContent = state.enabled ? 'On' : 'Off';
+    if (statusDot) statusDot.classList.toggle('off', !state.enabled);
+    menuReset.disabled = !state.enabled;
+  }
+
+  hero.addEventListener('click', () => {
+    state.enabled = !state.enabled;
+    renderEnabled();
+  });
+
+  screen.querySelectorAll('.row .sw').forEach(sw => {
+    sw.addEventListener('click', e => {
+      e.stopPropagation();
+      sw.classList.toggle('on');
+      sw.setAttribute('aria-checked', sw.classList.contains('on') ? 'true' : 'false');
+    });
+  });
+
+  /* ---------- device: speaker vs headphones ---------- */
+  function renderDevice() {
+    const label = state.speaker ? 'Phone speaker' : 'Headphones';
+    screen.querySelectorAll('.js-device').forEach(n => { n.textContent = label; });
+    const icon = screen.querySelector('.js-device-icon');
+    icon.innerHTML = state.speaker
+      ? '<path d="M9 2.5 L15 2.5 A3 3 0 0 1 18 5.5 L18 18.5 A3 3 0 0 1 15 21.5 L9 21.5 A3 3 0 0 1 6 18.5 L6 5.5 A3 3 0 0 1 9 2.5 Z M10 18.5 L14 18.5"/>'
+      : '<path d="M4 14 L4 12 A8 8 0 0 1 20 12 L20 14 M3 13 L7 13 L7 20 L3 20 Z M17 13 L21 13 L21 20 L17 20 Z"/>';
+
+    screen.querySelector('.js-hp-sub').textContent =
+      state.speaker ? 'Connect headphones' : 'Spatial audio for headphones';
+    screen.querySelector('.js-stereo-sub').textContent =
+      state.speaker ? 'Connect headphones' : 'Widens the stereo field';
+    screen.querySelector('.js-hp-row').classList.toggle('disabled', state.speaker);
+    screen.querySelector('.js-stereo-row').classList.toggle('disabled', state.speaker);
+  }
+
+  /* double-click a device section header to swap device (demo only) */
+  screen.querySelectorAll('.section-label .js-device').forEach(n => {
+    n.style.cursor = 'pointer';
+    n.addEventListener('click', () => { state.speaker = !state.speaker; renderDevice(); });
+  });
+
+  /* ---------- reset to defaults ---------- */
+  function doReset() {
+    state.bands = PRESETS['Flat (off)'].slice();
+    state.preset = 'Flat (off)';
+    state.ieq = 1;
+    state.dialogue = 2;
+    state.stereo = 1;
+    renderBands();
+    renderChart();
+    renderSpark();
+    renderPresets();
+    renderPresetLabels();
+    renderIeq();
+    screen.querySelector('.js-dialogue').textContent = DIALOGUE[state.dialogue];
+    screen.querySelector('.js-stereo').textContent = STEREO[state.stereo];
+  }
+  screen.querySelectorAll('[data-reset]').forEach(b => b.addEventListener('click', doReset));
+
+  /* ---------- boot ---------- */
+  setTab(screen.dataset.tab || 'home');
+  layoutCarousel();
+  renderIeq();
+  renderBands();
+  renderChart();
+  renderSpark();
+  renderPresets();
+  renderPresetLabels();
+  renderEnabled();
+  renderDevice();
+}
+
+document.querySelectorAll('.screen').forEach(initFrame);
+</script>
+</body>
+</html>

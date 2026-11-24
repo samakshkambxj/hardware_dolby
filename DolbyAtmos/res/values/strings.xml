@@ -68,4 +68,45 @@
     <string name="dolby_warm">Warm</string>
     <string name="dolby_detailed">Detailed</string>
 
+    <!-- Compose UI -->
+    <string name="dolby_home">Home</string>
+    <string name="dolby_equalizer">Equalizer</string>
+    <string name="dolby_more_options">More options</string>
+    <string name="dolby_immersive_audio">Immersive audio</string>
+    <string name="dolby_section_profile">Profile</string>
+    <string name="dolby_section_profile_meta">Per-device tuning</string>
+    <string name="dolby_section_sound">Sound</string>
+    <string name="dolby_section_devices">Devices</string>
+    <string name="dolby_phone_speaker">Phone speaker</string>
+    <string name="dolby_headphones">Headphones</string>
+    <string name="dolby_profile_movie">Movie</string>
+    <string name="dolby_profile_spatial">Spatial</string>
+    <string name="dolby_bass_enhancer_summary">Adds weight to low frequencies</string>
+    <string name="dolby_dialogue_enhancer_summary">Lifts voices over the mix</string>
+    <string name="dolby_volume_leveler_summary">Evens out quiet and loud scenes</string>
+    <string name="dolby_spk_virtualizer_summary">Widens the built-in speakers</string>
+    <string name="dolby_hp_virtualizer_summary">Spatial audio for headphones</string>
+    <string name="dolby_stereo_widening_summary">Widens the stereo field</string>
+    <string name="dolby_graphic_equalizer_summary">%1$s · 10 bands</string>
+    <string name="dolby_reset_profile_title">Reset %1$s?</string>
+    <string name="dolby_reset_profile_message">EQ gains and sound controls for this profile go back to their defaults. Other profiles are not affected.</string>
+    <string name="dolby_reset">Reset</string>
+    <string name="dolby_eq_response">Response</string>
+    <string name="dolby_eq_bands">Bands</string>
+    <string name="dolby_eq_db_range">±10 dB</string>
+    <string name="dolby_eq_save_preset">Save as new preset</string>
+    <string name="dolby_eq_custom">Custom</string>
+    <string name="dolby_new">New</string>
+    <string name="dolby_eq_hint">Changes apply to %1$s immediately · long-press a preset to rename</string>
+    <string name="dolby_eq_frequency_32">32</string>
+    <string name="dolby_eq_frequency_64">64</string>
+    <string name="dolby_eq_frequency_125">125</string>
+    <string name="dolby_eq_frequency_250">250</string>
+    <string name="dolby_eq_frequency_500">500</string>
+    <string name="dolby_eq_frequency_1k">1k</string>
+    <string name="dolby_eq_frequency_2k">2k</string>
+    <string name="dolby_eq_frequency_4k">4k</string>
+    <string name="dolby_eq_frequency_8k">8k</string>
+    <string name="dolby_eq_frequency_16k">16k</string>
+
 </resources>
