@@ -68,4 +68,79 @@
     <string name="dolby_warm">Warm</string>
     <string name="dolby_detailed">Detailed</string>
 
+    <!-- Compose UI -->
+    <string name="dolby_page_sound">Sound</string>
+    <string name="dolby_page_equalizer">Equalizer</string>
+    <string name="dolby_page_advanced">Advanced</string>
+    <string name="dolby_section_profile">Profile</string>
+    <string name="dolby_section_sound">Sound</string>
+    <string name="dolby_section_audio_tuning">Audio tuning</string>
+    <string name="dolby_section_playback">Playback</string>
+    <string name="dolby_section_device">Device</string>
+    <string name="dolby_section_maintenance">Maintenance</string>
+    <string name="dolby_reset_profile_short">Reset profile</string>
+    <string name="dolby_reset_current_profile">Reset current profile</string>
+    <string name="dolby_profile_unknown">Unknown profile</string>
+    <string name="dolby_status_active">Active · %1$s profile</string>
+    <string name="dolby_audio_output">Audio output</string>
+    <string name="dolby_dolby_status">Dolby status</string>
+    <string name="dolby_about">About Dolby Atmos</string>
+    <string name="dolby_version">Version %1$s</string>
+    <string name="dolby_speaker">Speaker</string>
+    <string name="dolby_headphones">Headphones</string>
+    <string name="dolby_on_output">On · %1$s</string>
+    <string name="dolby_off_output">Off · %1$s</string>
+
+    <!-- Equalizer screen -->
+    <string name="dolby_eq_preset">Preset</string>
+    <string name="dolby_eq_band_configuration">Band configuration</string>
+    <string name="dolby_eq_band_configuration_desc">Choose equalizer precision: more bands = finer control</string>
+    <string name="dolby_eq_band_count">%1$d Bands</string>
+    <string name="dolby_eq_band_chip">%1$d bands</string>
+    <string name="dolby_eq_view">Equalizer view</string>
+    <string name="dolby_eq_view_curve">Curve</string>
+    <string name="dolby_eq_view_sliders">Sliders</string>
+    <string name="dolby_eq_interactive_response">Interactive Frequency Response</string>
+    <string name="dolby_eq_interactive_response_desc">Drag the control points to adjust gain (±15 dB) • %1$s</string>
+    <string name="dolby_eq_frequency_response">Frequency Response</string>
+    <string name="dolby_eq_gain">Gain</string>
+    <string name="dolby_eq_band_tuner">Band tuner</string>
+    <string name="dolby_eq_band_tuner_desc">Step through bands and fine-tune gain in 0.1 dB increments</string>
+    <string name="dolby_eq_band_position">Band %1$d of %2$d</string>
+    <string name="dolby_eq_band_label">Band %1$d · %2$s</string>
+    <string name="dolby_eq_previous_band">Previous band</string>
+    <string name="dolby_eq_next_band">Next band</string>
+    <string name="dolby_eq_decrement">−0.1 dB</string>
+    <string name="dolby_eq_zero">0 dB</string>
+    <string name="dolby_eq_increment">+0.1 dB</string>
+    <string name="dolby_eq_save_preset">Save preset</string>
+    <string name="dolby_eq_import_export">Import / export</string>
+    <string name="dolby_eq_autoeq">AutoEQ</string>
+    <string name="dolby_eq_delete_preset">Delete preset</string>
+    <string name="dolby_eq_custom">Custom</string>
+    <string name="dolby_eq_preset_saved">Preset saved</string>
+    <string name="dolby_eq_import_export_title">Import / export</string>
+    <string name="dolby_eq_import_export_desc">Preset import and export is not available in this build yet.</string>
+    <string name="dolby_eq_autoeq_title">AutoEQ</string>
+    <string name="dolby_eq_autoeq_desc">Pick a correction target to load its curve into the equalizer.</string>
+    <string name="dolby_eq_close">Close</string>
+    <string name="dolby_eq_cancel">Cancel</string>
+    <string name="dolby_eq_save">Save</string>
+
+    <!-- Audio tuning -->
+    <string name="dolby_bass_enhancer_desc">Enhances low-frequency sounds for deeper bass</string>
+    <string name="dolby_bass_curve">Bass curve</string>
+    <string name="dolby_bass_level">Bass level</string>
+    <string name="dolby_mid_enhancer">Mid enhancer</string>
+    <string name="dolby_mid_enhancer_desc">Enhances mid-frequency sounds for clearer vocals and instruments</string>
+    <string name="dolby_mid_level">Mid level</string>
+    <string name="dolby_treble_enhancer">Treble enhancer</string>
+    <string name="dolby_treble_enhancer_desc">Enhances high-frequency sounds for clearer treble</string>
+    <string name="dolby_treble_level">Treble level</string>
+    <string name="dolby_bass_curve_balanced">Balanced</string>
+    <string name="dolby_bass_curve_sub_boost">Sub boost</string>
+    <string name="dolby_bass_curve_punch">Punch</string>
+    <string name="dolby_percent">%1$d%%</string>
+    <string name="dolby_playback_settings">Playback settings</string>
+
 </resources>

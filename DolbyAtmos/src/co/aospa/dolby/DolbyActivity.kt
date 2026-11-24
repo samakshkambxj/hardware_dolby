@@ -7,22 +7,24 @@
 package co.aospa.dolby
 
 import android.os.Bundle
-import co.aospa.dolby.preference.DolbySettingsFragment
-import com.android.settingslib.collapsingtoolbar.CollapsingToolbarBaseActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import co.aospa.dolby.ui.DolbyApp
+import co.aospa.dolby.ui.DolbyViewModel
+import co.aospa.dolby.ui.theme.DolbyTheme
 
-private const val TAG = "DolbyActivity"
+class DolbyActivity : ComponentActivity() {
 
-class DolbyActivity : CollapsingToolbarBaseActivity() {
+    private lateinit var viewModel: DolbyViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        supportFragmentManager
-            .beginTransaction()
-            .replace(
-                com.android.settingslib.collapsingtoolbar.R.id.content_frame,
-                DolbySettingsFragment(),
-                TAG,
-            )
-            .commit()
+        viewModel = DolbyViewModel(this)
+        setContent { DolbyTheme { DolbyApp(viewModel) } }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::viewModel.isInitialized) viewModel.refresh()
     }
 }
