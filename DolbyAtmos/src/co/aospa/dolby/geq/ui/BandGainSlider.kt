@@ -6,6 +6,7 @@
 
 package co.aospa.dolby.geq.ui
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
@@ -30,6 +31,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
@@ -58,6 +60,7 @@ fun VerticalBand(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
+    val view = LocalView.current
     var heightPx by remember { mutableFloatStateOf(1f) }
     val preview by rememberUpdatedState(onPreview)
     val commit by rememberUpdatedState(onCommit)
@@ -88,7 +91,9 @@ fun VerticalBand(
                                 steps = 199,
                             )
                         setProgress { target ->
-                            commit(target.roundToInt().coerceIn(-100, 100))
+                            val value = target.roundToInt().coerceIn(-100, 100)
+                            view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                            commit(value)
                             true
                         }
                     }
@@ -97,13 +102,21 @@ fun VerticalBand(
                             ((0.5f - y / heightPx) * 200f).roundToInt().coerceIn(-100, 100)
 
                         var last = gain
+                        var lastTick = gain
                         detectDragGestures(
                             onDragStart = { offset ->
                                 last = valueFor(offset.y)
+                                lastTick = last
+                                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                                 preview(last)
                             },
                             onDrag = { change, _ ->
                                 last = valueFor(change.position.y)
+                                // One tick per whole dB-ish step, not per touch sample.
+                                if (last != lastTick) {
+                                    lastTick = last
+                                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                }
                                 preview(last)
                                 change.consume()
                             },

@@ -6,6 +6,7 @@
 
 package co.aospa.dolby.ui
 
+import android.view.HapticFeedbackConstants
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -66,6 +67,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -538,8 +540,11 @@ private fun StrengthRow(
     onValueChange: (Int) -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
+    val view = LocalView.current
     val current = value.coerceIn(STRENGTH_MIN, STRENGTH_MAX)
     var sliderValue by remember(current) { mutableStateOf(current.toFloat()) }
+    // Haptic ticks once per whole step, not on every pixel of the drag.
+    var lastTick by remember(current) { mutableStateOf(current) }
     val shown = sliderValue.roundToInt()
 
     Column(
@@ -569,8 +574,18 @@ private fun StrengthRow(
         }
         Slider(
             value = sliderValue,
-            onValueChange = { sliderValue = it },
-            onValueChangeFinished = { onValueChange(sliderValue.roundToInt()) },
+            onValueChange = {
+                sliderValue = it
+                val tick = it.roundToInt()
+                if (tick != lastTick) {
+                    lastTick = tick
+                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                }
+            },
+            onValueChangeFinished = {
+                view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                onValueChange(sliderValue.roundToInt())
+            },
             valueRange = STRENGTH_MIN.toFloat()..STRENGTH_MAX.toFloat(),
             steps = STRENGTH_MAX - STRENGTH_MIN - 1,
             enabled = enabled,
