@@ -274,9 +274,25 @@ class DolbyViewModel(application: Application) : ViewModel() {
         super.onCleared()
     }
 
-    private fun currentDevice(): AudioDeviceInfo? =
-        runCatching { audioManager.getDevicesForAttributes(ATTRIBUTES_MEDIA).firstOrNull() }
-            .getOrNull()
+    /**
+     * `getDevicesForAttributes` reports the active route as [android.media.AudioDeviceAttributes],
+     * not as an [AudioDeviceInfo]. Map it back onto the matching output so the rest of the view
+     * model can keep using device type, address and product name.
+     */
+    private fun currentDevice(): AudioDeviceInfo? {
+        val routed =
+            runCatching { audioManager.getDevicesForAttributes(ATTRIBUTES_MEDIA).firstOrNull() }
+                .getOrNull() ?: return null
+        val outputs =
+            runCatching { audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS) }
+                .getOrNull() ?: return null
+        val address = routed.address.orEmpty()
+        return outputs.firstOrNull {
+            it.isSink &&
+                it.type == routed.type &&
+                (address.isEmpty() || it.address == address)
+        } ?: outputs.firstOrNull { it.isSink && it.type == routed.type }
+    }
 
     private fun isOnSpeaker(): Boolean {
         val device = currentDevice()
