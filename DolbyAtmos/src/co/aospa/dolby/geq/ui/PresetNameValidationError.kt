@@ -11,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import co.aospa.dolby.R
 
 enum class PresetNameValidationError {
+    NAME_EMPTY,
     NAME_EXISTS,
     NAME_TOO_LONG;
 
@@ -19,6 +20,7 @@ enum class PresetNameValidationError {
         stringResource(
             id =
                 when (this) {
+                    NAME_EMPTY -> R.string.dolby_geq_preset_name_empty
                     NAME_EXISTS -> R.string.dolby_geq_preset_name_exists
                     NAME_TOO_LONG -> R.string.dolby_geq_preset_name_too_long
                 }

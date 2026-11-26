@@ -30,6 +30,12 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -72,6 +78,20 @@ fun VerticalBand(
                 Modifier.fillMaxWidth()
                     .height(138.dp)
                     .onSizeChanged { heightPx = it.height.toFloat().coerceAtLeast(1f) }
+                    .semantics {
+                        contentDescription = "${formatFrequency(bandGain.band)} Hz"
+                        stateDescription = "${formatGain(gain)} dB"
+                        progressBarRangeInfo =
+                            ProgressBarRangeInfo(
+                                current = gain.toFloat(),
+                                range = -100f..100f,
+                                steps = 199,
+                            )
+                        setProgress { target ->
+                            commit(target.roundToInt().coerceIn(-100, 100))
+                            true
+                        }
+                    }
                     .pointerInput(Unit) {
                         fun valueFor(y: Float): Int =
                             ((0.5f - y / heightPx) * 200f).roundToInt().coerceIn(-100, 100)

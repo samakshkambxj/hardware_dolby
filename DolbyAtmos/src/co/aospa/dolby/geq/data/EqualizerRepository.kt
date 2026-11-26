@@ -91,7 +91,17 @@ class EqualizerRepository(private val context: Context) {
 
     suspend fun getBandGains(): List<BandGain> =
         withContext(Dispatchers.IO) {
-            val gains = profileSharedPrefs.getString(PREF_PRESET, dolbyController.getPreset())
+            // Read the saved gains first. The effect is only a fallback for profiles that have
+            // never been touched, and querying it can fail while the effect has no control.
+            val stored = profileSharedPrefs.getString(PREF_PRESET, null)
+            val gains =
+                if (stored.isNullOrEmpty()) {
+                    runCatching { dolbyController.getPreset() }
+                        .onFailure { Log.e(TAG, "Failed to read preset from effect", it) }
+                        .getOrNull()
+                } else {
+                    stored
+                }
             return@withContext if (gains.isNullOrEmpty()) {
                     defaultPreset.bandGains
                 } else {
@@ -104,7 +114,10 @@ class EqualizerRepository(private val context: Context) {
         withContext(Dispatchers.IO) {
             dlog(TAG, "setBandGains($bandGains)")
             val gains = serializeGains(bandGains)
-            dolbyController.setPreset(gains)
+            // Keep the preference write even if the effect is temporarily unavailable, so the
+            // values are restored on the next boot instead of being silently dropped.
+            runCatching { dolbyController.setPreset(gains) }
+                .onFailure { Log.e(TAG, "Failed to apply preset to effect", it) }
             profileSharedPrefs.edit().putString(PREF_PRESET, gains).apply()
         }
 

@@ -7,9 +7,11 @@
 package co.aospa.dolby.ui
 
 import android.view.HapticFeedbackConstants
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -27,7 +29,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -41,6 +42,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -104,6 +107,9 @@ fun DolbyApp(
         if (tab == DolbyTab.Home) dolbyViewModel.refresh()
     }
 
+    // Back from the equalizer returns to Home instead of leaving the app.
+    BackHandler(enabled = tab != DolbyTab.Home) { tab = DolbyTab.Home }
+
     // A root Surface is required: it provides LocalContentColor, so Text outside the individual
     // cards inherits onBackground instead of the framework default (black).
     Surface(
@@ -111,32 +117,38 @@ fun DolbyApp(
         color = MaterialTheme.colorScheme.background,
     ) {
         Box(Modifier.fillMaxSize()) {
-            when (tab) {
-                DolbyTab.Home ->
-                    HomeScreen(
-                        state = state,
-                        scrollState = homeScroll,
-                        onToggle = dolbyViewModel::setDsOn,
-                        onProfile = dolbyViewModel::setProfile,
-                        onIeq = dolbyViewModel::setIeq,
-                        onDialogue = dolbyViewModel::setDialogue,
-                        onBass = dolbyViewModel::setBass,
-                        onVolumeLeveler = dolbyViewModel::setVolumeLeveler,
-                        onSpeakerVirtualizer = dolbyViewModel::setSpeakerVirtualizer,
-                        onHeadphoneVirtualizer = dolbyViewModel::setHeadphoneVirtualizer,
-                        onStereo = dolbyViewModel::setStereo,
-                        onOpenEqualizer = { tab = DolbyTab.Equalizer },
-                        onReset = {
-                            dolbyViewModel.resetProfile()
-                            equalizerViewModel.reload()
-                        },
-                    )
-                DolbyTab.Equalizer ->
-                    EqualizerTab(
-                        viewModel = equalizerViewModel,
-                        profileName = state.profileName,
-                        scrollState = equalizerScroll,
-                    )
+            Crossfade(
+                targetState = tab,
+                animationSpec = tween(durationMillis = 180),
+                label = "dolby_tab",
+            ) { current ->
+                when (current) {
+                    DolbyTab.Home ->
+                        HomeScreen(
+                            state = state,
+                            scrollState = homeScroll,
+                            onToggle = dolbyViewModel::setDsOn,
+                            onProfile = dolbyViewModel::setProfile,
+                            onIeq = dolbyViewModel::setIeq,
+                            onDialogue = dolbyViewModel::setDialogue,
+                            onBass = dolbyViewModel::setBass,
+                            onVolumeLeveler = dolbyViewModel::setVolumeLeveler,
+                            onSpeakerVirtualizer = dolbyViewModel::setSpeakerVirtualizer,
+                            onHeadphoneVirtualizer = dolbyViewModel::setHeadphoneVirtualizer,
+                            onStereo = dolbyViewModel::setStereo,
+                            onOpenEqualizer = { tab = DolbyTab.Equalizer },
+                            onReset = {
+                                dolbyViewModel.resetProfile()
+                                equalizerViewModel.reload()
+                            },
+                        )
+                    DolbyTab.Equalizer ->
+                        EqualizerTab(
+                            viewModel = equalizerViewModel,
+                            profileName = state.profileName,
+                            scrollState = equalizerScroll,
+                        )
+                }
             }
 
             FloatingNavBar(
@@ -170,6 +182,7 @@ private fun FloatingNavBar(
                 .clip(shape)
                 .background(colors.surfaceContainer)
                 .border(1.dp, colors.outlineVariant.copy(alpha = 0.5f), shape)
+                .selectableGroup()
                 .padding(6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -235,10 +248,14 @@ private fun NavItem(
                 .fillMaxHeight()
                 .clip(CircleShape)
                 .background(container)
-                .clickable(role = Role.Tab) {
-                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                    onSelect(tab)
-                }
+                .selectable(
+                    selected = active,
+                    role = Role.Tab,
+                    onClick = {
+                        view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                        onSelect(tab)
+                    },
+                )
                 .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,

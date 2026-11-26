@@ -93,20 +93,25 @@ internal class DolbyController private constructor(private val context: Context)
 
         // Restore our main settings
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        dsOn = prefs.getBoolean(DolbyConstants.PREF_ENABLE, true)
+        runCatching { dsOn = prefs.getBoolean(DolbyConstants.PREF_ENABLE, true) }
+            .onFailure { Log.e(TAG, "Failed to restore enabled state", it) }
 
         context.resources
             .getStringArray(R.array.dolby_profile_values)
-            .map { it.toInt() }
+            .mapNotNull { it.toIntOrNull() }
             .forEach { profile ->
-                // Reset dolby first to prevent it from loading bad settings
-                dolbyEffect.resetProfileSpecificSettings(profile)
-                // Now restore our profile-specific settings
-                restoreSettings(profile)
+                runCatching {
+                        // Reset dolby first to prevent it from loading bad settings
+                        dolbyEffect.resetProfileSpecificSettings(profile)
+                        // Now restore our profile-specific settings
+                        restoreSettings(profile)
+                    }
+                    .onFailure { Log.e(TAG, "Failed to restore profile $profile", it) }
             }
 
         // Finally restore the current profile.
-        setCurrentProfile()
+        runCatching { setCurrentProfile() }
+            .onFailure { Log.e(TAG, "Failed to restore current profile", it) }
     }
 
     private fun restoreSettings(profile: Int) {

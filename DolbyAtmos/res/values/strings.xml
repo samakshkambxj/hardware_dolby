@@ -60,6 +60,7 @@
     <string name="dolby_geq_reset_gains">Reset gains</string>
     <string name="dolby_geq_reset_gains_prompt">Do you want to reset this preset to defaults?</string>
     <string name="dolby_geq_preset_name_exists">Preset name already exists!</string>
+    <string name="dolby_geq_preset_name_empty">Preset name can\'t be empty</string>
     <string name="dolby_geq_preset_name_too_long">Preset name is too long!</string>
 
     <!-- Dolby intelligent EQ -->
@@ -95,6 +96,7 @@
     <string name="dolby_eq_bands">Bands</string>
     <string name="dolby_eq_db_range">±10 dB</string>
     <string name="dolby_eq_save_preset">Save as new preset</string>
+    <string name="dolby_eq_save_changes">Save changes</string>
     <string name="dolby_eq_custom">Custom</string>
     <string name="dolby_new">New</string>
     <string name="dolby_eq_hint">Changes apply to %1$s immediately · long-press a preset to rename</string>

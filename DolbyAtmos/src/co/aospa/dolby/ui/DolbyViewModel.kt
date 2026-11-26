@@ -13,6 +13,7 @@ import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
@@ -51,6 +52,7 @@ data class DolbyUiState(
     val stereo: Int = 0,
     val volumeLeveler: Boolean = false,
     val isOnSpeaker: Boolean = true,
+    val deviceName: String = "",
     val stereoSupported: Boolean = true,
 ) {
     val enabled: Boolean
@@ -117,6 +119,7 @@ class DolbyViewModel(application: Application) : ViewModel() {
                 profile = profile,
                 profileName = profileName,
                 isOnSpeaker = isOnSpeaker(),
+                deviceName = currentDeviceName(),
                 stereoSupported =
                     context.resources.getBoolean(R.bool.dolby_stereo_widening_supported),
             )
@@ -146,64 +149,81 @@ class DolbyViewModel(application: Application) : ViewModel() {
     }
 
     fun setDsOn(value: Boolean) {
-        controller.setDsOnAndPersist(value)
-        refresh()
+        applyChange { controller.setDsOnAndPersist(value) }
     }
 
     fun setProfile(value: Int) {
-        controller.profile = value
-        store.profile = value
-        store.putString(PREF_PROFILE, value.toString())
-        refresh()
+        applyChange {
+            store.profile = value
+            store.putString(PREF_PROFILE, value.toString())
+            controller.profile = value
+        }
     }
 
     fun setIeq(value: Int) {
-        controller.setIeqPreset(value)
-        store.putString(PREF_IEQ, value.toString())
-        refresh()
+        applyChange {
+            store.putString(PREF_IEQ, value.toString())
+            controller.setIeqPreset(value)
+        }
     }
 
     fun setDialogue(value: Int) {
-        controller.setDialogueEnhancerAmount(value)
-        store.putString(PREF_DIALOGUE, value.toString())
-        refresh()
+        applyChange {
+            store.putString(PREF_DIALOGUE, value.toString())
+            controller.setDialogueEnhancerAmount(value)
+        }
     }
 
     fun setBass(enabled: Boolean) {
-        controller.setBassEnhancerEnabled(enabled)
-        store.putBoolean(PREF_BASS, enabled)
-        refresh()
+        applyChange {
+            store.putBoolean(PREF_BASS, enabled)
+            controller.setBassEnhancerEnabled(enabled)
+        }
     }
 
     fun setVolumeLeveler(enabled: Boolean) {
-        controller.setVolumeLevelerEnabled(enabled)
-        store.putBoolean(PREF_VOLUME, enabled)
-        refresh()
+        applyChange {
+            store.putBoolean(PREF_VOLUME, enabled)
+            controller.setVolumeLevelerEnabled(enabled)
+        }
     }
 
     fun setSpeakerVirtualizer(enabled: Boolean) {
-        controller.setSpeakerVirtEnabled(enabled)
-        store.putBoolean(PREF_SPK_VIRTUALIZER, enabled)
-        refresh()
+        applyChange {
+            store.putBoolean(PREF_SPK_VIRTUALIZER, enabled)
+            controller.setSpeakerVirtEnabled(enabled)
+        }
     }
 
     fun setHeadphoneVirtualizer(enabled: Boolean) {
-        controller.setHeadphoneVirtEnabled(enabled)
-        store.putBoolean(PREF_HP_VIRTUALIZER, enabled)
-        refresh()
+        applyChange {
+            store.putBoolean(PREF_HP_VIRTUALIZER, enabled)
+            controller.setHeadphoneVirtEnabled(enabled)
+        }
     }
 
     fun setStereo(value: Int) {
         if (!context.resources.getBoolean(R.bool.dolby_stereo_widening_supported)) return
-        controller.setStereoWideningAmount(value)
-        store.putString(PREF_STEREO, value.toString())
-        refresh()
+        applyChange {
+            store.putString(PREF_STEREO, value.toString())
+            controller.setStereoWideningAmount(value)
+        }
     }
 
     fun resetProfile() {
         runCatching { controller.resetProfileSpecificSettings() }
+            .onFailure { Log.e(TAG, "Failed to reset profile", it) }
         // The profile file was deleted; re-acquire a fresh SharedPreferences instance.
         store.profile = runCatching { controller.profile }.getOrDefault(store.profile)
+        refresh()
+    }
+
+    /**
+     * Applies a controller write without letting a transient effect failure take the UI down.
+     * The preference write happens inside [block] first, so the value is still restored on boot.
+     */
+    private inline fun applyChange(block: () -> Unit) {
+        runCatching(block).onFailure { Log.e(TAG, "Failed to apply Dolby change", it) }
         refresh()
     }
 
@@ -212,12 +232,27 @@ class DolbyViewModel(application: Application) : ViewModel() {
         super.onCleared()
     }
 
-    private fun isOnSpeaker(): Boolean =
-        runCatching {
-                val device = audioManager.getDevicesForAttributes(ATTRIBUTES_MEDIA).firstOrNull()
-                device == null || device.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
-            }
-            .getOrDefault(true)
+    private fun currentDevice(): AudioDeviceInfo? =
+        runCatching { audioManager.getDevicesForAttributes(ATTRIBUTES_MEDIA).firstOrNull() }
+            .getOrNull()
+
+    private fun isOnSpeaker(): Boolean {
+        val device = currentDevice()
+        return device == null || device.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+    }
+
+    /**
+     * Name of the routed media device, so the Home header can show the actual output instead of
+     * calling every non-speaker device "Headphones".
+     */
+    private fun currentDeviceName(): String {
+        val device = currentDevice() ?: return context.getString(R.string.dolby_phone_speaker)
+        if (device.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER) {
+            return context.getString(R.string.dolby_phone_speaker)
+        }
+        return device.productName?.toString()?.takeIf { it.isNotBlank() }
+            ?: context.getString(R.string.dolby_headphones)
+    }
 
     private fun parseGains(raw: String): List<Int> =
         raw.split(',')
@@ -227,6 +262,7 @@ class DolbyViewModel(application: Application) : ViewModel() {
             .let { if (it.size == 10) it else ZERO_GAINS }
 
     companion object {
+        private const val TAG = "DolbyViewModel"
         private val ATTRIBUTES_MEDIA =
             AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build()
         private val ZERO_GAINS = List(10) { 0 }

@@ -12,9 +12,11 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import com.android.settingslib.drawer.TileUtils.META_DATA_PREFERENCE_SUMMARY
 
 private const val KEY_DOLBY = "dolby"
+private const val TAG = "DolbySummary"
 
 /** Provide preference summary for injected items. */
 class SummaryProvider : ContentProvider() {
@@ -52,13 +54,20 @@ class SummaryProvider : ContentProvider() {
     ): Int = 0
 
     private fun getDolbySummary(): String {
-        val context = context!!
+        val context = context ?: return ""
         val dolbyController = DolbyController.getInstance(context)
-        if (!dolbyController.dsOn) {
-            return context.getString(R.string.dolby_off)
-        }
-        return dolbyController.getProfileName()?.let {
-            context.getString(R.string.dolby_on_with_profile, it)
-        } ?: context.getString(R.string.dolby_on)
+        return runCatching {
+                if (!dolbyController.dsOn) {
+                    context.getString(R.string.dolby_off)
+                } else {
+                    dolbyController.getProfileName()?.let {
+                        context.getString(R.string.dolby_on_with_profile, it)
+                    } ?: context.getString(R.string.dolby_on)
+                }
+            }
+            .getOrElse {
+                Log.w(TAG, "Failed to read Dolby summary", it)
+                context.getString(R.string.dolby_unknown)
+            }
     }
 }

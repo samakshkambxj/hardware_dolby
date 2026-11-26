@@ -22,6 +22,22 @@ class BootCompletedReceiver : BroadcastReceiver() {
         }
 
         Log.i(TAG, "Boot completed, starting dolby")
-        DolbyController.getInstance(context).onBootCompleted()
+
+        // Restoring every profile performs a lot of effect transactions. Do it off the broadcast
+        // main thread so boot is not delayed, and finish the pending result when we are done.
+        val pendingResult = goAsync()
+        Thread(
+                {
+                    try {
+                        DolbyController.getInstance(context.applicationContext).onBootCompleted()
+                    } catch (t: Throwable) {
+                        Log.e(TAG, "Failed to restore Dolby state", t)
+                    } finally {
+                        pendingResult.finish()
+                    }
+                },
+                "dolby-boot",
+            )
+            .start()
     }
 }

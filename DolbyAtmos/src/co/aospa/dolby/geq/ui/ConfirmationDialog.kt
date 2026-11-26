@@ -10,6 +10,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,10 +20,12 @@ import androidx.compose.ui.res.stringResource
 @Composable
 fun ConfirmationDialog(text: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     var showDialog by remember { mutableStateOf(true) }
-    if (!showDialog) {
-        onDismiss()
-        return
+    // Dismissing is a side effect; doing it during composition would mutate parent state while
+    // the current frame is still being composed.
+    LaunchedEffect(showDialog) {
+        if (!showDialog) onDismiss()
     }
+    if (!showDialog) return
 
     AlertDialog(
         onDismissRequest = { showDialog = false },

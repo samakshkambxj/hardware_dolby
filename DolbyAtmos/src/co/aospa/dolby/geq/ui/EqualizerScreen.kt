@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -63,6 +65,9 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -101,90 +106,108 @@ fun EqualizerTab(
             if (index == dragIndex) bandGain.copy(gain = dragGain) else bandGain
         }
 
-    Column(
-        modifier =
-            modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(),
+    val canSaveInPlace = preset.isUserDefined && preset.isMutated
+    val onSave: () -> Unit = {
+        if (canSaveInPlace) viewModel.saveCurrentPreset() else showNewDialog = true
+    }
+
+    Box(
+        modifier = modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(),
+        contentAlignment = Alignment.TopCenter,
     ) {
-        EqualizerHeader(
-            onSave = { showNewDialog = true },
-            onReset = {
-                if (preset.isUserDefined) showResetDialog = true else viewModel.reset()
-            },
-        )
-
         Column(
-            modifier =
-                Modifier.weight(1f).verticalScroll(scrollState).padding(bottom = 104.dp),
+            modifier = Modifier.fillMaxHeight().widthIn(max = 640.dp).fillMaxWidth(),
         ) {
-            PresetChips(
-                presets = presets,
-                currentName = preset.name,
-                showCustom = presets.none { it.name == "Custom" },
-                onSelect = viewModel::setPreset,
-                onCustom = {
-                    viewModel.setPreset(
-                        Preset(name = "Custom", bandGains = preset.bandGains)
-                    )
+            EqualizerHeader(
+                onSave = onSave,
+                canSaveInPlace = canSaveInPlace,
+                onReset = {
+                    if (preset.isUserDefined) showResetDialog = true else viewModel.reset()
                 },
-                onNew = { showNewDialog = true },
-                onRename = { renamePreset = it },
-                onDelete = { deletePreset = it },
             )
 
-            Spacer(Modifier.height(16.dp))
-
-            ResponseCard(
-                gains = gains,
-                presetName = preset.name,
-                modifier = Modifier.padding(horizontal = 20.dp),
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            BandsCard(
-                gains = gains,
-                onPreview = { index, gain ->
-                    dragIndex = index
-                    dragGain = gain
-                },
-                onCommit = { index, gain ->
-                    viewModel.setGain(index, gain)
-                    dragIndex = -1
-                },
-                modifier = Modifier.padding(horizontal = 20.dp),
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            Button(
-                onClick = { showNewDialog = true },
+            Column(
                 modifier =
-                    Modifier.fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                        .height(50.dp),
-                shape = CircleShape,
+                    Modifier.weight(1f).verticalScroll(scrollState).padding(bottom = 104.dp),
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.save_as_24px),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
+                PresetChips(
+                    presets = presets,
+                    currentName = preset.name,
+                    showCustom = presets.none { it.name == "Custom" },
+                    onSelect = viewModel::setPreset,
+                    onCustom = {
+                        viewModel.setPreset(
+                            Preset(name = "Custom", bandGains = preset.bandGains)
+                        )
+                    },
+                    onNew = { showNewDialog = true },
+                    onRename = { renamePreset = it },
+                    onDelete = { deletePreset = it },
                 )
-                Spacer(Modifier.width(8.dp))
+
+                Spacer(Modifier.height(16.dp))
+
+                ResponseCard(
+                    gains = gains,
+                    presetName = preset.name,
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                BandsCard(
+                    gains = gains,
+                    onPreview = { index, gain ->
+                        dragIndex = index
+                        dragGain = gain
+                    },
+                    onCommit = { index, gain ->
+                        viewModel.setGain(index, gain)
+                        dragIndex = -1
+                    },
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Button(
+                    onClick = onSave,
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                            .height(50.dp),
+                    shape = CircleShape,
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.save_as_24px),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text =
+                            stringResource(
+                                id =
+                                    if (canSaveInPlace) {
+                                        R.string.dolby_eq_save_changes
+                                    } else {
+                                        R.string.dolby_eq_save_preset
+                                    }
+                            ),
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+
                 Text(
-                    text = stringResource(id = R.string.dolby_eq_save_preset),
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    text = stringResource(id = R.string.dolby_eq_hint, profileName),
+                    modifier =
+                        Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+                    textAlign = TextAlign.Center,
+                    fontSize = 10.5.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-
-            Text(
-                text = stringResource(id = R.string.dolby_eq_hint, profileName),
-                modifier =
-                    Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
-                textAlign = TextAlign.Center,
-                fontSize = 10.5.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 
@@ -223,7 +246,11 @@ fun EqualizerTab(
 }
 
 @Composable
-private fun EqualizerHeader(onSave: () -> Unit, onReset: () -> Unit) {
+private fun EqualizerHeader(
+    onSave: () -> Unit,
+    canSaveInPlace: Boolean,
+    onReset: () -> Unit,
+) {
     Row(
         modifier =
             Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 6.dp, bottom = 2.dp),
@@ -241,7 +268,15 @@ private fun EqualizerHeader(onSave: () -> Unit, onReset: () -> Unit) {
         IconButton(onClick = onSave) {
             Icon(
                 painter = painterResource(id = R.drawable.save_as_24px),
-                contentDescription = stringResource(id = R.string.dolby_geq_new_preset),
+                contentDescription =
+                    stringResource(
+                        id =
+                            if (canSaveInPlace) {
+                                R.string.dolby_eq_save_changes
+                            } else {
+                                R.string.dolby_geq_new_preset
+                            }
+                    ),
             )
         }
         IconButton(onClick = onReset) {
@@ -317,7 +352,10 @@ private fun PresetChips(
 
         item(key = "new") {
             Surface(
-                modifier = Modifier.height(34.dp).clip(CircleShape).clickable(onClick = onNew),
+                modifier =
+                    Modifier.height(34.dp)
+                        .clip(CircleShape)
+                        .clickable(role = Role.Button, onClick = onNew),
                 shape = CircleShape,
                 color = Color.Transparent,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -368,7 +406,12 @@ private fun PresetChip(
         modifier =
             Modifier.height(34.dp)
                 .clip(CircleShape)
-                .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+                .combinedClickable(
+                    role = Role.Button,
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                )
+                .semantics { this.selected = selected },
         shape = CircleShape,
         color = container,
         contentColor = content,

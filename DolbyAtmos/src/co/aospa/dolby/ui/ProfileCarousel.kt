@@ -19,7 +19,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +35,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -62,6 +63,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -145,7 +147,7 @@ fun ProfileCarousel(
 
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxWidth().height(140.dp),
+                modifier = Modifier.fillMaxWidth().height(140.dp).selectableGroup(),
                 contentPadding = PaddingValues(horizontal = 64.dp),
                 pageSpacing = 8.dp,
                 userScrollEnabled = enabled,
@@ -243,7 +245,12 @@ private fun ProfileCard(
                     cameraDistance = 12f * density.density
                 }
                 .clip(shape)
-                .clickable(enabled = enabled, onClick = onClick),
+                .selectable(
+                    selected = isSelected,
+                    enabled = enabled,
+                    role = Role.RadioButton,
+                    onClick = onClick,
+                ),
         shape = shape,
         colors =
             CardDefaults.cardColors(

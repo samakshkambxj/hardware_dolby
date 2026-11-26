@@ -126,13 +126,20 @@ class EqualizerViewModel(private val repository: EqualizerRepository) : ViewMode
     }
 
     // Returns string containing the error message if it failed, otherwise null
-    private fun validatePresetName(name: String): PresetNameValidationError? {
-        // Ensure we don't have another preset with the same name
-        return if (_presets.value.any { it.name.equals(name.trim(), ignoreCase = true) }) {
-            PresetNameValidationError.NAME_EXISTS
-        } else if (name.length > 50) {
-            PresetNameValidationError.NAME_TOO_LONG
-        } else null
+    private fun validatePresetName(
+        name: String,
+        except: Preset? = null,
+    ): PresetNameValidationError? {
+        val trimmed = name.trim()
+        return when {
+            trimmed.isEmpty() -> PresetNameValidationError.NAME_EMPTY
+            trimmed.length > 50 -> PresetNameValidationError.NAME_TOO_LONG
+            // Ignore the preset that is being renamed so keeping its name stays valid.
+            _presets.value.any {
+                it.name != except?.name && it.name.equals(trimmed, ignoreCase = true)
+            } -> PresetNameValidationError.NAME_EXISTS
+            else -> null
+        }
     }
 
     fun createNewPreset(name: String): PresetNameValidationError? {
@@ -146,22 +153,56 @@ class EqualizerViewModel(private val repository: EqualizerRepository) : ViewMode
         return null
     }
 
+    /**
+     * Persists edits to the selected user preset in place.
+     *
+     * The state flow already applies the gains to the effect; flipping [Preset.isMutated] makes it
+     * write the updated gains back to the stored preset as well.
+     */
+    fun saveCurrentPreset() {
+        val current = _preset.value
+        if (!current.isUserDefined || !current.isMutated) return
+        _preset.value = current.copy(isMutated = false)
+    }
+
     fun renamePreset(preset: Preset, name: String): PresetNameValidationError? {
         dlog(TAG, "renamePreset($preset, $name)")
-        // create a preset with the new name and same gains
-        createNewPreset(name = name)?.let {
-            dlog(TAG, "renamePreset failed")
+        validatePresetName(name, except = preset)?.let {
+            dlog(TAG, "renamePreset failed: $it")
             return it
         }
-        // and delete the old one.
-        deletePreset(preset, shouldReset = false)
+
+        val renamed = preset.copy(name = name.trim(), isUserDefined = true, isMutated = false)
+        if (renamed.name == preset.name) {
+            // Nothing changed; keep the existing entry instead of deleting and re-adding it.
+            return null
+        }
+
+        if (preset.name == _preset.value.name) {
+            // Renaming the selected preset: keep the selection, let the state flow persist the
+            // new entry, then remove the old one.
+            _preset.value =
+                _preset.value.copy(
+                    name = renamed.name,
+                    isUserDefined = true,
+                    isMutated = false,
+                )
+            viewModelScope.launch { repository.removePreset(preset) }
+        } else {
+            // Renaming a preset that is not selected must not touch the current selection.
+            viewModelScope.launch {
+                repository.removePreset(preset)
+                repository.addPreset(renamed)
+            }
+        }
         return null
     }
 
     fun deletePreset(preset: Preset, shouldReset: Boolean = true) {
         dlog(TAG, "deletePreset($preset)")
         viewModelScope.launch { repository.removePreset(preset) }
-        if (shouldReset) {
+        // Only reset the selection when the preset being deleted is the active one.
+        if (shouldReset && preset.name == _preset.value.name) {
             _preset.value = repository.defaultPreset
         }
     }

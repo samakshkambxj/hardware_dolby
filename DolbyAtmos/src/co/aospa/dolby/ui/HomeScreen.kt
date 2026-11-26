@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -104,60 +106,62 @@ fun HomeScreen(
 ) {
     var showReset by remember { mutableStateOf(false) }
 
-    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
-        HomeHeader(
-            onOpenEqualizer = onOpenEqualizer,
-            onReset = { showReset = true },
-            enabled = state.enabled,
-        )
-
+    Box(
+        modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(),
+        contentAlignment = Alignment.TopCenter,
+    ) {
         Column(
-            modifier =
-                Modifier.weight(1f)
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = 20.dp)
-                    .padding(bottom = 104.dp),
+            modifier = Modifier.fillMaxHeight().widthIn(max = 640.dp).fillMaxWidth(),
         ) {
-            HeroCard(state = state, onToggle = onToggle)
+            HomeHeader(
+                onOpenEqualizer = onOpenEqualizer,
+                onReset = { showReset = true },
+                enabled = state.enabled,
+            )
 
-            Column(Modifier.alpha(if (state.enabled) 1f else 0.38f)) {
-                Spacer(Modifier.height(20.dp))
-                ProfileCarousel(
-                    currentProfile = state.profile,
-                    onProfileChange = onProfile,
-                    enabled = state.enabled,
-                )
+            Column(
+                modifier =
+                    Modifier.weight(1f)
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 20.dp)
+                        .padding(bottom = 104.dp),
+            ) {
+                HeroCard(state = state, onToggle = onToggle)
 
-                SectionLabel(
-                    title = stringResource(id = R.string.dolby_section_sound),
-                    meta = state.profileName,
-                )
-                SoundCard(
-                    state = state,
-                    onIeq = onIeq,
-                    onDialogue = onDialogue,
-                    onBass = onBass,
-                    onVolumeLeveler = onVolumeLeveler,
-                    onOpenEqualizer = onOpenEqualizer,
-                )
+                Column(Modifier.alpha(if (state.enabled) 1f else 0.38f)) {
+                    Spacer(Modifier.height(20.dp))
+                    ProfileCarousel(
+                        currentProfile = state.profile,
+                        onProfileChange = onProfile,
+                        enabled = state.enabled,
+                    )
 
-                SectionLabel(
-                    title = stringResource(id = R.string.dolby_section_devices),
-                    meta =
-                        if (state.isOnSpeaker) {
-                            stringResource(id = R.string.dolby_phone_speaker)
-                        } else {
-                            stringResource(id = R.string.dolby_headphones)
-                        },
-                )
-                DeviceCard(
-                    state = state,
-                    onSpeakerVirtualizer = onSpeakerVirtualizer,
-                    onHeadphoneVirtualizer = onHeadphoneVirtualizer,
-                    onStereo = onStereo,
-                )
+                    SectionLabel(
+                        title = stringResource(id = R.string.dolby_section_sound),
+                        meta = state.profileName,
+                    )
+                    SoundCard(
+                        state = state,
+                        onIeq = onIeq,
+                        onDialogue = onDialogue,
+                        onBass = onBass,
+                        onVolumeLeveler = onVolumeLeveler,
+                        onOpenEqualizer = onOpenEqualizer,
+                    )
 
-                ResetButton(enabled = state.enabled, onClick = { showReset = true })
+                    SectionLabel(
+                        title = stringResource(id = R.string.dolby_section_devices),
+                        meta = state.deviceName,
+                    )
+                    DeviceCard(
+                        state = state,
+                        onSpeakerVirtualizer = onSpeakerVirtualizer,
+                        onHeadphoneVirtualizer = onHeadphoneVirtualizer,
+                        onStereo = onStereo,
+                    )
+
+                    ResetButton(enabled = state.enabled, onClick = { showReset = true })
+                }
             }
         }
     }
@@ -239,6 +243,17 @@ private fun HeroCard(state: DolbyUiState, onToggle: (Boolean) -> Unit) {
     val shape = RoundedCornerShape(28.dp)
     val profileLabel =
         state.profileName.ifBlank { stringResource(id = R.string.dolby_unknown) }
+    val deviceLabel =
+        state.deviceName.ifBlank {
+            stringResource(
+                id =
+                    if (state.isOnSpeaker) {
+                        R.string.dolby_phone_speaker
+                    } else {
+                        R.string.dolby_headphones
+                    }
+            )
+        }
 
     Column(
         modifier =
@@ -338,15 +353,7 @@ private fun HeroCard(state: DolbyUiState, onToggle: (Boolean) -> Unit) {
                     modifier = Modifier.size(13.dp),
                 )
                 Text(
-                    text =
-                        stringResource(
-                            id =
-                                if (state.isOnSpeaker) {
-                                    R.string.dolby_phone_speaker
-                                } else {
-                                    R.string.dolby_headphones
-                                }
-                        ),
+                    text = deviceLabel,
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -502,7 +509,8 @@ private fun IeqGroup(state: DolbyUiState, label: String, onIeq: (Int) -> Unit) {
         Row(
             modifier =
                 Modifier.fillMaxWidth()
-                    .padding(start = 14.dp, end = 14.dp, bottom = 14.dp),
+                    .padding(start = 14.dp, end = 14.dp, bottom = 14.dp)
+                    .selectableGroup(),
             horizontalArrangement = Arrangement.spacedBy(7.dp),
         ) {
             IEQ_OPTIONS.forEach { option ->
@@ -511,7 +519,12 @@ private fun IeqGroup(state: DolbyUiState, label: String, onIeq: (Int) -> Unit) {
                     modifier =
                         Modifier.weight(1f)
                             .clip(RoundedCornerShape(16.dp))
-                            .clickable(enabled = state.enabled) { onIeq(option.value) },
+                            .selectable(
+                                selected = selected,
+                                enabled = state.enabled,
+                                role = Role.RadioButton,
+                                onClick = { onIeq(option.value) },
+                            ),
                     shape = RoundedCornerShape(16.dp),
                     color = if (selected) colors.primaryContainer else colors.surface,
                     contentColor =
@@ -740,7 +753,7 @@ private fun ActionRow(
         modifier =
             Modifier.fillMaxWidth()
                 .background(colors.surfaceContainer)
-                .clickable(enabled = enabled, onClick = onClick)
+                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -881,6 +894,7 @@ private fun SectionLabel(title: String, meta: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(max = 180.dp),
         )
     }
 }

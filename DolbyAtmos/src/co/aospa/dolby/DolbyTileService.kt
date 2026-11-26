@@ -8,6 +8,7 @@ package co.aospa.dolby
 
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
+import android.util.Log
 
 private const val TAG = "DolbyTileService"
 
@@ -16,21 +17,32 @@ class DolbyTileService : TileService() {
     private val dolbyController by lazy { DolbyController.getInstance(applicationContext) }
 
     override fun onStartListening() {
-        qsTile.apply {
-            state = if (dolbyController.dsOn) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-            subtitle = dolbyController.getProfileName() ?: getString(R.string.dolby_unknown)
-            updateTile()
-        }
+        refreshTile()
         super.onStartListening()
     }
 
     override fun onClick() {
-        val isDsOn = dolbyController.dsOn
-        dolbyController.setDsOnAndPersist(!isDsOn) // toggle
-        qsTile.apply {
-            state = if (isDsOn) Tile.STATE_INACTIVE else Tile.STATE_ACTIVE
+        val isDsOn = runCatching { dolbyController.dsOn }.getOrDefault(false)
+        runCatching { dolbyController.setDsOnAndPersist(!isDsOn) }
+            .onFailure { Log.e(TAG, "Failed to toggle Dolby", it) }
+        refreshTile()
+        super.onClick()
+    }
+
+    /**
+     * The effect can temporarily lose control (for example right after boot). A failed read must
+     * not take the tile service down, so fall back to the inactive/unknown state.
+     */
+    private fun refreshTile() {
+        val enabled = runCatching { dolbyController.dsOn }.getOrDefault(false)
+        val tileSubtitle =
+            runCatching { dolbyController.getProfileName() }.getOrNull()
+                ?: getString(R.string.dolby_unknown)
+
+        qsTile?.apply {
+            state = if (enabled) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+            subtitle = tileSubtitle
             updateTile()
         }
-        super.onClick()
     }
 }

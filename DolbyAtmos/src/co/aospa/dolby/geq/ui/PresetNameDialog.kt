@@ -14,6 +14,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,10 +32,12 @@ fun PresetNameDialog(
     onDismissDialog: () -> Unit,
 ) {
     var showDialog by remember { mutableStateOf(true) }
-    if (!showDialog) {
-        onDismissDialog()
-        return
+    // Dismissing is a side effect; doing it during composition would mutate parent state while
+    // the current frame is still being composed.
+    LaunchedEffect(showDialog) {
+        if (!showDialog) onDismissDialog()
     }
+    if (!showDialog) return
     var text by remember { mutableStateOf(presetName) }
     var error by remember { mutableStateOf<PresetNameValidationError?>(null) }
 
@@ -66,7 +69,10 @@ fun PresetNameDialog(
             Column {
                 OutlinedTextField(
                     value = text,
-                    onValueChange = { text = it },
+                    onValueChange = {
+                        text = it
+                        error = null
+                    },
                     label = { Text(stringResource(id = R.string.dolby_geq_preset_name)) },
                     isError = error != null,
                     singleLine = true,
