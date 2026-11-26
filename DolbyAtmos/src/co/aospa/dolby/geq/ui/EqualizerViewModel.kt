@@ -12,6 +12,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import co.aospa.dolby.DolbyConstants.Companion.dlog
+import co.aospa.dolby.geq.data.BandGain
+import co.aospa.dolby.geq.data.BandMode
 import co.aospa.dolby.geq.data.EqualizerRepository
 import co.aospa.dolby.geq.data.Preset
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +30,11 @@ class EqualizerViewModel(private val repository: EqualizerRepository) : ViewMode
     private val _presets = MutableStateFlow(repository.builtInPresets)
     val presets = _presets.asStateFlow()
 
-    private val _preset = MutableStateFlow(repository.defaultPreset)
+    private val _bandMode = MutableStateFlow(repository.getBandMode())
+    val bandMode = _bandMode.asStateFlow()
+
+    private val _preset =
+        MutableStateFlow(repository.defaultPreset.copy(bandMode = _bandMode.value))
     val preset = _preset.asStateFlow()
 
     private var presetRestored = false
@@ -52,8 +58,9 @@ class EqualizerViewModel(private val repository: EqualizerRepository) : ViewMode
                 if (!presetRestored) {
                     val bandGains = repository.getBandGains()
                     _preset.value =
-                        _presets.value.find { bandGains == it.bandGains }
-                            ?: Preset(name = "Custom", bandGains = bandGains)
+                        (_presets.value.find { bandGains == it.bandGains }
+                                ?: Preset(name = "Custom", bandGains = bandGains))
+                            .copy(bandMode = _bandMode.value)
                     dlog(TAG, "restored preset: ${_preset.value}")
                     presetRestored = true
                 }
@@ -87,42 +94,59 @@ class EqualizerViewModel(private val repository: EqualizerRepository) : ViewMode
         viewModelScope.launch {
             val bandGains = repository.getBandGains()
             _preset.value =
-                _presets.value.find { bandGains == it.bandGains }
-                    ?: Preset(name = "Custom", bandGains = bandGains)
+                (_presets.value.find { bandGains == it.bandGains }
+                        ?: Preset(name = "Custom", bandGains = bandGains))
+                    .copy(bandMode = _bandMode.value)
         }
     }
 
     fun reset() {
         dlog(TAG, "reset()")
         if (_preset.value.isUserDefined) {
-            // Reset gains to 0
-            _preset.value = _preset.value.copy(bandGains = repository.defaultPreset.bandGains)
+            // Reset gains to 0 while keeping the user preset selected.
+            _preset.value =
+                _preset.value.copy(
+                    bandGains =
+                        BandMode.TWENTY_BAND.frequencies.map { frequency ->
+                            BandGain(band = frequency, gain = 0)
+                        },
+                    isMutated = true,
+                )
         } else {
-            // Switch to flat preset
-            _preset.value = repository.defaultPreset
+            // Switch to flat preset, keeping the mode the UI is currently showing.
+            _preset.value = repository.defaultPreset.copy(bandMode = _bandMode.value)
         }
+    }
+
+    fun setBandMode(mode: BandMode) {
+        if (_bandMode.value == mode) return
+        dlog(TAG, "setBandMode($mode)")
+        _bandMode.value = mode
+        repository.setBandMode(mode)
     }
 
     fun setPreset(preset: Preset) {
         dlog(TAG, "setPreset($preset)")
-        _preset.value = preset
+        // Selecting a preset adapts it to the mode the user is looking at. Switching the mode
+        // afterwards is what makes the current preset read-only until it is selected again.
+        _preset.value = preset.copy(bandMode = _bandMode.value)
     }
 
     fun setGain(index: Int, gain: Int) {
-        dlog(TAG, "setGain($index, $gain)")
+        val current = _preset.value
+        val isFlatPreset = current.name == repository.defaultPreset.name
+        if (!isFlatPreset && current.bandMode != _bandMode.value) {
+            dlog(TAG, "setGain ignored: preset is ${current.bandMode}, UI is ${_bandMode.value}")
+            return
+        }
+        dlog(TAG, "setGain($index, $gain) in ${_bandMode.value}")
         _preset.value =
-            _preset.value.run {
-                copy(
-                    name = if (!isUserDefined) "Custom" else name,
-                    bandGains =
-                        bandGains
-                            .toMutableList()
-                            // create a new object to ensure the flow emits an update.
-                            .apply { this[index] = this[index].copy(gain = gain) }
-                            .toList(),
-                    isMutated = true,
-                )
-            }
+            current.copy(
+                name = if (!current.isUserDefined) "Custom" else current.name,
+                bandGains = _bandMode.value.applyGain(current.bandGains, index, gain),
+                isMutated = true,
+                bandMode = _bandMode.value,
+            )
     }
 
     // Returns string containing the error message if it failed, otherwise null
@@ -149,7 +173,12 @@ class EqualizerViewModel(private val repository: EqualizerRepository) : ViewMode
             return it
         }
         _preset.value =
-            _preset.value.copy(name = name.trim(), isUserDefined = true, isMutated = false)
+            _preset.value.copy(
+                name = name.trim(),
+                isUserDefined = true,
+                isMutated = false,
+                bandMode = _bandMode.value,
+            )
         return null
     }
 
@@ -203,7 +232,7 @@ class EqualizerViewModel(private val repository: EqualizerRepository) : ViewMode
         viewModelScope.launch { repository.removePreset(preset) }
         // Only reset the selection when the preset being deleted is the active one.
         if (shouldReset && preset.name == _preset.value.name) {
-            _preset.value = repository.defaultPreset
+            _preset.value = repository.defaultPreset.copy(bandMode = _bandMode.value)
         }
     }
 

@@ -62,6 +62,29 @@
     <string name="dolby_geq_preset_name_exists">Preset name already exists!</string>
     <string name="dolby_geq_preset_name_empty">Preset name can\'t be empty</string>
     <string name="dolby_geq_preset_name_too_long">Preset name is too long!</string>
+    <string name="dolby_save_preset">Save preset</string>
+    <string name="dolby_equalizer_summary">Shape your sound, frequency by frequency</string>
+    <string name="dolby_eq_view_curve">Curve</string>
+    <string name="dolby_eq_view_sliders">Sliders</string>
+    <string name="frequency_response">Frequency response</string>
+    <string name="dolby_eq_readonly_title">Frequency response (read-only)</string>
+    <string name="dolby_eq_drag_hint">Drag nodes to shape gain (±10 dB)</string>
+    <string name="dolby_eq_readonly_hint">Switch band mode or pick a compatible preset to edit</string>
+    <string name="locked">Locked</string>
+    <string name="band_mode_mismatch">Band mode mismatch</string>
+    <string name="band_mode_mismatch_desc">This %1$s preset cannot be edited in %2$s mode.</string>
+    <string name="dolby_eq_switch_to_mode">Switch to %1$s</string>
+    <string name="band_configuration">Band configuration</string>
+    <string name="choose_equalizer_precision">Choose equalizer precision: more bands = finer control</string>
+    <string name="band_tuner">Band tuner</string>
+    <string name="band_tuner_desc">Step through bands and fine-tune gain in 0.1 dB increments</string>
+    <string name="band_tuner_position">Band %1$d of %2$d</string>
+    <string name="band_tuner_label">Band %1$d · %2$s</string>
+    <string name="band_tuner_previous">Previous band</string>
+    <string name="band_tuner_next">Next band</string>
+    <string name="band_tuner_decrement">−0.1 dB</string>
+    <string name="band_tuner_reset">0 dB</string>
+    <string name="band_tuner_increment">+0.1 dB</string>
 
     <!-- Dolby intelligent EQ -->
     <string name="dolby_ieq">Intelligent equalizer</string>
@@ -90,7 +113,7 @@
     <string name="dolby_hp_virtualizer_strength">Surround virtualizer strength</string>
     <string name="dolby_hp_virtualizer_strength_summary">Adjusts the width of the virtual surround field</string>
     <string name="dolby_stereo_widening_summary">Widens the stereo field</string>
-    <string name="dolby_graphic_equalizer_summary">%1$s · 10 bands</string>
+    <string name="dolby_graphic_equalizer_summary">%1$s · 10 / 15 / 20 bands</string>
     <string name="dolby_reset_profile_title">Reset %1$s?</string>
     <string name="dolby_reset_profile_message">EQ gains and sound controls for this profile go back to their defaults. Other profiles are not affected.</string>
     <string name="dolby_reset">Reset</string>

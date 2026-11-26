@@ -11,4 +11,5 @@ data class Preset(
     val bandGains: List<BandGain>,
     var isUserDefined: Boolean = false,
     var isMutated: Boolean = false,
+    val bandMode: BandMode = BandMode.TEN_BAND,
 )

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Paranoid Android
+ * Copyright (C) 2024-2026 Paranoid Android
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -24,10 +24,15 @@ class EqualizerRepository(private val context: Context) {
     private val dolbyController by lazy { DolbyController.getInstance(context) }
 
     // Preset is saved as a string of comma separated gains in SharedPreferences
-    // and is unique to each profile ID
+    // and is unique to each profile ID. The DAP always has 20 values.
     private var profile = runCatching { dolbyController.profile }.getOrDefault(0)
     private var profileSharedPrefs =
         context.getSharedPreferences("profile_$profile", Context.MODE_PRIVATE)
+
+    /** UI-only settings that are not tied to a Dolby profile. */
+    private val settingsSharedPrefs by lazy {
+        context.getSharedPreferences("equalizer_settings", Context.MODE_PRIVATE)
+    }
 
     /**
      * Follows the active Dolby profile. The Home tab can change the profile while this repository
@@ -50,6 +55,11 @@ class EqualizerRepository(private val context: Context) {
         context.getSharedPreferences("presets", Context.MODE_PRIVATE)
     }
 
+    /** Band mode each user preset was created in, keyed by preset name. */
+    private val presetModesSharedPrefs by lazy {
+        context.getSharedPreferences("preset_band_modes", Context.MODE_PRIVATE)
+    }
+
     val builtInPresets: List<Preset> by lazy {
         val names = context.resources.getStringArray(R.array.dolby_preset_entries)
         val presets = context.resources.getStringArray(R.array.dolby_preset_values)
@@ -62,17 +72,25 @@ class EqualizerRepository(private val context: Context) {
 
     // User defined presets are stored in a SharedPreferences as
     // key - preset name
-    // value - comma separated string of gains
+    // value - comma separated string of 20 gains
     val userPresets: Flow<List<Preset>> = callbackFlow {
         val listener =
             SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
                 dlog(TAG, "presetsSharedPrefs changed")
                 trySend(
-                    presetsSharedPrefs.all.map { (key, value) ->
+                    presetsSharedPrefs.all.mapNotNull { (key, value) ->
+                        val gains = value as? String ?: return@mapNotNull null
                         Preset(
                             name = key,
-                            bandGains = deserializeGains(value.toString()),
+                            bandGains = deserializeGains(gains),
                             isUserDefined = true,
+                            bandMode =
+                                BandMode.fromValue(
+                                    presetModesSharedPrefs.getInt(
+                                        key,
+                                        BandMode.TEN_BAND.bandCount,
+                                    )
+                                ),
                         )
                     }
                 )
@@ -87,6 +105,15 @@ class EqualizerRepository(private val context: Context) {
             presetsSharedPrefs.unregisterOnSharedPreferenceChangeListener(listener)
             dlog(TAG, "presetsSharedPrefs unregistered listener")
         }
+    }
+
+    fun getBandMode(): BandMode =
+        BandMode.fromValue(
+            settingsSharedPrefs.getInt(KEY_BAND_MODE, BandMode.TEN_BAND.bandCount)
+        )
+
+    fun setBandMode(mode: BandMode) {
+        settingsSharedPrefs.edit().putInt(KEY_BAND_MODE, mode.bandCount).apply()
     }
 
     suspend fun getBandGains(): List<BandGain> =
@@ -124,6 +151,11 @@ class EqualizerRepository(private val context: Context) {
     suspend fun addPreset(preset: Preset) =
         withContext(Dispatchers.IO) {
             dlog(TAG, "addPreset($preset)")
+            // Write the mode first: the presets listener reads it as soon as the gains are stored.
+            presetModesSharedPrefs
+                .edit()
+                .putInt(preset.name, preset.bandMode.bandCount)
+                .apply()
             presetsSharedPrefs
                 .edit()
                 .putString(preset.name, serializeGains(preset.bandGains))
@@ -134,46 +166,71 @@ class EqualizerRepository(private val context: Context) {
         withContext(Dispatchers.IO) {
             dlog(TAG, "removePreset($preset)")
             presetsSharedPrefs.edit().remove(preset.name).apply()
+            presetModesSharedPrefs.edit().remove(preset.name).apply()
         }
 
     private companion object {
         const val TAG = "EqRepository"
-
-        val tenBandFreqs = intArrayOf(32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000)
+        const val KEY_BAND_MODE = "band_mode"
+        const val GAIN_MIN = -100
+        const val GAIN_MAX = 100
 
         fun deserializeGains(bandGains: String): List<BandGain> {
-            val gains: List<Int> =
-                bandGains
-                    .split(",")
-                    .runCatching {
-                        require(size == 20) { "Preset must have 20 elements, has only $size!" }
-                        map { it.toInt() }.twentyToTenBandGains()
-                    }
-                    .onFailure { exception -> Log.e(TAG, "Failed to parse preset", exception) }
-                    .getOrDefault(
-                        // fallback to flat
-                        List<Int>(10) { 0 }
-                    )
-            return List(10) { index -> BandGain(band = tenBandFreqs[index], gain = gains[index]) }
+            val values = bandGains.split(",").mapNotNull { it.trim().toIntOrNull() }
+            val twenty = values.toTwentyBandGains()
+            return BandMode.TWENTY_BAND.frequencies.mapIndexed { index, frequency ->
+                BandGain(
+                    band = frequency,
+                    gain = twenty.getOrElse(index) { 0 }.coerceIn(GAIN_MIN, GAIN_MAX),
+                )
+            }
         }
 
         fun serializeGains(bandGains: List<BandGain>): String {
-            return bandGains.map { it.gain }.tenToTwentyBandGains().joinToString(",")
+            val values = bandGains.map { it.gain.coerceIn(GAIN_MIN, GAIN_MAX) }
+            return values.toTwentyBandGains().joinToString(",")
         }
 
-        // we show only 10 bands in UI however backend requires 20 bands
+        fun List<Int>.toTwentyBandGains(): List<Int> =
+            when (size) {
+                20 -> this
+                15 -> fifteenToTwentyBandGains()
+                10 -> tenToTwentyBandGains()
+                else -> {
+                    Log.e(TAG, "Preset must have 10, 15 or 20 elements, has $size!")
+                    List(20) { 0 }
+                }
+            }
+
+        // The 10-band UI only edits every other backend value; the odd ones are averaged.
         fun List<Int>.tenToTwentyBandGains() =
-            List<Int>(20) { index ->
+            List(20) { index ->
                 if (index % 2 == 1 && index < 19) {
-                    // every odd element is the average of its surrounding elements
                     (this[(index - 1) / 2] + this[(index + 1) / 2]) / 2
                 } else {
                     this[index / 2]
                 }
             }
 
-        fun List<Int>.twentyToTenBandGains() =
-            // skip every odd element
-            filterIndexed { index, _ -> index % 2 == 0 }
+        // The 15-band UI uses a fixed subset; the remaining slots are linearly interpolated.
+        fun List<Int>.fifteenToTwentyBandGains(): List<Int> {
+            val indices = BandMode.FIFTEEN_BAND.indices
+            val result = MutableList(20) { 0 }
+            indices.forEachIndexed { index, target ->
+                result[target] = this.getOrElse(index) { 0 }
+            }
+            (0 until 20).filter { it !in indices }.forEach { index ->
+                val previous = indices.filter { it < index }.maxOrNull() ?: 0
+                val next = indices.filter { it > index }.minOrNull() ?: 19
+                result[index] =
+                    if (previous < index && next > index) {
+                        val ratio = (index - previous).toFloat() / (next - previous)
+                        (result[previous] + ratio * (result[next] - result[previous])).toInt()
+                    } else {
+                        result[previous]
+                    }
+            }
+            return result
+        }
     }
 }
