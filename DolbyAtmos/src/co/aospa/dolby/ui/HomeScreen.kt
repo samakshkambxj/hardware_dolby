@@ -38,6 +38,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.rounded.Headphones
+import androidx.compose.material.icons.rounded.Speaker
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -63,7 +65,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -105,6 +106,13 @@ fun HomeScreen(
     onReset: () -> Unit,
 ) {
     var showReset by remember { mutableStateOf(false) }
+    val profileLabel = state.profileName.ifBlank { stringResource(R.string.dolby_unknown) }
+    val deviceLabel =
+        state.deviceName.ifBlank {
+            stringResource(
+                if (state.isOnSpeaker) R.string.dolby_phone_speaker else R.string.dolby_headphones
+            )
+        }
 
     Box(
         modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(),
@@ -126,7 +134,23 @@ fun HomeScreen(
                         .padding(horizontal = 20.dp)
                         .padding(bottom = 104.dp),
             ) {
-                HeroCard(state = state, onToggle = onToggle)
+                DolbyMainCard(
+                    enabled = state.dsOn,
+                    onEnabledChange = onToggle,
+                    statusText =
+                        if (state.dsOn) {
+                            stringResource(R.string.dolby_on_with_profile, profileLabel)
+                        } else {
+                            stringResource(R.string.dolby_off)
+                        },
+                    outputDeviceText = deviceLabel,
+                    outputDeviceIcon =
+                        if (state.isOnSpeaker) {
+                            Icons.Rounded.Speaker
+                        } else {
+                            Icons.Rounded.Headphones
+                        },
+                )
 
                 Column(Modifier.alpha(if (state.enabled) 1f else 0.38f)) {
                     Spacer(Modifier.height(20.dp))
@@ -229,171 +253,6 @@ private fun HomeHeader(
                 )
             }
         }
-    }
-}
-
-/**
- * Master switch, rendered the way AOSP Settings renders a top-level toggle: a flat
- * `surfaceContainer` card, a tonal icon tile, the action as the title and the current state as
- * value pills underneath. No gradient, no rings, no shadow — the carousel is the visual anchor.
- */
-@Composable
-private fun HeroCard(state: DolbyUiState, onToggle: (Boolean) -> Unit) {
-    val colors = MaterialTheme.colorScheme
-    val shape = RoundedCornerShape(28.dp)
-    val profileLabel =
-        state.profileName.ifBlank { stringResource(id = R.string.dolby_unknown) }
-    val deviceLabel =
-        state.deviceName.ifBlank {
-            stringResource(
-                id =
-                    if (state.isOnSpeaker) {
-                        R.string.dolby_phone_speaker
-                    } else {
-                        R.string.dolby_headphones
-                    }
-            )
-        }
-
-    Column(
-        modifier =
-            Modifier.fillMaxWidth()
-                .clip(shape)
-                .background(colors.surfaceContainer)
-                .toggleable(
-                    value = state.dsOn,
-                    role = Role.Switch,
-                    onValueChange = onToggle,
-                )
-                .padding(18.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier =
-                    Modifier.size(44.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(colors.primaryContainer),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_dolby),
-                    contentDescription = null,
-                    tint = colors.onPrimaryContainer,
-                    modifier = Modifier.size(26.dp),
-                )
-            }
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(id = R.string.dolby_enable),
-                    fontSize = 16.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = (-0.2).sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = stringResource(id = R.string.dolby_immersive_audio),
-                    fontSize = 12.5.sp,
-                    color = colors.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Spacer(Modifier.width(12.dp))
-            Switch(checked = state.dsOn, onCheckedChange = null)
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            HeroChip {
-                Box(
-                    modifier =
-                        Modifier.size(6.dp)
-                            .clip(CircleShape)
-                            .background(if (state.dsOn) colors.primary else colors.outline)
-                )
-                Text(
-                    text =
-                        stringResource(
-                            id = if (state.dsOn) R.string.dolby_on else R.string.dolby_off
-                        ),
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-
-            HeroChip(modifier = Modifier.weight(1f, fill = false), accent = true) {
-                Text(
-                    text = profileLabel,
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-
-            HeroChip(modifier = Modifier.weight(1f, fill = false)) {
-                Icon(
-                    painter =
-                        painterResource(
-                            id =
-                                if (state.isOnSpeaker) {
-                                    R.drawable.ic_phone
-                                } else {
-                                    R.drawable.ic_headphones
-                                }
-                        ),
-                    contentDescription = null,
-                    tint = colors.onSurfaceVariant,
-                    modifier = Modifier.size(13.dp),
-                )
-                Text(
-                    text = deviceLabel,
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-}
-
-/**
- * Value pill used under the master switch. The neutral variant sits one step above the card
- * (white in light, `surfaceContainerHigh` in dark) so it reads as raised in both themes.
- */
-@Composable
-private fun HeroChip(
-    modifier: Modifier = Modifier,
-    accent: Boolean = false,
-    content: @Composable RowScope.() -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val container =
-        when {
-            accent -> colors.primaryContainer
-            colors.background.luminance() < 0.5f -> colors.surfaceContainerHigh
-            else -> colors.surface
-        }
-
-    Surface(
-        modifier = modifier,
-        shape = CircleShape,
-        color = container,
-        contentColor = if (accent) colors.onPrimaryContainer else colors.onSurface,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 11.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            content = content,
-        )
     }
 }
 
