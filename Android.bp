@@ -800,12 +800,9 @@ cc_prebuilt_library_shared {
                 "proprietary/vendor/lib64/libcodec2_soft_dolby.so",
             ],
             shared_libs: [
-                "libcodec2_hal_common-aidl",
-                "libcodec2_hidl_plugin-dolby",
-                "libcodec2_aidl-dolby",
                 "libbase",
                 "libcodec2",
-                "libcodec2_vndk-aidl",
+                "libcodec2_vndk",
                 "libutils",
                 "libcutils",
                 "liblog",
