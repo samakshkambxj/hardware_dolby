@@ -32,6 +32,11 @@ import co.aospa.dolby.preference.DolbyPreferenceStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+/** The DAP stereo-widening parameter is a continuous value in this range. */
+private const val STEREO_MIN = 4
+private const val STEREO_MAX = 64
+private const val STEREO_DEFAULT = 32
+
 /**
  * Immutable snapshot of everything the Home tab renders.
  *
@@ -49,7 +54,7 @@ data class DolbyUiState(
     val bass: Boolean = false,
     val speakerVirtualizer: Boolean = false,
     val headphoneVirtualizer: Boolean = false,
-    val stereo: Int = 0,
+    val stereo: Int = 32,
     val volumeLeveler: Boolean = false,
     val isOnSpeaker: Boolean = true,
     val deviceName: String = "",
@@ -113,6 +118,8 @@ class DolbyViewModel(application: Application) : ViewModel() {
                 unknown
             }
 
+        val stereoSupported =
+            context.resources.getBoolean(R.bool.dolby_stereo_widening_supported)
         val base =
             previous.copy(
                 dsOn = dsOn,
@@ -120,8 +127,7 @@ class DolbyViewModel(application: Application) : ViewModel() {
                 profileName = profileName,
                 isOnSpeaker = isOnSpeaker(),
                 deviceName = currentDeviceName(),
-                stereoSupported =
-                    context.resources.getBoolean(R.bool.dolby_stereo_widening_supported),
+                stereoSupported = stereoSupported,
             )
 
         // Reading DAP parameters requires a live effect. Mirror the old preference screen and
@@ -131,21 +137,54 @@ class DolbyViewModel(application: Application) : ViewModel() {
             return
         }
 
+        // Each parameter is read on its own. A single failing getter (the effect can briefly lose
+        // control, or a tuning may not expose a parameter) must not discard every other value and
+        // leave the whole card stale. Fall back to the profile-scoped preference we wrote earlier.
+        val storedInt = { key: String, fallback: Int ->
+            store.getString(key, null)?.toIntOrNull() ?: fallback
+        }
+        // The effect can report an out-of-range or stale value for the widening amount. The
+        // profile-scoped preference is what this app wrote on the last change and what boot
+        // restore replays, so it is the authoritative value for the control.
+        val stereo =
+            if (!stereoSupported) {
+                0
+            } else {
+                val stored = store.getString(PREF_STEREO, null)?.toIntOrNull()
+                val effectValue =
+                    runCatching { controller.getStereoWideningAmount(profile) }.getOrNull()
+                (stored ?: effectValue?.takeIf { it in STEREO_MIN..STEREO_MAX } ?: STEREO_DEFAULT)
+                    .coerceIn(STEREO_MIN, STEREO_MAX)
+            }
+
         _uiState.value =
-            runCatching {
-                    base.copy(
-                        presetName = controller.getPresetName(),
-                        presetGains = parseGains(controller.getPreset(profile)),
-                        ieq = controller.getIeqPreset(profile),
-                        dialogue = controller.getDialogueEnhancerAmount(profile),
-                        bass = controller.getBassEnhancerEnabled(profile),
-                        speakerVirtualizer = controller.getSpeakerVirtEnabled(profile),
-                        headphoneVirtualizer = controller.getHeadphoneVirtEnabled(profile),
-                        stereo = controller.getStereoWideningAmount(profile),
-                        volumeLeveler = controller.getVolumeLevelerEnabled(profile),
-                    )
-                }
-                .getOrElse { base }
+            base.copy(
+                presetName =
+                    runCatching { controller.getPresetName() }.getOrDefault(previous.presetName),
+                presetGains =
+                    runCatching { parseGains(controller.getPreset(profile)) }
+                        .getOrDefault(previous.presetGains),
+                ieq = runCatching { controller.getIeqPreset(profile) }
+                    .getOrElse { storedInt(PREF_IEQ, previous.ieq) },
+                dialogue =
+                    runCatching { controller.getDialogueEnhancerAmount(profile) }
+                        .getOrElse { storedInt(PREF_DIALOGUE, previous.dialogue) },
+                bass =
+                    runCatching { controller.getBassEnhancerEnabled(profile) }
+                        .getOrElse { store.getBoolean(PREF_BASS, previous.bass) },
+                speakerVirtualizer =
+                    runCatching { controller.getSpeakerVirtEnabled(profile) }
+                        .getOrElse { store.getBoolean(PREF_SPK_VIRTUALIZER, previous.speakerVirtualizer) },
+                headphoneVirtualizer =
+                    runCatching { controller.getHeadphoneVirtEnabled(profile) }
+                        .getOrElse {
+                            store.getBoolean(PREF_HP_VIRTUALIZER, previous.headphoneVirtualizer)
+                        },
+                stereo = stereo,
+                volumeLeveler =
+                    runCatching { controller.getVolumeLevelerEnabled(profile) }
+                        .getOrElse { store.getBoolean(PREF_VOLUME, previous.volumeLeveler) },
+            )
     }
 
     fun setDsOn(value: Boolean) {
@@ -204,9 +243,12 @@ class DolbyViewModel(application: Application) : ViewModel() {
 
     fun setStereo(value: Int) {
         if (!context.resources.getBoolean(R.bool.dolby_stereo_widening_supported)) return
+        val clamped = value.coerceIn(STEREO_MIN, STEREO_MAX)
+        // Reflect the new strength immediately; refresh() re-reads it afterwards.
+        _uiState.value = _uiState.value.copy(stereo = clamped)
         applyChange {
-            store.putString(PREF_STEREO, value.toString())
-            controller.setStereoWideningAmount(value)
+            store.putString(PREF_STEREO, clamped.toString())
+            controller.setStereoWideningAmount(clamped)
         }
     }
 

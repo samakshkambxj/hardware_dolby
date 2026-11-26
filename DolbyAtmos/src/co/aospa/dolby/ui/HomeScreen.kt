@@ -48,6 +48,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -74,6 +75,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.aospa.dolby.R
+import kotlin.math.roundToInt
 
 private data class IeqOption(
     val value: Int,
@@ -425,13 +427,6 @@ private fun DeviceCard(
     onStereo: (Int) -> Unit,
 ) {
     val connect = stringResource(id = R.string.dolby_connect_headphones)
-    val unknown = stringResource(id = R.string.dolby_unknown)
-    val stereoEntries = stringArrayResource(id = R.array.dolby_stereo_entries)
-    val stereoValues = stringArrayResource(id = R.array.dolby_stereo_values).map { it.toInt() }
-    val stereoIndex = stereoValues.indexOf(state.stereo)
-    val stereoLabel = if (stereoIndex >= 0) stereoEntries[stereoIndex] else unknown
-
-    var showStereo by remember { mutableStateOf(false) }
 
     SettingsGroup {
         SwitchRow(
@@ -457,34 +452,13 @@ private fun DeviceCard(
             onCheckedChange = onHeadphoneVirtualizer,
         )
 
-        if (state.stereoSupported) {
-            ActionRow(
-                icon = R.drawable.ic_stereo,
-                title = stringResource(id = R.string.dolby_stereo_widening),
-                subtitle =
-                    if (state.isOnSpeaker) {
-                        connect
-                    } else {
-                        stringResource(id = R.string.dolby_stereo_widening_summary)
-                    },
-                enabled = state.enabled && !state.isOnSpeaker,
-                onClick = { showStereo = true },
-                trailing = {
-                    ValuePill(text = stereoLabel)
-                    Chevron()
-                },
+        if (state.stereoSupported && !state.isOnSpeaker) {
+            StrengthRow(
+                value = state.stereo,
+                enabled = state.enabled && state.headphoneVirtualizer,
+                onValueChange = onStereo,
             )
         }
-    }
-
-    if (showStereo) {
-        ChoiceDialog(
-            title = stringResource(id = R.string.dolby_stereo_widening),
-            entries = stereoEntries.toList(),
-            selectedIndex = stereoIndex,
-            onSelect = { index -> onStereo(stereoValues[index]) },
-            onDismiss = { showStereo = false },
-        )
     }
 }
 
@@ -549,6 +523,64 @@ private fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
         )
     }
 }
+
+/**
+ * Headphone surround strength. The effect exposes this as a continuous 4..64 value, so it is
+ * rendered as a slider instead of a fixed Low/Medium/High/Max list. That keeps the current value
+ * visible for every possible value rather than falling back to "Unknown" for anything outside the
+ * four presets. The value is committed when the user lifts their finger to avoid a burst of effect
+ * writes while dragging.
+ */
+@Composable
+private fun StrengthRow(
+    value: Int,
+    enabled: Boolean,
+    onValueChange: (Int) -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    val current = value.coerceIn(STRENGTH_MIN, STRENGTH_MAX)
+    var sliderValue by remember(current) { mutableStateOf(current.toFloat()) }
+    val shown = sliderValue.roundToInt()
+
+    Column(
+        modifier =
+            Modifier.fillMaxWidth()
+                .background(colors.surfaceContainer)
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(id = R.string.dolby_hp_virtualizer_strength),
+                    fontSize = 14.5.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = stringResource(id = R.string.dolby_hp_virtualizer_strength_summary),
+                    fontSize = 11.5.sp,
+                    color = colors.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            ValuePill(text = shown.toString())
+        }
+        Slider(
+            value = sliderValue,
+            onValueChange = { sliderValue = it },
+            onValueChangeFinished = { onValueChange(sliderValue.roundToInt()) },
+            valueRange = STRENGTH_MIN.toFloat()..STRENGTH_MAX.toFloat(),
+            steps = STRENGTH_MAX - STRENGTH_MIN - 1,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+private const val STRENGTH_MIN = 4
+private const val STRENGTH_MAX = 64
 
 @Composable
 private fun SwitchRow(

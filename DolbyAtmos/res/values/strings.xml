@@ -87,6 +87,8 @@
     <string name="dolby_volume_leveler_summary">Evens out quiet and loud scenes</string>
     <string name="dolby_spk_virtualizer_summary">Widens the built-in speakers</string>
     <string name="dolby_hp_virtualizer_summary">Spatial audio for headphones</string>
+    <string name="dolby_hp_virtualizer_strength">Surround virtualizer strength</string>
+    <string name="dolby_hp_virtualizer_strength_summary">Adjusts the width of the virtual surround field</string>
     <string name="dolby_stereo_widening_summary">Widens the stereo field</string>
     <string name="dolby_graphic_equalizer_summary">%1$s · 10 bands</string>
     <string name="dolby_reset_profile_title">Reset %1$s?</string>
