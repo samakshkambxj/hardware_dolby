@@ -194,7 +194,7 @@ fun DolbyTopAppBar(
                 if (scrolled) {
                     MaterialTheme.colorScheme.surfaceContainer
                 } else {
-                    MaterialTheme.colorScheme.surface
+                    MaterialTheme.colorScheme.background
                 },
             animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
             label = "topbar_container",
@@ -251,7 +251,7 @@ fun ModernSettingsCard(
         shape = MaterialTheme.shapes.extraLarge,
         colors =
             CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
             ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {

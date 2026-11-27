@@ -219,7 +219,7 @@ fun ModernEqualizerScreen(
                 },
             )
         },
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.background,
     ) { paddingValues ->
         ModernEqualizerContent(
             presets = presets,
@@ -579,7 +579,7 @@ private fun CurveViewContent(
         shape = MaterialTheme.shapes.extraLarge,
         colors =
             CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
             ),
     ) {
         Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
@@ -662,7 +662,7 @@ private fun SlidersViewContent(
             shape = MaterialTheme.shapes.extraLarge,
             colors =
                 CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
@@ -701,7 +701,7 @@ private fun SlidersViewContent(
             shape = MaterialTheme.shapes.extraLarge,
             colors =
                 CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
         ) {
             Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
