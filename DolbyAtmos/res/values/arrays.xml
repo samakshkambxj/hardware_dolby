@@ -11,6 +11,11 @@
         <item>@string/dolby_profile_video</item>
         <item>@string/dolby_profile_music</item>
         <item>@string/dolby_profile_spatialaudio</item>
+        <item>@string/dolby_profile_mobility</item>
+        <item>@string/dolby_profile_commute</item>
+        <item>@string/dolby_profile_travel</item>
+        <item>@string/dolby_profile_game</item>
+        <item>@string/dolby_profile_voice</item>
         <item>@string/dolby_profile_custom</item>
     </string-array>
 
@@ -19,6 +24,11 @@
         <item>1</item>
         <item>2</item>
         <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
         <item>3</item>
     </string-array>
 

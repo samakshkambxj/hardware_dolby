@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 Paranoid Android
+     SPDX-License-Identifier: Apache-2.0
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M13,5 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 M10,21 L12,14 L9,11 L10,7 L14,7 L17,11 L20,12 M12,14 L16,17 L17,21 M9,11 L6,13 L3,13" />
+</vector>

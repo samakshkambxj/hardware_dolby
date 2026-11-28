@@ -80,6 +80,11 @@ private val PROFILE_ICONS =
         2 to R.drawable.ic_profile_music,
         3 to R.drawable.ic_profile_custom,
         4 to R.drawable.ic_profile_spatial,
+        5 to R.drawable.ic_profile_mobility,
+        6 to R.drawable.ic_profile_commute,
+        7 to R.drawable.ic_profile_travel,
+        8 to R.drawable.ic_profile_game,
+        9 to R.drawable.ic_profile_voice,
     )
 
 /**
